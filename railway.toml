@@ -1,8 +1,9 @@
 [build]
-buildCommand = "npx prisma generate && npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && npm run start -- -p $PORT"
+startCommand = "npx prisma migrate deploy && node server.js"
 healthcheckPath = "/login"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
