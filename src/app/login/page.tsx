@@ -1,10 +1,18 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
 
-export default function LoginPage() {
+export default function LoginPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen grid place-items-center">Yuklanmoqda...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") ?? "/";
