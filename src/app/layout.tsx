@@ -8,13 +8,17 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Ishlab Chiqarish",
-  description: "Ishlab chiqarish va ombor boshqaruv tizimi",
+  title: "OneShop ERP",
+  description: "Savdo, ombor, ishlab chiqarish va moliya boshqaruv tizimi",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="ru" className={`${inter.variable} h-full`}>
+    <html lang="uz" className={`${inter.variable} h-full`}>
       <body className="min-h-full">{children}</body>
     </html>
   );
