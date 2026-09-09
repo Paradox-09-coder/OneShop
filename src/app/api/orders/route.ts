@@ -7,7 +7,11 @@ const CreateOrder = z.object({
   clientId: z.string().min(1),
   type: z.enum(["RETAIL", "WHOLESALE", "MANUFACTURING", "POS"]),
   orderCurrency: z.enum(["UZS", "USD", "EUR", "RUB"]),
+  exchangeRate: z.number().positive().nullable().optional(),
   taxRate: z.number().min(0).max(100).default(0),
+  taxAmount: z.number().min(0).default(0),
+  discountPercent: z.number().min(0).max(100).default(0),
+  discountAmount: z.number().min(0).default(0),
   note: z.string().optional(),
   items: z
     .array(
@@ -40,24 +44,37 @@ export async function POST(req: Request) {
     const session = await requireApiPermission("orders.write");
     const body = CreateOrder.parse(await req.json());
 
-    const totalRaw = body.items.reduce(
+    const subtotal = body.items.reduce(
       (s, it) => s + it.quantity * it.unitPrice,
       0
     );
-    const taxAmount = (totalRaw * body.taxRate) / 100;
-    const total = totalRaw + taxAmount;
+    const discount =
+      body.discountPercent > 0
+        ? (subtotal * body.discountPercent) / 100
+        : body.discountAmount;
+    const afterDiscount = subtotal - discount;
+    const tax =
+      body.taxRate > 0
+        ? (afterDiscount * body.taxRate) / 100
+        : body.taxAmount;
+    const total = afterDiscount + tax;
 
-    // Snapshot the current FX rate for non-UZS orders
+    // Snapshot the exchange rate for non-UZS orders.
+    // If the client supplied one, trust that; otherwise fall back to settings.
     let exchangeRate: number | null = null;
     if (body.orderCurrency !== "UZS") {
-      const setting = await prisma.setting.findUnique({
-        where: { key: "exchange_rate_usd" },
-      });
-      exchangeRate = Number(
-        ((setting?.value as { rate?: number } | null)?.rate) ??
-          process.env.DEFAULT_EXCHANGE_RATE ??
-          12200
-      );
+      if (body.exchangeRate) {
+        exchangeRate = body.exchangeRate;
+      } else {
+        const setting = await prisma.setting.findUnique({
+          where: { key: "exchange_rate_usd" },
+        });
+        exchangeRate = Number(
+          ((setting?.value as { rate?: number } | null)?.rate) ??
+            process.env.DEFAULT_EXCHANGE_RATE ??
+            12200
+        );
+      }
     }
 
     const initialStatus =
@@ -77,6 +94,8 @@ export async function POST(req: Request) {
           orderCurrency: body.orderCurrency,
           exchangeRateSnapshot: exchangeRate,
           taxRate: body.taxRate,
+          discountPercent: body.discountPercent,
+          discountAmount: discount,
           clientId: client?.id,
           clientNameSnapshot: client?.name,
           clientPhoneSnapshot: client?.phone,

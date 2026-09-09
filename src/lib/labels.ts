@@ -164,10 +164,18 @@ export const roleLabel: Record<Role, string> = {
   SUPER_ADMIN: "Bosh administrator",
   ADMIN: "Administrator",
   MANAGER: "Menejer",
-  SELLER: "Sotuvchi",
-  WAREHOUSE: "Omborchi",
-  ACCOUNTANT: "Buxgalter",
   USER: "Foydalanuvchi",
+  RAHBAR: "Rahbar",
+  SOTUVCHI: "Sotuvchi",
+  SEX_MUDIRI: "Sex mudiri",
+  OMBORCHI: "Omborchi",
+  BUXGALTER: "Buxgalter",
+  TAMINOTCHI: "Ta'minotchi (Telegram)",
+  MIJOZ: "Mijoz (Telegram)",
+  HAYDOVCHI: "Haydovchi (Telegram)",
+  SELLER: "Sotuvchi (eski)",
+  WAREHOUSE: "Omborchi (eski)",
+  ACCOUNTANT: "Buxgalter (eski)",
 };
 
 export const notifTypeLabel: Record<NotificationType, string> = {

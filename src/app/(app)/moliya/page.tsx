@@ -1,22 +1,59 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
+import DateRangePicker from "./date-range-picker";
 import { formatMoney } from "@/lib/utils";
 import { accountTypeLabel, paymentTxLabel } from "@/lib/labels";
 import { Wallet, TrendingUp, TrendingDown, CreditCard } from "lucide-react";
 
-export default async function FinancePage() {
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
+export const dynamic = "force-dynamic";
 
-  const [accounts, incomeMonth, expenseMonth, recentPayments] = await Promise.all([
+type Range = "today" | "week" | "month" | "year" | "custom";
+
+function rangeToDates(range: Range, from?: string, to?: string): [Date, Date] {
+  const now = new Date();
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  if (range === "custom" && from) {
+    const start = new Date(from);
+    start.setHours(0, 0, 0, 0);
+    const end2 = to ? new Date(to) : now;
+    end2.setHours(23, 59, 59, 999);
+    return [start, end2];
+  }
+
+  let start = new Date(now);
+  if (range === "today") {
+    start.setHours(0, 0, 0, 0);
+  } else if (range === "week") {
+    start.setDate(start.getDate() - 7);
+    start.setHours(0, 0, 0, 0);
+  } else if (range === "year") {
+    start = new Date(now.getFullYear(), 0, 1);
+  } else {
+    // month (default)
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return [start, end];
+}
+
+export default async function FinancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: Range; from?: string; to?: string }>;
+}) {
+  const sp = await searchParams;
+  const range = sp.range ?? "month";
+  const [start, end] = rangeToDates(range, sp.from, sp.to);
+
+  const [accounts, incomeAgg, expenseAgg, recentPayments] = await Promise.all([
     prisma.account.findMany({ where: { isActive: true } }),
     prisma.payment.aggregate({
       where: {
         type: { in: ["CASH_IN", "BANK_IN"] },
         voidedAt: null,
-        date: { gte: monthStart },
+        date: { gte: start, lte: end },
       },
       _sum: { amount: true },
     }),
@@ -24,11 +61,12 @@ export default async function FinancePage() {
       where: {
         type: { in: ["CASH_OUT", "BANK_OUT"] },
         voidedAt: null,
-        date: { gte: monthStart },
+        date: { gte: start, lte: end },
       },
       _sum: { amount: true },
     }),
     prisma.payment.findMany({
+      where: { date: { gte: start, lte: end } },
       orderBy: { date: "desc" },
       take: 10,
       include: {
@@ -38,15 +76,26 @@ export default async function FinancePage() {
     }),
   ]);
 
-  const income = incomeMonth._sum.amount ?? 0;
-  const expense = expenseMonth._sum.amount ?? 0;
+  const income = incomeAgg._sum.amount ?? 0;
+  const expense = expenseAgg._sum.amount ?? 0;
   const net = income - expense;
+
+  const rangeLabel =
+    range === "today"
+      ? "Bugungi"
+      : range === "week"
+        ? "Haftalik"
+        : range === "year"
+          ? "Yillik"
+          : range === "custom"
+            ? "Tanlangan davr"
+            : "Oylik";
 
   return (
     <div>
       <PageHeader
         title="Moliya"
-        subtitle="Hisoblar, tranzaksiyalar va qarzdorliklar"
+        subtitle={`${rangeLabel} ko'rsatkichlar`}
         actions={
           <Link
             href="/moliya/tranzaksiyalar"
@@ -57,13 +106,17 @@ export default async function FinancePage() {
         }
       />
 
+      <DateRangePicker current={range} from={sp.from} to={sp.to} />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="panel p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl grid place-items-center bg-success text-white">
               <TrendingUp size={18} />
             </div>
-            <span className="text-sm text-ink-soft font-medium">Oylik kirim</span>
+            <span className="text-sm text-ink-soft font-medium">
+              {rangeLabel} kirim
+            </span>
           </div>
           <p className="text-2xl font-bold">{formatMoney(income, "UZS")}</p>
         </div>
@@ -72,7 +125,9 @@ export default async function FinancePage() {
             <div className="w-10 h-10 rounded-xl grid place-items-center bg-danger text-white">
               <TrendingDown size={18} />
             </div>
-            <span className="text-sm text-ink-soft font-medium">Oylik chiqim</span>
+            <span className="text-sm text-ink-soft font-medium">
+              {rangeLabel} chiqim
+            </span>
           </div>
           <p className="text-2xl font-bold">{formatMoney(expense, "UZS")}</p>
         </div>
@@ -107,9 +162,10 @@ export default async function FinancePage() {
           ) : (
             <div className="space-y-2">
               {accounts.map((a) => (
-                <div
+                <Link
                   key={a.id}
-                  className="flex justify-between items-center p-3 rounded-xl bg-gray-50"
+                  href={`/moliya/hisoblar/${a.id}`}
+                  className="flex justify-between items-center p-3 rounded-xl bg-gray-50 hover:bg-primary/5 hover:shadow-sm transition"
                 >
                   <div>
                     <p className="font-semibold text-sm">{a.name}</p>
@@ -120,7 +176,7 @@ export default async function FinancePage() {
                   <p className="font-bold">
                     {formatMoney(a.balanceCache, a.currency)}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           )}

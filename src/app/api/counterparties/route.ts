@@ -6,7 +6,11 @@ const Create = z.object({
   name: z.string().min(1),
   type: z.enum(["CLIENT", "SUPPLIER", "EMPLOYEE", "FOUNDER", "LENDER", "OTHER"]),
   phone: z.string().optional(),
+  phone2: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
+  telegram: z.string().optional(),
+  address: z.string().optional(),
+  inn: z.string().optional(),
   customerKind: z.enum(["RETAIL", "RESELLER"]).optional(),
 });
 
@@ -38,8 +42,12 @@ export async function POST(req: Request) {
       data: {
         type: body.type,
         name: body.name,
-        phone: body.phone,
+        phone: body.phone || null,
+        phone2: body.phone2 || null,
         email: body.email || null,
+        telegram: body.telegram || null,
+        address: body.address || null,
+        inn: body.inn || null,
         ...(body.type === "CLIENT" && body.customerKind
           ? {
               clientProfile: {

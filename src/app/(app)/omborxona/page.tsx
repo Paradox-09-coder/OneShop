@@ -6,7 +6,16 @@ import { formatMoney, formatNumber } from "@/lib/utils";
 import { unitTypeLabel, rollStatusLabel } from "@/lib/labels";
 import { Package, Plus, AlertTriangle } from "lucide-react";
 
-export default async function WarehousePage() {
+export const dynamic = "force-dynamic";
+
+export default async function WarehousePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
+  const sp = await searchParams;
+  const isLowStock = sp.filter === "low-stock";
+
   const [products, rolls, lots] = await Promise.all([
     prisma.catalogProduct.findMany({
       where: { status: "active" },
@@ -25,25 +34,50 @@ export default async function WarehousePage() {
     }),
     prisma.inventoryLot.findMany({
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 100,
       include: { catalogProduct: { select: { name: true, sku: true } } },
     }),
   ]);
 
   const lowStock = lots.filter((l) => l.qty <= l.lowStockThreshold && l.lowStockThreshold > 0);
+  const visibleLots = isLowStock ? lowStock : lots.slice(0, 30);
 
   return (
     <div>
       <PageHeader
         title="Omborxona"
-        subtitle="Mahsulotlar, partiyalar va rulonlar"
+        subtitle={
+          isLowStock
+            ? `Faqat kam qoldiqli — ${lowStock.length} ta`
+            : "Mahsulotlar, partiyalar va rulonlar"
+        }
         actions={
-          <Link
-            href="/katalog"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border font-semibold hover:bg-gray-50"
-          >
-            <Plus size={16} /> Katalog
-          </Link>
+          <div className="flex gap-2">
+            <div className="flex gap-1 p-1 rounded-xl bg-gray-100">
+              <Link
+                href="/omborxona"
+                className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                  !isLowStock ? "bg-white shadow-sm" : "text-ink-soft"
+                }`}
+              >
+                Barchasi
+              </Link>
+              <Link
+                href="/omborxona?filter=low-stock"
+                className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                  isLowStock ? "bg-white shadow-sm text-danger" : "text-ink-soft"
+                }`}
+              >
+                Kam qoldiq
+              </Link>
+            </div>
+            <Link
+              href="/katalog"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border font-semibold hover:bg-gray-50"
+            >
+              <Plus size={16} /> Katalog
+            </Link>
+          </div>
         }
       />
 
@@ -98,12 +132,16 @@ export default async function WarehousePage() {
         </div>
 
         <div className="panel p-5">
-          <h3 className="font-bold mb-3">Partiyalar ({lots.length})</h3>
-          {lots.length === 0 ? (
-            <p className="text-sm text-ink-soft py-4 text-center">Partiyalar yo'q</p>
+          <h3 className="font-bold mb-3">
+            {isLowStock ? "Kam qoldiqli partiyalar" : "Partiyalar"} ({visibleLots.length})
+          </h3>
+          {visibleLots.length === 0 ? (
+            <p className="text-sm text-ink-soft py-4 text-center">
+              {isLowStock ? "Kam qoldiqli partiyalar yo'q — hammasi yetarli!" : "Partiyalar yo'q"}
+            </p>
           ) : (
             <div className="space-y-2">
-              {lots.slice(0, 8).map((l) => (
+              {visibleLots.slice(0, isLowStock ? visibleLots.length : 8).map((l) => (
                 <div
                   key={l.id}
                   className="flex justify-between items-center p-3 rounded-xl bg-gray-50"

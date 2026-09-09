@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney } from "@/lib/utils";
 import { accountTypeLabel } from "@/lib/labels";
+
+export const dynamic = "force-dynamic";
 
 export default async function AccountsPage() {
   const accounts = await prisma.account.findMany({
@@ -43,8 +46,15 @@ export default async function AccountsPage() {
           </thead>
           <tbody>
             {accounts.map((a) => (
-              <tr key={a.id} className="border-b border-border/50">
-                <td className="px-5 py-3 font-semibold">{a.name}</td>
+              <tr
+                key={a.id}
+                className="border-b border-border/50 hover:bg-gray-50/50 cursor-pointer"
+              >
+                <td className="px-5 py-3 font-semibold">
+                  <Link href={`/moliya/hisoblar/${a.id}`} className="text-primary hover:underline">
+                    {a.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3">{accountTypeLabel[a.type]}</td>
                 <td className="px-5 py-3">{a.currency}</td>
                 <td className="px-5 py-3 text-right font-bold">

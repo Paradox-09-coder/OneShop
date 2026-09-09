@@ -18,11 +18,15 @@ interface StatCardProps {
   value: string;
   hint?: string;
   color?: string;
+  href: string;
 }
 
-function StatCard({ icon, label, value, hint, color = "primary" }: StatCardProps) {
+function StatCard({ icon, label, value, hint, color = "primary", href }: StatCardProps) {
   return (
-    <div className="panel p-5">
+    <Link
+      href={href}
+      className="panel p-5 hover:border-primary hover:shadow-md transition group block"
+    >
       <div className="flex items-center gap-3 mb-3">
         <div
           className={`w-10 h-10 rounded-xl grid place-items-center text-white bg-${color}`}
@@ -31,9 +35,9 @@ function StatCard({ icon, label, value, hint, color = "primary" }: StatCardProps
         </div>
         <span className="text-sm text-ink-soft font-medium">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-ink">{value}</p>
+      <p className="text-2xl font-bold text-ink group-hover:text-primary transition">{value}</p>
       {hint && <p className="text-xs text-ink-soft mt-1">{hint}</p>}
-    </div>
+    </Link>
   );
 }
 
@@ -124,6 +128,7 @@ export default async function DashboardPage() {
           value={formatMoney(monthTotal, "UZS")}
           hint={`${ordersThisMonth._count} ta buyurtma`}
           color="primary"
+          href="/moliya/tranzaksiyalar?filter=income&period=month"
         />
         <StatCard
           icon={<TrendingUp size={18} />}
@@ -131,6 +136,7 @@ export default async function DashboardPage() {
           value={String(ordersActive)}
           hint="Jarayonda"
           color="info"
+          href="/buyurtmalar?filter=active"
         />
         <StatCard
           icon={<Wallet size={18} />}
@@ -138,6 +144,7 @@ export default async function DashboardPage() {
           value={formatMoney(debt, "UZS")}
           hint="Mijozlardan olinishi kerak"
           color="warning"
+          href="/moliya/qarzdorliklar"
         />
         <StatCard
           icon={<AlertTriangle size={18} />}
@@ -145,6 +152,7 @@ export default async function DashboardPage() {
           value={String(lowStockCount)}
           hint="Mahsulot ombordan tugab qolyapti"
           color="danger"
+          href="/omborxona?filter=low-stock"
         />
       </div>
 
@@ -219,9 +227,10 @@ export default async function DashboardPage() {
           </div>
           <div className="space-y-2">
             {cashboxByCurrency.map((a) => (
-              <div
+              <Link
                 key={a.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-50"
+                href={`/moliya/hisoblar/${a.id}`}
+                className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-primary/5 hover:shadow-sm transition"
               >
                 <div>
                   <p className="text-sm font-semibold">{a.name}</p>
@@ -230,7 +239,7 @@ export default async function DashboardPage() {
                 <p className="font-bold text-ink">
                   {formatMoney(a.balanceCache, a.currency)}
                 </p>
-              </div>
+              </Link>
             ))}
             {cashboxByCurrency.length === 0 && (
               <p className="text-sm text-ink-soft text-center py-4">

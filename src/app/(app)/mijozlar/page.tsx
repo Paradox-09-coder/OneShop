@@ -4,7 +4,10 @@ import PageHeader from "@/components/page-header";
 import EmptyState from "@/components/empty-state";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { customerKindLabel } from "@/lib/labels";
-import { Users, Plus } from "lucide-react";
+import { Users, Plus, Phone } from "lucide-react";
+import AddClientButton from "./add-client-button";
+
+export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
   const clients = await prisma.counterparty.findMany({
@@ -14,7 +17,7 @@ export default async function ClientsPage() {
       clientProfile: true,
       _count: { select: { ordersAsClient: true } },
     },
-    take: 100,
+    take: 200,
   });
 
   return (
@@ -22,22 +25,16 @@ export default async function ClientsPage() {
       <PageHeader
         title="Mijozlar"
         subtitle={`${clients.length} ta mijoz`}
-        actions={
-          <Link
-            href="/kontragentlar"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border font-semibold hover:bg-gray-50"
-          >
-            <Plus size={16} /> Kontragentlar orqali qo'shish
-          </Link>
-        }
+        actions={<AddClientButton />}
       />
 
       <div className="panel overflow-hidden">
         {clients.length === 0 ? (
           <EmptyState
             title="Mijozlar yo'q"
-            message="Kontragentlar sahifasidan mijoz qo'shing"
+            message="Yangi mijoz qo'shish uchun yuqoridagi tugmani bosing"
             icon={<Users size={22} />}
+            action={<AddClientButton />}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -54,13 +51,44 @@ export default async function ClientsPage() {
               </thead>
               <tbody>
                 {clients.map((c) => (
-                  <tr key={c.id} className="border-b border-border/50">
-                    <td className="px-5 py-3 font-semibold">{c.name}</td>
-                    <td className="px-5 py-3 text-ink-soft">{c.phone ?? "—"}</td>
+                  <tr
+                    key={c.id}
+                    className="border-b border-border/50 hover:bg-gray-50/50"
+                  >
                     <td className="px-5 py-3">
-                      {c.clientProfile
-                        ? customerKindLabel[c.clientProfile.customerKind]
-                        : "—"}
+                      <Link
+                        href={`/mijozlar/${c.id}`}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        {c.name}
+                      </Link>
+                    </td>
+                    <td className="px-5 py-3 text-ink-soft">
+                      {c.phone ? (
+                        <a
+                          href={`tel:${c.phone}`}
+                          className="inline-flex items-center gap-1 hover:text-primary"
+                        >
+                          <Phone size={12} /> {c.phone}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      {c.clientProfile ? (
+                        <span
+                          className={`chip ${
+                            c.clientProfile.customerKind === "RESELLER"
+                              ? "bg-fuchsia-100 text-fuchsia-700"
+                              : "bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          {customerKindLabel[c.clientProfile.customerKind]}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-5 py-3 text-center">
                       {c._count.ordersAsClient}

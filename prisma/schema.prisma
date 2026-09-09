@@ -42,13 +42,22 @@ model User {
 }
 
 enum Role {
-  SUPER_ADMIN
-  ADMIN
-  MANAGER
+  SUPER_ADMIN        // legacy
+  ADMIN              // legacy
+  MANAGER            // legacy
+  USER               // legacy — default fallback
+  RAHBAR             // director / CEO — full access
+  SOTUVCHI           // seller — orders + clients + CRM
+  SEX_MUDIRI         // production manager — manufacturing orders + warehouse
+  OMBORCHI           // warehouse keeper — inventory + shipments
+  BUXGALTER          // accountant — finance + reports
+  TAMINOTCHI         // supplier — via Telegram, own shipments only
+  MIJOZ              // client — via Telegram, own orders only
+  HAYDOVCHI          // driver — via Telegram, own deliveries only
+  // legacy synonyms kept for compat
   SELLER
   WAREHOUSE
   ACCOUNTANT
-  USER
 }
 
 model CustomRole {

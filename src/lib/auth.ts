@@ -96,28 +96,59 @@ export async function buildSession(userId: string): Promise<SessionUser | null> 
 
 export function defaultPermissionsForRole(role: Role): string[] {
   switch (role) {
+    // Full access — director / super admin
     case "SUPER_ADMIN":
+    case "RAHBAR":
       return ["*"];
     case "ADMIN":
       return [
-        "orders.*",
-        "warehouse.*",
-        "clients.*",
-        "counterparties.*",
-        "finance.*",
-        "crm.*",
-        "employees.*",
-        "reports.*",
-        "settings.*",
+        "orders.*", "warehouse.*", "clients.*", "counterparties.*",
+        "finance.*", "crm.*", "employees.*", "reports.*", "settings.*",
       ];
+    // Manager — legacy
     case "MANAGER":
       return ["orders.*", "clients.*", "crm.*", "reports.read"];
+    // Seller — sotuvchi
+    case "SOTUVCHI":
     case "SELLER":
-      return ["orders.read", "orders.write", "clients.read", "clients.write", "crm.*"];
+      return [
+        "orders.read", "orders.write",
+        "clients.read", "clients.write",
+        "counterparties.read",
+        "crm.*", "pos.*",
+      ];
+    // Production manager — sex mudiri (Alisher aka)
+    case "SEX_MUDIRI":
+      return [
+        "orders.read", "orders.write",     // manufacturing orders
+        "warehouse.read", "warehouse.write",
+        "production.*",
+        "employees.read",                   // sees team
+      ];
+    // Warehouse keeper — omborchi
+    case "OMBORCHI":
     case "WAREHOUSE":
-      return ["warehouse.*", "orders.read"];
+      return [
+        "warehouse.*",
+        "shipments.*",
+        "orders.read",
+        "catalog.read",
+      ];
+    // Accountant — buxgalter
+    case "BUXGALTER":
     case "ACCOUNTANT":
-      return ["finance.*", "reports.*", "counterparties.read"];
+      return [
+        "finance.*",
+        "reports.*",
+        "counterparties.read",
+        "orders.read",
+        "payroll.*",
+      ];
+    // External-only (Telegram bot users) — no web access
+    case "TAMINOTCHI":
+    case "MIJOZ":
+    case "HAYDOVCHI":
+      return ["telegram.read"];  // no web modules
     default:
       return ["orders.read", "warehouse.read"];
   }
