@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
-import { formatMoney } from "@/lib/utils";
-import { unitTypeLabel } from "@/lib/labels";
-import EmptyState from "@/components/empty-state";
 import { Layers, Package, Zap, Battery, Plug, Cable } from "lucide-react";
+import ProductManager from "./product-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -121,62 +119,25 @@ export default async function CatalogPage({
         </div>
 
         {/* Mahsulotlar jadvali — o'ngda */}
-        <div className="lg:col-span-3 panel overflow-hidden">
-          {products.length === 0 ? (
-            <EmptyState
-              title={
-                activeCategory
-                  ? `"${activeCategory.name}" kategoriyasida mahsulot yo'q`
-                  : "Mahsulot yo'q"
-              }
-              message="Yangi mahsulot qo'shish uchun buyoni ochish tugmasidan foydalaning"
-              icon={<Layers size={22} />}
-            />
-          ) : (
-            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                  <tr className="text-xs text-ink-soft uppercase border-b border-border bg-gray-50/50">
-                    <th className="text-left px-5 py-3">SKU</th>
-                    <th className="text-left px-5 py-3">Nomi</th>
-                    <th className="text-left px-5 py-3">Kategoriya</th>
-                    <th className="text-left px-5 py-3">Birligi</th>
-                    <th className="text-right px-5 py-3">Tannarx</th>
-                    <th className="text-right px-5 py-3">Narx</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((p) => (
-                    <tr
-                      key={p.id}
-                      className="border-b border-border/50 hover:bg-gray-50/50"
-                    >
-                      <td className="px-5 py-3 text-ink-soft font-mono text-xs">
-                        {p.sku}
-                      </td>
-                      <td className="px-5 py-3 font-semibold">{p.name}</td>
-                      <td className="px-5 py-3">
-                        {p.category?.name ?? "—"}
-                      </td>
-                      <td className="px-5 py-3">
-                        {unitTypeLabel[p.unitType]}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        {p.baseCost != null
-                          ? formatMoney(p.baseCost, p.baseCostCurrency)
-                          : "—"}
-                      </td>
-                      <td className="px-5 py-3 text-right font-semibold">
-                        {p.basePrice != null
-                          ? formatMoney(p.basePrice, p.basePriceCurrency)
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="lg:col-span-3">
+          <ProductManager
+            products={products.map((p) => ({
+              id: p.id,
+              sku: p.sku,
+              name: p.name,
+              categoryId: p.categoryId,
+              categoryName: p.category?.name ?? null,
+              unitType: p.unitType,
+              baseCost: p.baseCost,
+              baseCostCurrency: p.baseCostCurrency,
+              basePrice: p.basePrice,
+              basePriceCurrency: p.basePriceCurrency,
+              color: p.color,
+              lowStockThreshold: p.lowStockThreshold,
+            }))}
+            categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+            defaultCategoryId={categoryId && categoryId !== "all" ? categoryId : undefined}
+          />
         </div>
       </div>
     </div>
