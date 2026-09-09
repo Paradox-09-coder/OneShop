@@ -13,7 +13,6 @@ import {
   Wallet,
   Target,
   BarChart3,
-  Bell,
   Settings,
   ChevronDown,
   ChevronLeft,
@@ -95,7 +94,6 @@ const navigation: NavItem[] = [
     ],
   },
   { label: "Hisobotlar", href: "/hisobotlar", icon: BarChart3 },
-  { label: "Bildirishnomalar", href: "/xabarnomalar", icon: Bell },
   { label: "Sozlamalar", href: "/sozlamalar", icon: Settings },
 ];
 

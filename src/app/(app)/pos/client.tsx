@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatMoney, relativeTime } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 import { Plus, Minus, Trash2, Receipt, Search, ChevronDown, ChevronRight, Clock } from "lucide-react";
 
 interface Product {
@@ -28,6 +27,12 @@ interface Line {
   price: number;
 }
 
+interface RecentOrderItem {
+  catalogProductId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
 interface RecentOrder {
   id: string;
   orderNumber: string;
@@ -35,6 +40,7 @@ interface RecentOrder {
   amount: number;
   currency: string;
   createdAt: string;
+  items: RecentOrderItem[];
 }
 
 interface Props {
@@ -121,6 +127,17 @@ export default function PosClient({
     setLines((prev) => prev.filter((l) => l.id !== id));
   }
 
+  function copyFrom(order: RecentOrder) {
+    setLines(
+      order.items.map((it) => ({
+        id: it.catalogProductId,
+        name: it.productName,
+        quantity: it.quantity,
+        price: it.unitPrice,
+      }))
+    );
+  }
+
   async function checkout() {
     if (lines.length === 0) return;
     if (!walkInId) {
@@ -177,7 +194,37 @@ export default function PosClient({
           />
         </div>
 
-        <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+        {/* Oxirgi 3 sotuv — qidiruv va kategoriyalar orasida */}
+        {recentOrders.length > 0 && !query && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2 text-xs text-ink-soft font-semibold uppercase">
+              <Clock size={12} /> Oxirgi sotuvlar (bosing → nusxa)
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {recentOrders.slice(0, 3).map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => copyFrom(o)}
+                  className="text-left p-2 rounded-xl border border-border bg-white hover:bg-primary/5 hover:border-primary transition"
+                  title={`${o.items.map((i) => i.productName).join(", ")} — bosib chekka nusxa`}
+                >
+                  <p className="text-xs font-mono text-primary truncate">
+                    {o.orderNumber}
+                  </p>
+                  <p className="text-xs text-ink-soft truncate">
+                    {o.items.length} ta mahsulot
+                  </p>
+                  <p className="text-sm font-bold">
+                    {formatMoney(o.amount, o.currency)}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
           {Array.from(grouped.entries()).map(([catId, catProducts]) => {
             const isOpen = query ? true : openCategories[catId] ?? false;
             const name =
@@ -324,40 +371,6 @@ export default function PosClient({
           </button>
         </div>
 
-        {/* Oxirgi 5 buyurtma */}
-        <div className="panel p-5">
-          <h3 className="font-bold mb-3 flex items-center gap-2">
-            <Clock size={16} className="text-primary" /> Oxirgi 5 sotuv
-          </h3>
-          {recentOrders.length === 0 ? (
-            <p className="text-xs text-ink-soft text-center py-3">
-              Hozircha sotuvlar yo'q
-            </p>
-          ) : (
-            <ul className="space-y-1">
-              {recentOrders.map((o) => (
-                <li key={o.id}>
-                  <Link
-                    href={`/buyurtmalar/${o.id}`}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-mono text-primary">
-                        {o.orderNumber}
-                      </p>
-                      <p className="text-xs text-ink-soft truncate">
-                        {relativeTime(o.createdAt)}
-                      </p>
-                    </div>
-                    <span className="text-sm font-bold">
-                      {formatMoney(o.amount, o.currency)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
     </div>
   );

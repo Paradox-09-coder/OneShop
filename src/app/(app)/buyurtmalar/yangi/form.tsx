@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, UserPlus } from "lucide-react";
+import { Trash2, Plus, UserPlus, Minus } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 
 interface ClientOpt {
@@ -162,72 +162,20 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-1.5">Mijoz</label>
-              <div className="flex gap-2">
-                <select
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-border bg-white"
-                  required
-                >
-                  <option value="">— tanlang —</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}{c.phone ? ` — ${c.phone}` : ""}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setAddingClient(!addingClient)}
-                  className="px-4 py-2 rounded-xl border border-border bg-white hover:bg-gray-50 inline-flex items-center gap-1 font-semibold text-sm"
-                >
-                  <UserPlus size={16} /> Yangi
-                </button>
-              </div>
+              <select
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                required
+              >
+                <option value="">— tanlang —</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}{c.phone ? ` — ${c.phone}` : ""}
+                  </option>
+                ))}
+              </select>
 
-              {addingClient && (
-                <div className="mt-3 p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <input
-                      value={newClientName}
-                      onChange={(e) => setNewClientName(e.target.value)}
-                      placeholder="Ismi / kompaniya nomi"
-                      className="px-3 py-2 rounded-lg border border-border bg-white text-sm"
-                    />
-                    <input
-                      value={newClientPhone}
-                      onChange={(e) => setNewClientPhone(e.target.value)}
-                      placeholder="Telefon"
-                      className="px-3 py-2 rounded-lg border border-border bg-white text-sm"
-                    />
-                    <select
-                      value={newClientKind}
-                      onChange={(e) => setNewClientKind(e.target.value as never)}
-                      className="px-3 py-2 rounded-lg border border-border bg-white text-sm md:col-span-2"
-                    >
-                      <option value="RETAIL">Chakana mijoz</option>
-                      <option value="RESELLER">Qayta sotuvchi</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setAddingClient(false)}
-                      className="px-3 py-1.5 rounded-lg text-sm text-ink-soft"
-                    >
-                      Bekor qilish
-                    </button>
-                    <button
-                      type="button"
-                      onClick={saveClient}
-                      disabled={savingClient}
-                      className="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-semibold disabled:opacity-50"
-                    >
-                      {savingClient ? "Saqlanmoqda..." : "Saqlash"}
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div>
@@ -328,26 +276,35 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
         </div>
 
         <div className="panel p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-ink">Mahsulotlar</h3>
-            <select
-              onChange={(e) => {
-                const p = catalog.find((x) => x.id === e.target.value);
-                if (p) addLine(p);
-                e.currentTarget.value = "";
-              }}
-              className="px-3 py-1.5 rounded-xl border border-border bg-white text-sm"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                + Mahsulot qo'shish
-              </option>
-              {catalog.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} — {p.sku}
+          <div className="flex flex-wrap items-center justify-between mb-3 gap-2">
+            <h3 className="font-bold text-ink">Mahsulotlar va mijoz</h3>
+            <div className="flex gap-2 items-center">
+              <button
+                type="button"
+                onClick={() => setAddingClient(!addingClient)}
+                className="px-3 py-1.5 rounded-xl border border-border bg-white hover:bg-gray-50 inline-flex items-center gap-1 font-semibold text-sm"
+              >
+                <UserPlus size={14} /> Yangi mijoz
+              </button>
+              <select
+                onChange={(e) => {
+                  const p = catalog.find((x) => x.id === e.target.value);
+                  if (p) addLine(p);
+                  e.currentTarget.value = "";
+                }}
+                className="px-3 py-1.5 rounded-xl border border-border bg-white text-sm"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  + Mahsulot qo'shish
                 </option>
-              ))}
-            </select>
+                {catalog.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.sku}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {lines.length === 0 ? (
@@ -364,7 +321,18 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                   <div className="col-span-4 text-sm font-semibold">
                     {l.productName}
                   </div>
-                  <div className="col-span-3">
+                  <div className="col-span-3 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateLine(i, {
+                          quantity: Math.max(1, (l.quantity ?? 1) - 1),
+                        })
+                      }
+                      className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+                    >
+                      <Minus size={12} />
+                    </button>
                     <input
                       type="number"
                       min={0.01}
@@ -373,9 +341,17 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                       onChange={(e) =>
                         updateLine(i, { quantity: Number(e.target.value) })
                       }
-                      className="w-full px-2 py-1.5 rounded-lg border border-border bg-white text-sm"
-                      placeholder="miqdor"
+                      className="w-full px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center"
                     />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateLine(i, { quantity: (l.quantity ?? 0) + 1 })
+                      }
+                      className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+                    >
+                      <Plus size={12} />
+                    </button>
                   </div>
                   <div className="col-span-3">
                     <input
@@ -405,6 +381,55 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
           )}
         </div>
       </div>
+
+      {/* Yangi mijoz modali — tugma bosilganda ochiladi */}
+      {addingClient && (
+        <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
+            <h3 className="font-bold text-lg mb-3">Yangi mijoz qo'shish</h3>
+            <div className="space-y-2">
+              <input
+                value={newClientName}
+                onChange={(e) => setNewClientName(e.target.value)}
+                placeholder="Ismi / kompaniya nomi"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                autoFocus
+              />
+              <input
+                value={newClientPhone}
+                onChange={(e) => setNewClientPhone(e.target.value)}
+                placeholder="Telefon"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              />
+              <select
+                value={newClientKind}
+                onChange={(e) => setNewClientKind(e.target.value as never)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              >
+                <option value="RETAIL">Chakana mijoz</option>
+                <option value="RESELLER">Qayta sotuvchi</option>
+              </select>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAddingClient(false)}
+                  className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold"
+                >
+                  Bekor
+                </button>
+                <button
+                  type="button"
+                  onClick={saveClient}
+                  disabled={savingClient}
+                  className="flex-1 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50"
+                >
+                  {savingClient ? "..." : "Saqlash"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="panel p-5 sticky top-4">

@@ -34,7 +34,17 @@ export default async function PosPage() {
       where: { type: "POS", status: "YAKUNLANDI" },
       orderBy: { createdAt: "desc" },
       take: 5,
-      include: { client: { select: { name: true } } },
+      include: {
+        client: { select: { name: true } },
+        items: {
+          select: {
+            catalogProductId: true,
+            productNameSnapshot: true,
+            quantity: true,
+            unitPrice: true,
+          },
+        },
+      },
     }),
   ]);
 
@@ -53,6 +63,12 @@ export default async function PosPage() {
           amount: o.agreedAmount ?? 0,
           currency: o.orderCurrency,
           createdAt: o.createdAt.toISOString(),
+          items: o.items.map((it) => ({
+            catalogProductId: it.catalogProductId,
+            productName: it.productNameSnapshot,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+          })),
         }))}
       />
     </div>

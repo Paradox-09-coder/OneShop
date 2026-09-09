@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/sidebar";
+import Topbar from "@/components/topbar";
 import { getSession } from "@/lib/auth";
 import { roleLabel } from "@/lib/labels";
 
@@ -21,6 +22,7 @@ export default async function AppShellLayout({
           role: roleLabel[session.role],
         }}
       />
+      <Topbar />
       <main className="flex-1 ml-[260px] p-6 md:p-8">{children}</main>
     </div>
   );
