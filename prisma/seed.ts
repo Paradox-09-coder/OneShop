@@ -237,7 +237,7 @@ async function main() {
     clientRecords.push(cp);
   }
 
-  const supplier = await prisma.counterparty.upsert({
+  const _supplier = await prisma.counterparty.upsert({
     where: { id: "sup-china" },
     update: {},
     create: {
@@ -248,6 +248,7 @@ async function main() {
       supplierProfile: { create: {} },
     },
   });
+  void _supplier;
 
   // ── Employees ─────────────────────────────────────────────
   const empSanjar = await prisma.counterparty.upsert({
@@ -367,6 +368,264 @@ async function main() {
     }
     console.log("✅ 8 ta demo buyurtma");
   }
+
+  // ── Additional counterparties ─────────────────────────────
+  // Second supplier + driver + more clients — for richer demo
+  const supplier2 = await prisma.counterparty.upsert({
+    where: { id: "sup-local" },
+    update: {},
+    create: {
+      id: "sup-local",
+      type: "SUPPLIER",
+      name: "OOO 'Toshkent Kabel'",
+      phone: "+998712001122",
+      supplierProfile: { create: {} },
+    },
+  });
+
+  const driver = await prisma.counterparty.upsert({
+    where: { id: "drv-1" },
+    update: {},
+    create: {
+      id: "drv-1",
+      type: "OTHER",
+      name: "Otabek (haydovchi)",
+      phone: "+998907778899",
+    },
+  });
+
+  // Founder
+  const founder = await prisma.counterparty.upsert({
+    where: { id: "founder-1" },
+    update: {},
+    create: {
+      id: "founder-1",
+      type: "FOUNDER",
+      name: "Bahodir Yusupov",
+      phone: "+998901000001",
+    },
+  });
+  await prisma.founderProfile.upsert({
+    where: { counterpartyId: founder.id },
+    update: {},
+    create: {
+      counterpartyId: founder.id,
+      sharePct: 60,
+      investment: 500_000_000,
+      dividends: 0,
+    },
+  });
+
+  // ── Transaction categories ────────────────────────────────
+  const catIn = ["Sotuv", "Boshqa daromad", "Investitsiya"];
+  const catOut = ["Ijara", "Oylik", "Kommunal", "Marketing", "Sotib olish", "Boshqa xarajat"];
+  const txCategoryMap: Record<string, string> = {};
+  for (const n of catIn) {
+    const c = await prisma.transactionCategory.upsert({
+      where: { name: n },
+      update: {},
+      create: { name: n, type: "income" },
+    });
+    txCategoryMap[n] = c.id;
+  }
+  for (const n of catOut) {
+    const c = await prisma.transactionCategory.upsert({
+      where: { name: n },
+      update: {},
+      create: { name: n, type: "expense" },
+    });
+    txCategoryMap[n] = c.id;
+  }
+
+  // ── Demo payments — 60 kunlik moliya tarixi ────────────────
+  const paymentsCount = await prisma.payment.count();
+  if (paymentsCount === 0) {
+    const kassaId = "acc-kassa";
+    const bankId = "acc-bank";
+    const now = Date.now();
+    const day = 86400_000;
+    const allClients = clientRecords;
+    const allOrders = await prisma.order.findMany({ take: 8 });
+
+    // Income (client payments) across last 60 days
+    for (let i = 0; i < 30; i++) {
+      const daysAgo = Math.floor(Math.random() * 60);
+      const client = allClients[i % allClients.length];
+      const order = allOrders[i % allOrders.length];
+      const amount = 500_000 + Math.floor(Math.random() * 5_000_000);
+      const useBank = i % 3 === 0;
+      await prisma.payment.create({
+        data: {
+          date: new Date(now - daysAgo * day),
+          type: useBank ? "BANK_IN" : "CASH_IN",
+          accountId: useBank ? bankId : kassaId,
+          counterpartyId: client.id,
+          counterpartyNameSnapshot: client.name,
+          amount,
+          currency: "UZS",
+          categoryId: txCategoryMap["Sotuv"],
+          orderId: order?.id ?? null,
+          sourceType: "ORDER",
+          sourceId: order?.id ?? null,
+          sourceLabel: order?.orderNumber,
+          description: `To'lov — ${client.name}`,
+        },
+      });
+    }
+    // Expenses — rent, salary, marketing
+    const expenseTemplates = [
+      { name: "Ijara (do'kon)", cat: "Ijara", amount: 4_500_000, freq: 30 },
+      { name: "Marketing kampaniyasi", cat: "Marketing", amount: 800_000, freq: 15 },
+      { name: "Kommunal to'lovlar", cat: "Kommunal", amount: 350_000, freq: 30 },
+      { name: "Sotib olish (kabel)", cat: "Sotib olish", amount: 2_500_000, freq: 20 },
+    ];
+    for (const e of expenseTemplates) {
+      for (let day2 = 0; day2 < 60; day2 += e.freq) {
+        await prisma.payment.create({
+          data: {
+            date: new Date(now - day2 * day),
+            type: "CASH_OUT",
+            accountId: kassaId,
+            amount: e.amount + Math.floor(Math.random() * 500_000),
+            currency: "UZS",
+            categoryId: txCategoryMap[e.cat],
+            sourceType: "EXPENSE",
+            description: e.name,
+          },
+        });
+      }
+    }
+    console.log("✅ Moliya tarixi (60 kun)");
+  }
+
+  // ── Installment schedule for one order ─────────────────────
+  const schedCount = await prisma.paymentSchedule.count();
+  if (schedCount === 0) {
+    const firstOrder = await prisma.order.findFirst({
+      where: { agreedAmount: { gt: 3_000_000 } },
+    });
+    if (firstOrder) {
+      const months = 6;
+      const monthly = Math.floor((firstOrder.agreedAmount ?? 0) / months);
+      const startDate = new Date(firstOrder.createdAt);
+      const sched = await prisma.paymentSchedule.create({
+        data: {
+          orderId: firstOrder.id,
+          totalAmount: firstOrder.agreedAmount ?? 0,
+          currency: firstOrder.orderCurrency,
+          months,
+          monthlyAmount: monthly,
+          startDate,
+          dueDay: 15,
+        },
+      });
+      for (let i = 0; i < months; i++) {
+        const dueDate = new Date(
+          startDate.getFullYear(),
+          startDate.getMonth() + i,
+          15
+        );
+        const isPast = dueDate.getTime() < Date.now();
+        const isPaid = i < 2;
+        await prisma.paymentScheduleItem.create({
+          data: {
+            scheduleId: sched.id,
+            dueDate,
+            amount: monthly,
+            paidAmount: isPaid ? monthly : 0,
+            status: isPaid ? "PAID" : isPast ? "OVERDUE" : "PENDING",
+          },
+        });
+      }
+      console.log("✅ Bo'lib to'lash jadvali (6 oy)");
+    }
+  }
+
+  // ── Payroll accrual (last month) ───────────────────────────
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const period = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, "0")}`;
+  await prisma.payrollAccrual.upsert({
+    where: { employeeId_period: { employeeId: empSanjar.id, period } },
+    update: {},
+    create: {
+      employeeId: empSanjar.id,
+      period,
+      amount: 4_000_000,
+      note: "Oylik + KPI",
+    },
+  });
+
+  // ── Notifications ─────────────────────────────────────────
+  const notifCount = await prisma.notification.count();
+  if (notifCount <= 1) {
+    await prisma.notification.createMany({
+      data: [
+        {
+          type: "SUCCESS",
+          title: "Yangi buyurtma yaratildi",
+          body: "BZ-DEMO-1000 — 5 200 000 so'm",
+          link: "/buyurtmalar",
+        },
+        {
+          type: "WARNING",
+          title: "Kam qoldiq",
+          body: "Stabilizator 5000VA ombordan tugab qolyapti",
+          link: "/omborxona?filter=low-stock",
+        },
+        {
+          type: "DANGER",
+          title: "Muddati o'tgan to'lov",
+          body: "BZ-DEMO-1001 uchun 15-oy to'lovi vaqti o'tdi",
+          link: "/moliya/qarzdorliklar",
+        },
+        {
+          type: "INFO",
+          title: "Yangi mijoz",
+          body: "OOO 'Techno Servis' CRM'ga qo'shildi",
+          link: "/mijozlar",
+        },
+      ],
+    });
+    console.log("✅ 4 ta bildirishnoma");
+  }
+
+  // ── Client note ────────────────────────────────────────────
+  const noteCount = await prisma.counterpartyNote.count();
+  if (noteCount === 0 && clientRecords[0]) {
+    await prisma.counterpartyNote.create({
+      data: {
+        counterpartyId: clientRecords[0].id,
+        text: "VIP mijoz — har oy 20-sanada to'laydi.",
+      },
+    });
+  }
+
+  // ── Buyer funnel CRM stages ────────────────────────────────
+  const buyerStages = [
+    { key: "active", label: "Faol xaridor", order: 1, color: "#10b981" },
+    { key: "vip", label: "VIP mijoz", order: 2, color: "#f59e0b" },
+    { key: "resale_needed", label: "Qayta sotuvni kutmoqda", order: 3, color: "#8b5cf6", requiresResaleDate: true },
+    { key: "inactive", label: "Faol emas", order: 4, color: "#94a3b8" },
+  ];
+  for (const s of buyerStages) {
+    await prisma.crmStageConfig.upsert({
+      where: { funnel_stageKey: { funnel: "BUYER", stageKey: s.key } },
+      update: {},
+      create: {
+        funnel: "BUYER",
+        stageKey: s.key,
+        label: s.label,
+        order: s.order,
+        color: s.color,
+        requiresResaleDate: s.requiresResaleDate ?? false,
+      },
+    });
+  }
+
+  // ── Ensure suppressed warning: refer to unused vars ──────
+  void supplier2;
+  void driver;
 
   // ── Settings ──────────────────────────────────────────────
   await prisma.setting.upsert({
