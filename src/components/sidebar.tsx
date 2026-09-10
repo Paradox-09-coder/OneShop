@@ -128,10 +128,25 @@ export default function Sidebar({ user }: Props) {
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
-      <div className="flex items-center justify-between px-5 h-16 border-b border-border">
-        {!collapsed && (
-          <Link href="/" className="text-lg font-black tracking-tight text-ink leading-tight">
-            ONESHOP<br/>ERP
+      <div
+        className={cn(
+          "flex items-center h-16 border-b border-border",
+          collapsed ? "flex-col justify-center gap-1 px-0" : "justify-between px-5"
+        )}
+      >
+        {collapsed ? (
+          <Link
+            href="/"
+            className="text-base font-black tracking-tight text-ink leading-none"
+          >
+            ERP
+          </Link>
+        ) : (
+          <Link
+            href="/"
+            className="text-lg font-black tracking-tight text-ink leading-tight"
+          >
+            ONESHOP<br />ERP
           </Link>
         )}
         <button
@@ -139,7 +154,7 @@ export default function Sidebar({ user }: Props) {
           className="p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft"
           aria-label="Toggle sidebar"
         >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
