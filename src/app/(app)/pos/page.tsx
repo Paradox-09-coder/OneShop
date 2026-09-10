@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function PosPage() {
   const [products, walkIn, accounts, categories, recentOrders] = await Promise.all([
     prisma.catalogProduct.findMany({
-      where: { status: "active" },
+      // Faqat sotiladigan mahsulotlar — xomashyo kassada ko'rinmaydi
+      where: { status: "active", isSellable: true },
       orderBy: { name: "asc" },
       select: {
         id: true,

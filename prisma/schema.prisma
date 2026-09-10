@@ -298,6 +298,11 @@ model CatalogProduct {
   warehouse       Warehouse?        @relation(fields: [warehouseId], references: [id])
   status          String            @default("active")
   lowStockThreshold Float           @default(0)
+  // Mijozga sotiladigan tayyor mahsulotmi (true) yoki faqat retseptda
+  // ishlatiladigan xomashyo (false)?  Xomashyo (bitum, folga, mel...)
+  // "Yangi buyurtma" va "Kassa" mahsulot ro'yxatida ko'rinmasligi kerak —
+  // ular faqat Retsept (BOM) ingredient sifatida tanlanadi.
+  isSellable      Boolean           @default(true)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 

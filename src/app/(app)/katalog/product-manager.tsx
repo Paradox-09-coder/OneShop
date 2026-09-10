@@ -21,6 +21,7 @@ interface Product {
   basePriceCurrency: Currency;
   color: string | null;
   lowStockThreshold: number;
+  isSellable: boolean;
 }
 
 interface Category {
@@ -39,6 +40,7 @@ interface Draft {
   baseCurrency: Currency;
   color: string;
   lowStockThreshold: number;
+  isSellable: boolean;
 }
 
 const EMPTY: Draft = {
@@ -51,6 +53,7 @@ const EMPTY: Draft = {
   baseCurrency: "UZS",
   color: "",
   lowStockThreshold: 5,
+  isSellable: true,
 };
 
 interface Props {
@@ -82,6 +85,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
       baseCurrency: p.basePriceCurrency,
       color: p.color ?? "",
       lowStockThreshold: p.lowStockThreshold,
+      isSellable: p.isSellable,
     });
     setErr(null);
   }
@@ -103,6 +107,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
         baseCurrency: draft.baseCurrency,
         color: draft.color || null,
         lowStockThreshold: draft.lowStockThreshold,
+        isSellable: draft.isSellable,
       };
       const res = draft.id
         ? await fetch(`/api/catalog-products/${draft.id}`, {
@@ -151,6 +156,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
               <th className="text-left px-4 py-3">SKU</th>
               <th className="text-left px-4 py-3">Nomi</th>
               <th className="text-left px-4 py-3">Kategoriya</th>
+              <th className="text-left px-4 py-3">Turi</th>
               <th className="text-left px-4 py-3">Birligi</th>
               <th className="text-right px-4 py-3">Tannarx</th>
               <th className="text-right px-4 py-3">Narx</th>
@@ -165,6 +171,13 @@ export default function ProductManager({ products, categories, defaultCategoryId
                 </td>
                 <td className="px-4 py-2.5 font-semibold">{p.name}</td>
                 <td className="px-4 py-2.5">{p.categoryName ?? "—"}</td>
+                <td className="px-4 py-2.5">
+                  {p.isSellable ? (
+                    <span className="chip bg-emerald-100 text-emerald-700">Sotiladi</span>
+                  ) : (
+                    <span className="chip bg-amber-100 text-amber-700">Xomashyo</span>
+                  )}
+                </td>
                 <td className="px-4 py-2.5">{unitTypeLabel[p.unitType]}</td>
                 <td className="px-4 py-2.5 text-right">
                   {p.baseCost != null ? formatMoney(p.baseCost, p.baseCostCurrency) : "—"}
@@ -322,6 +335,25 @@ export default function ProductManager({ products, categories, defaultCategoryId
                   className="w-full px-3 py-2 rounded-xl border border-border bg-white"
                 />
               </div>
+              <label className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={draft.isSellable}
+                  onChange={(e) =>
+                    setDraft({ ...draft, isSellable: e.target.checked })
+                  }
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">
+                  <span className="font-semibold">Mijozga sotiladi</span>
+                  <br />
+                  <span className="text-xs text-ink-soft">
+                    O'chirilsa — bu mahsulot faqat Retsept (BOM) xomashyosi
+                    sifatida ishlatiladi, "Yangi buyurtma" va "Kassa"
+                    ro'yxatida ko'rinmaydi.
+                  </span>
+                </span>
+              </label>
               {err && (
                 <div className="p-2 rounded-lg bg-danger-light/30 text-danger text-sm">
                   {err}

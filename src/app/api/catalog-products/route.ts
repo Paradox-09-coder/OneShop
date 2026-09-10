@@ -12,6 +12,7 @@ const Create = z.object({
   baseCurrency: z.enum(["UZS", "USD", "EUR", "RUB"]).default("UZS"),
   color: z.string().nullish(),
   lowStockThreshold: z.number().default(0),
+  isSellable: z.boolean().default(true),
 });
 
 export async function POST(req: Request) {
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
         basePriceCurrency: body.baseCurrency,
         color: body.color ?? null,
         lowStockThreshold: body.lowStockThreshold,
+        isSellable: body.isSellable,
       },
     });
 

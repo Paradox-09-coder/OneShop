@@ -134,6 +134,7 @@ export default async function CatalogPage({
               basePriceCurrency: p.basePriceCurrency,
               color: p.color,
               lowStockThreshold: p.lowStockThreshold,
+              isSellable: p.isSellable,
             }))}
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             defaultCategoryId={categoryId && categoryId !== "all" ? categoryId : undefined}

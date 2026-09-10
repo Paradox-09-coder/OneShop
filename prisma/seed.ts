@@ -105,8 +105,13 @@ async function main() {
 
   // ── Catalog products ──────────────────────────────────────
   // Polizol domain — rulon shaklidagi izolyator + xomashyo
+  //
+  // isSellable: true  → mijozga sotiladi, "Yangi buyurtma" / "Kassa"
+  //                      mahsulot ro'yxatida ko'rinadi
+  // isSellable: false → faqat xomashyo, Retsept (BOM) ingredient
+  //                      sifatida tanlanadi, sotuv ro'yxatida YO'Q
   const products = [
-    // Tayyor mahsulotlar (Generatorlar → Polizol)
+    // Tayyor mahsulotlar (sotiladigan)
     {
       sku: "POL-33-STD",
       name: "Polizol 33kg (uchlik, standart)",
@@ -114,6 +119,7 @@ async function main() {
       unit: "DONA" as const,
       cost: 145_000,
       price: 195_000,
+      isSellable: true,
     },
     {
       sku: "POL-33-FOL",
@@ -122,6 +128,7 @@ async function main() {
       unit: "DONA" as const,
       cost: 175_000,
       price: 245_000,
+      isSellable: true,
     },
     {
       sku: "POL-22-STD",
@@ -130,8 +137,9 @@ async function main() {
       unit: "DONA" as const,
       cost: 110_000,
       price: 155_000,
+      isSellable: true,
     },
-    // Xomashyo — Stabilizatorlar (rebrand: "Xomashyo")
+    // Xomashyo (faqat retseptda ishlatiladi — sotilmaydi)
     {
       sku: "BITUM-90",
       name: "Bitum 90/40 (Buxoro)",
@@ -139,6 +147,7 @@ async function main() {
       unit: "KG" as const,
       cost: 1_800,
       price: 0,
+      isSellable: false,
     },
     {
       sku: "FOLGA-30",
@@ -147,6 +156,7 @@ async function main() {
       unit: "M2" as const,
       cost: 12_000,
       price: 0,
+      isSellable: false,
     },
     // Steklaxolst
     {
@@ -156,6 +166,7 @@ async function main() {
       unit: "M2" as const,
       cost: 5_400,
       price: 0,
+      isSellable: false,
     },
     // Mel
     {
@@ -165,6 +176,7 @@ async function main() {
       unit: "KG" as const,
       cost: 950,
       price: 0,
+      isSellable: false,
     },
   ];
 
@@ -172,7 +184,7 @@ async function main() {
   for (const p of products) {
     const cp = await prisma.catalogProduct.upsert({
       where: { sku: p.sku },
-      update: {},
+      update: { isSellable: p.isSellable },
       create: {
         sku: p.sku,
         name: p.name,
@@ -182,6 +194,7 @@ async function main() {
         basePrice: p.price,
         warehouseId: mainWh.id,
         lowStockThreshold: 5,
+        isSellable: p.isSellable,
       },
     });
     catalogProducts.push(cp);
@@ -201,6 +214,19 @@ async function main() {
     });
   }
   console.log(`✅ ${products.length} ta mahsulot + partiya`);
+
+  // Eski demo mahsulotlarni (Generator/Stabilizator/UPS/Kabel...) yashirish —
+  // bular Polizol biznesiga aloqasi yo'q, avvalgi umumiy demo'dan qolgan.
+  // O'chirmaymiz (eski buyurtmalar ularga bog'liq bo'lishi mumkin), faqat
+  // "inactive" qilib sotuv ro'yxatidan chiqaramiz.
+  const currentSkus = products.map((p) => p.sku);
+  const hidden = await prisma.catalogProduct.updateMany({
+    where: { sku: { notIn: currentSkus }, status: "active" },
+    data: { status: "inactive", isSellable: false },
+  });
+  if (hidden.count > 0) {
+    console.log(`✅ ${hidden.count} ta eski demo mahsulot yashirildi`);
+  }
 
   // ── Accounts ──────────────────────────────────────────────
   const mainKassa = await prisma.account.upsert({

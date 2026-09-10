@@ -19,7 +19,10 @@ export default async function NewOrderPage() {
       take: 500,
     }),
     prisma.catalogProduct.findMany({
-      where: { status: "active" },
+      // Faqat mijozga sotiladigan mahsulotlar — xomashyo (bitum, folga,
+      // steklaxolst, mel...) bu yerda ko'rinmasligi kerak, ular faqat
+      // Retsept (BOM) ingredienti sifatida ishlatiladi.
+      where: { status: "active", isSellable: true },
       orderBy: { name: "asc" },
       select: {
         id: true,

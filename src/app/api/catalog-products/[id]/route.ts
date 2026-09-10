@@ -13,6 +13,7 @@ const Patch = z.object({
   color: z.string().nullable().optional(),
   lowStockThreshold: z.number().optional(),
   status: z.string().optional(),
+  isSellable: z.boolean().optional(),
 });
 
 export async function PATCH(
@@ -38,6 +39,7 @@ export async function PATCH(
     if (body.lowStockThreshold !== undefined)
       patch.lowStockThreshold = body.lowStockThreshold;
     if (body.status) patch.status = body.status;
+    if (body.isSellable !== undefined) patch.isSellable = body.isSellable;
 
     const product = await prisma.catalogProduct.update({
       where: { id },
