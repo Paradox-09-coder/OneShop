@@ -8,7 +8,11 @@ interface Props {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
-  /** true = router.back(); string = navigate to href.  false/undefined = hide. */
+  /**
+   * true (default) = "/" ga (Bosh sahifa) o'tadi
+   * string        = shu href'ga o'tadi
+   * false         = tugma ko'rsatilmaydi
+   */
   back?: boolean | string;
 }
 
@@ -19,12 +23,8 @@ export default function PageHeader({ title, subtitle, actions, back = true }: Pr
     if (typeof back === "string") {
       router.push(back);
     } else {
-      // Fallback: history is empty (opened in new tab) → home
-      if (typeof window !== "undefined" && window.history.length > 1) {
-        router.back();
-      } else {
-        router.push("/");
-      }
+      // Standart: bir bir orqaga emas, to'g'ridan-to'g'ri bosh sahifaga
+      router.push("/");
     }
   }
 
