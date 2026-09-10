@@ -116,7 +116,6 @@ model Counterparty {
   clientProfile   ClientProfile?
   supplierProfile SupplierProfile?
   employee        Employee?
-  founderProfile  FounderProfile?
 
   ordersAsClient  Order[]             @relation("OrderClient")
   ordersAsSeller  Order[]             @relation("OrderSeller")
@@ -128,8 +127,6 @@ model Counterparty {
   crmHistory      CrmStageHistory[]
   counterpartyNotes CounterpartyNote[]
   extraExpenses   CounterpartyExpense[]
-  loans           Loan[]
-  founderTx       FounderTransaction[]
 
   @@index([type])
   @@index([deletedAt])
@@ -208,16 +205,6 @@ enum SalaryType {
   MIXED
 }
 
-model FounderProfile {
-  counterpartyId String       @id
-  counterparty   Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
-  sharePct       Float        @default(0)
-  investment     Float        @default(0)
-  dividends      Float        @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-}
-
 model CounterpartyNote {
   id             String       @id @default(cuid())
   counterpartyId String
@@ -244,7 +231,7 @@ model CounterpartyExpense {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Warehouses & Branches
+//  Warehouses
 // ─────────────────────────────────────────────────────────────
 
 model Warehouse {
@@ -260,15 +247,6 @@ model Warehouse {
   stockMovements  StockMovement[]
   transfersFrom   StockTransfer[]  @relation("TransferFrom")
   transfersTo     StockTransfer[]  @relation("TransferTo")
-}
-
-model Branch {
-  id       String  @id @default(cuid())
-  name     String  @unique
-  code     String? @unique
-  address  String?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -950,49 +928,6 @@ model PayrollAccrual {
   createdAt   DateTime @default(now())
 
   @@unique([employeeId, period])
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Loans & Founder transactions
-// ─────────────────────────────────────────────────────────────
-
-model Loan {
-  id          String       @id @default(cuid())
-  lenderId    String
-  lender      Counterparty @relation(fields: [lenderId], references: [id])
-  amount      Float
-  remaining   Float
-  rate        Float?
-  currency    Currency     @default(UZS)
-  startDate   DateTime
-  endDate     DateTime?
-  status      String       @default("active")   // active | closed | overdue
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  payments    LoanPayment[]
-}
-
-model LoanPayment {
-  id          String   @id @default(cuid())
-  loanId      String
-  loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  amount      Float
-  currency    Currency @default(UZS)
-  paymentDate DateTime
-  notes       String?
-}
-
-model FounderTransaction {
-  id        String   @id @default(cuid())
-  founderId String
-  founder   Counterparty @relation(fields: [founderId], references: [id])
-  type      String   // investment | dividend | withdrawal
-  amount    Float
-  currency  Currency @default(UZS)
-  date      DateTime
-  notes     String?
-  createdAt DateTime @default(now())
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -448,28 +448,6 @@ async function main() {
     },
   });
 
-  // Founder
-  const founder = await prisma.counterparty.upsert({
-    where: { id: "founder-1" },
-    update: {},
-    create: {
-      id: "founder-1",
-      type: "FOUNDER",
-      name: "Bahodir Yusupov",
-      phone: "+998901000001",
-    },
-  });
-  await prisma.founderProfile.upsert({
-    where: { counterpartyId: founder.id },
-    update: {},
-    create: {
-      counterpartyId: founder.id,
-      sharePct: 60,
-      investment: 500_000_000,
-      dividends: 0,
-    },
-  });
-
   // ── Transaction categories ────────────────────────────────
   const catIn = ["Sotuv", "Boshqa daromad", "Investitsiya"];
   const catOut = ["Ijara", "Oylik", "Kommunal", "Marketing", "Sotib olish", "Boshqa xarajat"];
