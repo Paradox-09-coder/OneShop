@@ -2,6 +2,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
 import { canTransition } from "@/lib/state-machine";
+import {
+  computeRecipeRequirements,
+  consumeMaterialsForOrder,
+  restoreMaterialsForOrder,
+} from "@/lib/production";
 
 const Body = z.object({
   to: z.enum([
@@ -41,12 +46,20 @@ export async function POST(
       );
     }
 
-    await prisma.$transaction([
-      prisma.order.update({
+    const isManufacturing = order.type === "MANUFACTURING";
+    const enteringReady = to === "READY" && order.status !== "READY";
+    const leavingReady = order.status === "READY" && to !== "READY";
+    const enteringProcessing =
+      to === "PROCESSING" && order.status !== "PROCESSING";
+
+    let shortageWarning: string | null = null;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
         where: { id },
         data: { status: to },
-      }),
-      prisma.orderStatusHistory.create({
+      });
+      await tx.orderStatusHistory.create({
         data: {
           orderId: id,
           fromStatus: order.status,
@@ -54,18 +67,50 @@ export async function POST(
           changedById: session.id,
           reason,
         },
-      }),
-      prisma.log.create({
+      });
+      await tx.log.create({
         data: {
           userId: session.id,
           screen: `/buyurtmalar/${id}`,
           action: "TRANSITION",
           description: `${order.orderNumber}: ${order.status} → ${to}`,
         },
-      }),
-    ]);
+      });
 
-    return jsonOk({ ok: true });
+      if (!isManufacturing) return;
+
+      // PROCESSING'ga kirganda — retseptga qarab yetarli xomashyo bormi,
+      // tekshiradi va yetmasa ogohlantiradi (bloklamaydi).
+      if (enteringProcessing) {
+        const reqs = await computeRecipeRequirements(tx, id);
+        const short = reqs.filter((r) => r.shortage > 0);
+        if (short.length > 0) {
+          shortageWarning = short
+            .map((r) => `${r.materialName}: yetmaydi ${r.shortage.toFixed(1)} ${r.unit.toLowerCase()}`)
+            .join("; ");
+          await tx.notification.create({
+            data: {
+              type: "WARNING",
+              title: `Xomashyo yetmaydi — ${order.orderNumber}`,
+              body: shortageWarning,
+              link: `/buyurtmalar/${id}`,
+            },
+          });
+        }
+      }
+
+      // READY'ga kirganda — xomashyoni haqiqatda ayiradi (StockMovement OUT)
+      if (enteringReady) {
+        await consumeMaterialsForOrder(tx, id, session.id);
+      }
+
+      // READY'dan chiqib ketilganda (orqaga yoki bekor) — qaytaradi
+      if (leavingReady) {
+        await restoreMaterialsForOrder(tx, id, session.id);
+      }
+    });
+
+    return jsonOk({ ok: true, shortageWarning });
   } catch (e) {
     return handleError(e);
   }

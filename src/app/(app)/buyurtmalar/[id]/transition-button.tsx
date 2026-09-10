@@ -31,6 +31,11 @@ export default function TransitionButton({ orderId, currentStatus, type }: Props
         alert(data.error?.message ?? "Xato");
         return;
       }
+      if (data.data?.shortageWarning) {
+        alert(
+          `⚠️ Holat o'zgartirildi, lekin xomashyo yetishmaydi:\n\n${data.data.shortageWarning}`
+        );
+      }
       router.refresh();
     } finally {
       setLoading(false);

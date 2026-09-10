@@ -9,9 +9,12 @@ import {
   orderTypeLabel,
   paymentTxLabel,
 } from "@/lib/labels";
-import { FileText, Truck } from "lucide-react";
+import { FileText, Truck, FlaskConical } from "lucide-react";
 import TransitionButton from "./transition-button";
 import LogisticsPanel from "./logistics-panel";
+import { computeRecipeRequirements } from "@/lib/production";
+import { formatNumber } from "@/lib/utils";
+import { unitTypeLabel } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +38,14 @@ export default async function OrderDetailPage({
   if (!order) notFound();
 
   const debt = (order.agreedAmount ?? 0) - order.paidAmount;
+
+  // Retsept (BOM) bo'yicha xomashyo holati — faqat ishlab chiqarish
+  // buyurtmalari uchun.  Advisory ko'rsatuv, hech narsani o'zgartirmaydi
+  // (Acham'ning "max producible" hisoblash naqshiga o'xshash).
+  const materialReqs =
+    order.type === "MANUFACTURING"
+      ? await prisma.$transaction((tx) => computeRecipeRequirements(tx, order.id))
+      : [];
 
   return (
     <div>
@@ -92,6 +103,59 @@ export default async function OrderDetailPage({
               </tbody>
             </table>
           </div>
+
+          {materialReqs.length > 0 && (
+            <div className="panel p-5">
+              <h3 className="font-bold mb-3 flex items-center gap-2">
+                <FlaskConical size={16} className="text-primary" />
+                Xomashyo holati (retsept bo'yicha)
+              </h3>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-ink-soft uppercase border-b border-border">
+                    <th className="text-left py-2">Xomashyo</th>
+                    <th className="text-right py-2">Kerak</th>
+                    <th className="text-right py-2">Omborda</th>
+                    <th className="text-right py-2">Holat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {materialReqs.map((r) => (
+                    <tr key={r.materialProductId} className="border-b border-border/50">
+                      <td className="py-2.5 font-medium">{r.materialName}</td>
+                      <td className="py-2.5 text-right">
+                        {formatNumber(r.requiredQty)}{" "}
+                        {unitTypeLabel[r.unit as keyof typeof unitTypeLabel] ?? r.unit}
+                      </td>
+                      <td className="py-2.5 text-right text-ink-soft">
+                        {formatNumber(r.availableQty)}
+                      </td>
+                      <td className="py-2.5 text-right">
+                        {r.shortage > 0 ? (
+                          <span className="chip bg-rose-100 text-rose-700">
+                            −{formatNumber(r.shortage)} yetmaydi
+                          </span>
+                        ) : (
+                          <span className="chip bg-emerald-100 text-emerald-700">
+                            Yetarli
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {order.status === "READY" || order.status === "DELIVERED" ? (
+                <p className="text-xs text-ink-soft mt-2">
+                  Bu buyurtma uchun xomashyo allaqachon ombordan ayirilgan.
+                </p>
+              ) : (
+                <p className="text-xs text-ink-soft mt-2">
+                  Xomashyo "Tayyor" bosqichiga o'tganda ombordan avtomatik ayiriladi.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="panel p-5">
             <h3 className="font-bold mb-3">To'lovlar</h3>
