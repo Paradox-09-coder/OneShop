@@ -35,7 +35,7 @@ export default async function AppShellLayout({
         allowedHrefs={hrefs}
       />
       <Topbar />
-      <main className="flex-1 ml-[260px] p-6 md:p-8 pt-16">
+      <main className="flex-1 md:ml-[260px] p-4 md:p-8 pt-16 md:pt-16 max-w-full overflow-x-hidden">
         {allowed ? (
           children
         ) : (

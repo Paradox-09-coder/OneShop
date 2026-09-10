@@ -28,7 +28,10 @@ import {
   UserSquare,
   FileBarChart,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface NavChild {
@@ -127,6 +130,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
   const filteredNav = filterNav(navigation, allowedSet);
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     "/buyurtmalar": true,
     "/omborxona": true,
@@ -134,6 +138,20 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
     "/moliya": true,
     "/xodimlar": false,
   });
+
+  // Sahifa o'zgarganda mobile drawer avtomatik yopilsin
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Mobile drawer ochilganda body scroll'ni to'xtatish
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const toggleSection = (href: string) =>
     setOpenSections((p) => ({ ...p, [href]: !p[href] }));
@@ -144,12 +162,35 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
   };
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 h-screen bg-white border-r border-border flex flex-col z-40 transition-all duration-200",
-        collapsed ? "w-[68px]" : "w-[260px]"
+    <>
+      {/* Mobile hamburger — faqat kichik ekranlarda */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-2 left-3 z-30 p-2 rounded-xl bg-white border border-border shadow-sm hover:bg-gray-50 text-ink"
+        aria-label="Menyu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Backdrop mobile drawer ochilganda */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden fixed inset-0 z-40 bg-black/40 animate-fadeIn"
+          aria-hidden
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          "fixed left-0 top-0 h-screen bg-white border-r border-border flex flex-col z-50 transition-all duration-200",
+          collapsed ? "w-[68px]" : "w-[260px]",
+          // Mobile: drawer sifatida yopiladi/ochiladi
+          mobileOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
+        )}
+      >
       <div
         className={cn(
           "flex items-center h-16 border-b border-border",
@@ -171,13 +212,24 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
             ONESHOP<br />ERP
           </Link>
         )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft"
-          aria-label="Toggle sidebar"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
-        </button>
+        <div className="flex gap-1">
+          {/* Mobile: yopish */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft"
+            aria-label="Yopish"
+          >
+            <X size={18} />
+          </button>
+          {/* Desktop: yig'ish/kengaytirish */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden md:block p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft"
+            aria-label="Toggle sidebar"
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-3">
@@ -278,6 +330,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
           </div>
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 }
