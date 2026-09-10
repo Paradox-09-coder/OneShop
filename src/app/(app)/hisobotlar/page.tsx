@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney } from "@/lib/utils";
 import { orderStatusLabel } from "@/lib/labels";
+import { Users } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
   const now = new Date();
@@ -79,6 +83,14 @@ export default async function ReportsPage() {
       <PageHeader
         title="Hisobotlar"
         subtitle="Oy bo'yicha ko'rsatkichlar"
+        actions={
+          <Link
+            href="/hisobotlar/mijoz-marja"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+          >
+            <Users size={16} /> Mijoz marja hisoboti
+          </Link>
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

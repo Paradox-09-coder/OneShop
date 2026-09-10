@@ -7,7 +7,12 @@ const SECRET = new TextEncoder().encode(
 const COOKIE_NAME = "oneshop_token";
 
 // Routes that DO NOT require auth
-const PUBLIC = ["/login", "/api/auth/login", "/api/auth/logout"];
+const PUBLIC = [
+  "/login",
+  "/api/auth/login",
+  "/api/auth/logout",
+  "/api/telegram/webhook", // Telegram calls without our cookies; secret token verifies.
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

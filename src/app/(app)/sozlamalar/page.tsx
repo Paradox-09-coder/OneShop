@@ -3,12 +3,14 @@ import PageHeader from "@/components/page-header";
 import { getSession } from "@/lib/auth";
 import { roleLabel } from "@/lib/labels";
 import { formatMoney } from "@/lib/utils";
-import { Users, Landmark, Layers, Building2, ArrowRightLeft, ShieldCheck } from "lucide-react";
+import { Users, Landmark, Layers, Building2, ArrowRightLeft, ShieldCheck, Send } from "lucide-react";
 import UsersManager from "./users-manager";
 import AccountsManager from "./accounts-manager";
 import CategoriesManager from "./categories-manager";
 import WarehousesManager from "./warehouses-manager";
 import ExchangeRateManager from "./exchange-rate-manager";
+import TelegramSetup from "./telegram-setup";
+import { isTelegramConfigured } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 
@@ -139,6 +141,15 @@ export default async function SettingsPage() {
             Har yangi buyurtmada dollar tanlansa bu kurs snapshot bo'lib yopishadi.
             Joriy: <b>1 USD = {formatMoney(currentRate, "UZS")}</b>
           </p>
+        </section>
+
+        {/* Telegram bot */}
+        <section className="panel p-5">
+          <header className="flex items-center gap-2 mb-4">
+            <Send size={20} className="text-primary" />
+            <h2 className="text-lg font-bold">Telegram bot</h2>
+          </header>
+          <TelegramSetup configured={isTelegramConfigured()} webhookInfo={null} />
         </section>
       </div>
     </div>

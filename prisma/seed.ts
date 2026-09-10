@@ -45,73 +45,78 @@ async function main() {
 
   // ── Product categories ────────────────────────────────────
   const cats = await Promise.all(
-    ["Generatorlar", "Stabilizatorlar", "UPS", "Kabellar", "Aksessuarlar"].map(
+    ["Polizol (tayyor)", "Bitum va folga", "Steklaxolst", "Mel va boshqa", "Chelakli mastika"].map(
       (name, i) =>
         prisma.productCategory.upsert({
           where: { id: `cat-${i}` },
-          update: {},
+          update: { name },
           create: { id: `cat-${i}`, name, sortOrder: i },
         })
     )
   );
 
   // ── Catalog products ──────────────────────────────────────
+  // Polizol domain — rulon shaklidagi izolyator + xomashyo
   const products = [
+    // Tayyor mahsulotlar (Generatorlar → Polizol)
     {
-      sku: "GEN-3000",
-      name: "Generator 3kW benzin",
+      sku: "POL-33-STD",
+      name: "Polizol 33kg (uchlik, standart)",
       category: cats[0].id,
       unit: "DONA" as const,
-      cost: 3_500_000,
-      price: 5_200_000,
+      cost: 145_000,
+      price: 195_000,
     },
     {
-      sku: "GEN-5500",
-      name: "Generator 5.5kW benzin",
+      sku: "POL-33-FOL",
+      name: "Polizol 33kg (uchlik, folgali)",
       category: cats[0].id,
       unit: "DONA" as const,
-      cost: 6_200_000,
-      price: 8_900_000,
+      cost: 175_000,
+      price: 245_000,
     },
     {
-      sku: "STB-5000",
-      name: "Stabilizator 5000VA",
-      category: cats[1].id,
+      sku: "POL-22-STD",
+      name: "Polizol 22kg (folgasiz)",
+      category: cats[0].id,
       unit: "DONA" as const,
-      cost: 1_800_000,
-      price: 2_600_000,
+      cost: 110_000,
+      price: 155_000,
     },
+    // Xomashyo — Stabilizatorlar (rebrand: "Xomashyo")
     {
-      sku: "STB-10000",
-      name: "Stabilizator 10000VA",
+      sku: "BITUM-90",
+      name: "Bitum 90/40 (Buxoro)",
       category: cats[1].id,
-      unit: "DONA" as const,
-      cost: 3_200_000,
-      price: 4_500_000,
+      unit: "KG" as const,
+      cost: 1_800,
+      price: 0,
     },
     {
-      sku: "UPS-800",
-      name: "UPS 800VA",
+      sku: "FOLGA-30",
+      name: "Alyuminiy folga 30 mkm",
+      category: cats[1].id,
+      unit: "M2" as const,
+      cost: 12_000,
+      price: 0,
+    },
+    // Steklaxolst
+    {
+      sku: "STEKLO-100",
+      name: "Steklaxolst 100 g/m²",
       category: cats[2].id,
-      unit: "DONA" as const,
-      cost: 480_000,
-      price: 720_000,
+      unit: "M2" as const,
+      cost: 5_400,
+      price: 0,
     },
+    // Mel
     {
-      sku: "KBL-4x25",
-      name: "Kabel 4x25 mm²",
+      sku: "MEL-1",
+      name: "Mel (bo'r)",
       category: cats[3].id,
-      unit: "METR" as const,
-      cost: 45_000,
-      price: 65_000,
-    },
-    {
-      sku: "AKS-KRP",
-      name: "Kirish klemma",
-      category: cats[4].id,
-      unit: "DONA" as const,
-      cost: 15_000,
-      price: 25_000,
+      unit: "KG" as const,
+      cost: 950,
+      price: 0,
     },
   ];
 
@@ -597,6 +602,83 @@ async function main() {
       data: {
         counterpartyId: clientRecords[0].id,
         text: "VIP mijoz — har oy 20-sanada to'laydi.",
+      },
+    });
+  }
+
+  // ── Retsept (BOM) — Polizol 33 kg (uchlik) uchun ─────────
+  const recipeCount = await prisma.recipe.count();
+  if (recipeCount === 0) {
+    const polizol33std = catalogProducts.find((p) => p.sku === "POL-33-STD");
+    const polizol33fol = catalogProducts.find((p) => p.sku === "POL-33-FOL");
+    const bitum = catalogProducts.find((p) => p.sku === "BITUM-90");
+    const folga = catalogProducts.find((p) => p.sku === "FOLGA-30");
+    const steklo = catalogProducts.find((p) => p.sku === "STEKLO-100");
+    const mel = catalogProducts.find((p) => p.sku === "MEL-1");
+
+    if (polizol33std && bitum && steklo && mel) {
+      const recipe = await prisma.recipe.create({
+        data: {
+          catalogProductId: polizol33std.id,
+          variantName: "Standart",
+          outputQty: 1,
+          outputUnit: "DONA",
+          laborCost: 3000,     // 3000 so'm/dona (сдельный)
+          note: "1 rulon polizol 33 kg uchun retsept (standart)",
+        },
+      });
+      await prisma.recipeIngredient.createMany({
+        data: [
+          { recipeId: recipe.id, materialProductId: bitum.id, quantity: 26, unit: "KG", wastePercent: 2 },
+          { recipeId: recipe.id, materialProductId: steklo.id, quantity: 4, unit: "M2", wastePercent: 3 },
+          { recipeId: recipe.id, materialProductId: mel.id, quantity: 3, unit: "KG", wastePercent: 1 },
+        ],
+      });
+    }
+
+    if (polizol33fol && bitum && folga && steklo && mel) {
+      const recipe = await prisma.recipe.create({
+        data: {
+          catalogProductId: polizol33fol.id,
+          variantName: "Folgali",
+          outputQty: 1,
+          outputUnit: "DONA",
+          laborCost: 3500,
+          note: "1 rulon polizol 33 kg (folgali) uchun retsept",
+        },
+      });
+      await prisma.recipeIngredient.createMany({
+        data: [
+          { recipeId: recipe.id, materialProductId: bitum.id, quantity: 25, unit: "KG", wastePercent: 2 },
+          { recipeId: recipe.id, materialProductId: folga.id, quantity: 4, unit: "M2", wastePercent: 5 },
+          { recipeId: recipe.id, materialProductId: steklo.id, quantity: 4, unit: "M2", wastePercent: 3 },
+          { recipeId: recipe.id, materialProductId: mel.id, quantity: 3, unit: "KG", wastePercent: 1 },
+        ],
+      });
+    }
+    console.log("✅ 2 ta retsept (BOM)");
+  }
+
+  // ── Credit limits — bir necha mijoz uchun ─────────────────
+  const client0 = clientRecords[0];
+  const client1 = clientRecords[1];
+  if (client0) {
+    await prisma.clientProfile.update({
+      where: { counterpartyId: client0.id },
+      data: {
+        creditLimit: 100_000_000,
+        creditLimitCurrency: "UZS",
+        creditLimitEnabled: true,
+      },
+    });
+  }
+  if (client1) {
+    await prisma.clientProfile.update({
+      where: { counterpartyId: client1.id },
+      data: {
+        creditLimit: 20_000_000,
+        creditLimitCurrency: "UZS",
+        creditLimitEnabled: true,
       },
     });
   }

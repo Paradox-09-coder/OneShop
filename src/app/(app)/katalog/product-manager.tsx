@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { unitTypeLabel } from "@/lib/labels";
 import { formatMoney } from "@/lib/utils";
 import type { UnitType, Currency } from "@prisma/client";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Utensils } from "lucide-react";
 
 interface Product {
   id: string;
@@ -172,6 +173,13 @@ export default function ProductManager({ products, categories, defaultCategoryId
                   {p.basePrice != null ? formatMoney(p.basePrice, p.basePriceCurrency) : "—"}
                 </td>
                 <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                  <Link
+                    href={`/katalog/${p.id}/recipe`}
+                    className="inline-block p-1.5 rounded-lg hover:bg-gray-100 text-warning"
+                    title="Retsept (BOM)"
+                  >
+                    <Utensils size={14} />
+                  </Link>
                   <button
                     onClick={() => openEdit(p)}
                     className="p-1.5 rounded-lg hover:bg-gray-100 text-primary"

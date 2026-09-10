@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
-import Badge from "@/components/badge";
 import { formatMoney, formatDateTime } from "@/lib/utils";
 import {
   orderStatusLabel,
@@ -9,7 +9,11 @@ import {
   orderTypeLabel,
   paymentTxLabel,
 } from "@/lib/labels";
+import { FileText, Truck } from "lucide-react";
 import TransitionButton from "./transition-button";
+import LogisticsPanel from "./logistics-panel";
+
+export const dynamic = "force-dynamic";
 
 export default async function OrderDetailPage({
   params,
@@ -38,9 +42,20 @@ export default async function OrderDetailPage({
         title={`Buyurtma ${order.orderNumber}`}
         subtitle={formatDateTime(order.createdAt)}
         actions={
-          <span className={`chip ${orderStatusColor[order.status]}`}>
-            {orderStatusLabel[order.status]}
-          </span>
+          <div className="flex gap-2 items-center">
+            <a
+              href={`/api/orders/${order.id}/nakladnoy`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border bg-white hover:bg-gray-50 text-sm font-semibold"
+              title="Nakladnoy chiqarish (PDF)"
+            >
+              <FileText size={14} /> Nakladnoy
+            </a>
+            <span className={`chip ${orderStatusColor[order.status]}`}>
+              {orderStatusLabel[order.status]}
+            </span>
+          </div>
         }
       />
 
@@ -205,6 +220,22 @@ export default async function OrderDetailPage({
             orderId={order.id}
             currentStatus={order.status}
             type={order.type}
+          />
+
+          <LogisticsPanel
+            orderId={order.id}
+            initial={{
+              driverName: order.driverName ?? "",
+              driverPhone: order.driverPhone ?? "",
+              driverCarNumber: order.driverCarNumber ?? "",
+              deliveryCost: order.deliveryCost ?? 0,
+              deliveryAddress: order.deliveryAddress ?? "",
+              receiverName: order.receiverName ?? "",
+              receiverPhone: order.receiverPhone ?? "",
+              expectedDeliveryDate: order.expectedDeliveryDate
+                ? order.expectedDeliveryDate.toISOString().slice(0, 10)
+                : "",
+            }}
           />
         </div>
       </div>

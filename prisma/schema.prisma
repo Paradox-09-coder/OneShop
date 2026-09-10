@@ -37,6 +37,7 @@ model User {
   paymentsCreated Payment[]  @relation("PaymentCreatedBy")
   paymentsVoided  Payment[]  @relation("PaymentVoidedBy")
   stockMovements  StockMovement[]
+  stockTransfers  StockTransfer[]
 
   @@index([customRoleId])
 }
@@ -120,6 +121,7 @@ model Counterparty {
   ordersAsClient  Order[]             @relation("OrderClient")
   ordersAsSeller  Order[]             @relation("OrderSeller")
   ordersAssigned  Order[]             @relation("OrderAssigned")
+  deliveriesPaid  Order[]             @relation("OrderDeliveryPaidTo")
   paymentsAsCounterparty Payment[]
   shipments       Shipment[]
   callLogs        CallLog[]
@@ -161,6 +163,10 @@ model ClientProfile {
   source               String?
   resaleScheduledAt    DateTime?
   currentDebtCache     Float        @default(0)
+  // Credit limit (1-etap)
+  creditLimit          Float?
+  creditLimitCurrency  Currency     @default(UZS)
+  creditLimitEnabled   Boolean      @default(false)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 }
@@ -252,6 +258,8 @@ model Warehouse {
   inventoryLots   InventoryLot[]
   inventoryRolls  InventoryRoll[]
   stockMovements  StockMovement[]
+  transfersFrom   StockTransfer[]  @relation("TransferFrom")
+  transfersTo     StockTransfer[]  @relation("TransferTo")
 }
 
 model Branch {
@@ -322,6 +330,9 @@ model CatalogProduct {
   orderItems      OrderItem[]
   shipmentItems   ShipmentItem[]
   priceHistory    ProductPriceHistory[]
+  recipes         Recipe[]
+  usedInRecipes   RecipeIngredient[]  @relation("RecipeMaterial")
+  transferItems   StockTransferItem[]
 
   @@index([categoryId])
   @@index([warehouseId])
@@ -601,6 +612,20 @@ model Order {
   installmentDueDay        Int?
   installmentMonths        Int?
   installmentNextPaymentDate DateTime?
+
+  // Logistika (1-etap)
+  driverName            String?
+  driverPhone           String?
+  driverCarNumber       String?
+  deliveryCost          Float?
+  deliveryCostCurrency  Currency? @default(UZS)
+  deliveryPaidToId      String?
+  deliveryPaidTo        Counterparty? @relation("OrderDeliveryPaidTo", fields: [deliveryPaidToId], references: [id])
+  deliveryPaidAt        DateTime?
+  deliveredAt           DateTime?
+  receiverName          String?
+  receiverPhone         String?
+  receiverSignatureUrl  String?
 
   note                  String?
   createdAt             DateTime      @default(now())
@@ -1088,6 +1113,88 @@ model FxRate {
   effectiveAt  DateTime @default(now())
 
   @@index([base, quote, effectiveAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Retsept (BOM) — polizol turiga qanday xomashyo ketishi
+// ─────────────────────────────────────────────────────────────
+
+model Recipe {
+  id                String              @id @default(cuid())
+  catalogProductId  String
+  catalogProduct    CatalogProduct      @relation(fields: [catalogProductId], references: [id], onDelete: Cascade)
+  variantName       String              @default("Standart")
+  outputQty         Float               @default(1)     // 1 rulon uchun
+  outputUnit        UnitType            @default(DONA)
+  laborCost         Float?              // donaga to'lov (masalan 3000 so'm/dona)
+  laborCostCurrency Currency            @default(UZS)
+  isActive          Boolean             @default(true)
+  note              String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  ingredients       RecipeIngredient[]
+
+  @@unique([catalogProductId, variantName])
+  @@index([catalogProductId])
+}
+
+model RecipeIngredient {
+  id                    String            @id @default(cuid())
+  recipeId              String
+  recipe                Recipe            @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  materialProductId     String
+  materialProduct       CatalogProduct    @relation("RecipeMaterial", fields: [materialProductId], references: [id])
+  quantity              Float
+  unit                  UnitType
+  wastePercent          Float             @default(0)  // chiqindi foizi
+  createdAt             DateTime          @default(now())
+
+  @@index([recipeId])
+  @@index([materialProductId])
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Filial-ichki o'tkazma (mahsulot ko'chirish)
+// ─────────────────────────────────────────────────────────────
+
+model StockTransfer {
+  id              String               @id @default(cuid())
+  transferNumber  String               @unique
+  fromWarehouseId String
+  fromWarehouse   Warehouse            @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouseId   String
+  toWarehouse     Warehouse            @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  status          TransferStatus       @default(PENDING)
+  note            String?
+  createdById     String?
+  createdBy       User?                @relation(fields: [createdById], references: [id])
+  createdAt       DateTime             @default(now())
+  completedAt     DateTime?
+
+  items           StockTransferItem[]
+
+  @@index([fromWarehouseId])
+  @@index([toWarehouseId])
+}
+
+enum TransferStatus {
+  PENDING
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
+model StockTransferItem {
+  id                String        @id @default(cuid())
+  transferId        String
+  transfer          StockTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  catalogProductId  String
+  catalogProduct    CatalogProduct @relation(fields: [catalogProductId], references: [id])
+  quantity          Float
+  unitType          UnitType
+
+  @@index([transferId])
 }
 
 // ─────────────────────────────────────────────────────────────

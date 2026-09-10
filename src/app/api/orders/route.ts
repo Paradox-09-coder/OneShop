@@ -83,7 +83,39 @@ export async function POST(req: Request) {
     const order = await prisma.$transaction(async (tx) => {
       const client = await tx.counterparty.findUnique({
         where: { id: body.clientId },
+        include: { clientProfile: true },
       });
+
+      // Kredit limit tekshirish
+      if (
+        client?.clientProfile?.creditLimitEnabled &&
+        client.clientProfile.creditLimit != null
+      ) {
+        // Umumiy hozirgi qarz (yakunlanmagan buyurtmalar bo'yicha)
+        const outstanding = await tx.order.aggregate({
+          where: {
+            clientId: client.id,
+            status: { not: "CANCELLED" },
+          },
+          _sum: { agreedAmount: true, paidAmount: true },
+        });
+        const currentDebt =
+          (outstanding._sum.agreedAmount ?? 0) - (outstanding._sum.paidAmount ?? 0);
+        const projected = currentDebt + total;
+        if (projected > client.clientProfile.creditLimit) {
+          throw new Error(
+            `Kredit limit oshib ketdi: joriy qarz ${currentDebt.toLocaleString(
+              "ru-RU"
+            )} + yangi ${total.toLocaleString(
+              "ru-RU"
+            )} = ${projected.toLocaleString(
+              "ru-RU"
+            )} so'm. Ruxsat: ${client.clientProfile.creditLimit.toLocaleString(
+              "ru-RU"
+            )} so'm`
+          );
+        }
+      }
       const created = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(
