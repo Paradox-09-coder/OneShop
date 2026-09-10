@@ -732,6 +732,187 @@ async function main() {
     });
   }
 
+  // ── Demo konteynerlar (shipments) — xomashyo kirimi ────────
+  const shipmentCount = await prisma.shipment.count();
+  if (shipmentCount === 0) {
+    const bitum = catalogProducts.find((p) => p.sku === "BITUM-90");
+    const folga = catalogProducts.find((p) => p.sku === "FOLGA-30");
+    const steklo = catalogProducts.find((p) => p.sku === "STEKLO-100");
+    const mel = catalogProducts.find((p) => p.sku === "MEL-1");
+
+    // Konteyner 1 — Bitum (Turkmaniston, USD)
+    if (bitum) {
+      const s1 = await prisma.shipment.create({
+        data: {
+          supplierId: _supplier.id,
+          containerNumber: "KZ-3341/2026",
+          status: "COMPLETED",
+          shippingDate: new Date(Date.now() - 25 * 86400_000),
+          arrivalDate: new Date(Date.now() - 20 * 86400_000),
+          currency: "USD",
+          totalProductCost: 15_400,
+          totalExpenses: 850,
+          totalCost: 16_250,
+          note: "Turkmaniston, Buxoro orqali, 11 tonna",
+        },
+      });
+      await prisma.shipmentItem.create({
+        data: {
+          shipmentId: s1.id,
+          catalogProductId: bitum.id,
+          productNameSnapshot: bitum.name,
+          quantity: 11_000, // kg
+          unitPrice: 1.4,   // USD/kg
+          totalPrice: 15_400,
+          currency: "USD",
+          transferredToInventory: true,
+        },
+      });
+      await prisma.shipmentExpense.createMany({
+        data: [
+          {
+            shipmentId: s1.id,
+            expenseType: "customs",
+            amount: 450,
+            currency: "USD",
+            note: "Bojxona",
+          },
+          {
+            shipmentId: s1.id,
+            expenseType: "transport",
+            amount: 300,
+            currency: "USD",
+            note: "Buxoro → Toshkent yo'l kira",
+          },
+          {
+            shipmentId: s1.id,
+            expenseType: "unloading",
+            amount: 100,
+            currency: "USD",
+            note: "Sexga tushirish",
+          },
+        ],
+      });
+    }
+
+    // Konteyner 2 — Steklaxolst (Xitoy, USD)
+    if (steklo) {
+      const s2 = await prisma.shipment.create({
+        data: {
+          supplierId: supplier2.id,
+          containerNumber: "CN-5518/2026",
+          status: "ARRIVED",
+          shippingDate: new Date(Date.now() - 12 * 86400_000),
+          arrivalDate: new Date(Date.now() - 3 * 86400_000),
+          currency: "USD",
+          totalProductCost: 4_320,
+          totalExpenses: 380,
+          totalCost: 4_700,
+          note: "Xitoy, 24 ta rulon 100 g/m² steklaxolst",
+        },
+      });
+      await prisma.shipmentItem.create({
+        data: {
+          shipmentId: s2.id,
+          catalogProductId: steklo.id,
+          productNameSnapshot: steklo.name,
+          quantity: 800,  // m²
+          unitPrice: 5.4,
+          totalPrice: 4_320,
+          currency: "USD",
+          transferredToInventory: true,
+        },
+      });
+      await prisma.shipmentExpense.createMany({
+        data: [
+          {
+            shipmentId: s2.id,
+            expenseType: "customs",
+            amount: 220,
+            currency: "USD",
+            note: "Bojxona",
+          },
+          {
+            shipmentId: s2.id,
+            expenseType: "transport",
+            amount: 160,
+            currency: "USD",
+            note: "Yo'l kira",
+          },
+        ],
+      });
+    }
+
+    // Konteyner 3 — Folga (Xitoy, USD) — hali yo'lda
+    if (folga) {
+      const s3 = await prisma.shipment.create({
+        data: {
+          supplierId: supplier2.id,
+          containerNumber: "CN-5622/2026",
+          status: "IN_TRANSIT",
+          shippingDate: new Date(Date.now() - 5 * 86400_000),
+          currency: "USD",
+          totalProductCost: 6_000,
+          totalExpenses: 0,
+          totalCost: 6_000,
+          note: "Xitoy → Toshkent, 30 mkm folga, yo'lda",
+        },
+      });
+      await prisma.shipmentItem.create({
+        data: {
+          shipmentId: s3.id,
+          catalogProductId: folga.id,
+          productNameSnapshot: folga.name,
+          quantity: 500,   // m²
+          unitPrice: 12,   // USD/m²
+          totalPrice: 6_000,
+          currency: "USD",
+          transferredToInventory: false, // hali yo'lda, ombor'ga yozilmagan
+        },
+      });
+    }
+
+    // Konteyner 4 — Mel (mahalliy, so'm)
+    if (mel) {
+      const s4 = await prisma.shipment.create({
+        data: {
+          supplierId: supplier2.id,
+          containerNumber: "LOC-0912/26",
+          status: "COMPLETED",
+          shippingDate: new Date(Date.now() - 8 * 86400_000),
+          arrivalDate: new Date(Date.now() - 8 * 86400_000),
+          currency: "UZS",
+          totalProductCost: 2_850_000,
+          totalExpenses: 150_000,
+          totalCost: 3_000_000,
+          note: "Mahalliy mel, 3 tonna",
+        },
+      });
+      await prisma.shipmentItem.create({
+        data: {
+          shipmentId: s4.id,
+          catalogProductId: mel.id,
+          productNameSnapshot: mel.name,
+          quantity: 3_000,
+          unitPrice: 950,
+          totalPrice: 2_850_000,
+          currency: "UZS",
+          transferredToInventory: true,
+        },
+      });
+      await prisma.shipmentExpense.create({
+        data: {
+          shipmentId: s4.id,
+          expenseType: "transport",
+          amount: 150_000,
+          currency: "UZS",
+          note: "Mahalliy yo'l kira",
+        },
+      });
+    }
+    console.log("✅ 4 ta demo konteyner + xarajatlar");
+  }
+
   // ── Buyer funnel CRM stages ────────────────────────────────
   const buyerStages = [
     { key: "active", label: "Faol xaridor", order: 1, color: "#10b981" },

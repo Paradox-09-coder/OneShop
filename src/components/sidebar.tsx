@@ -11,7 +11,6 @@ import {
   Building2,
   UserCog,
   Wallet,
-  Target,
   BarChart3,
   Settings,
   ChevronDown,
@@ -72,12 +71,11 @@ const navigation: NavItem[] = [
     ],
   },
   {
-    label: "Mijozlar va CRM",
+    label: "Mijozlar",
     href: "/mijozlar",
     icon: Users,
     children: [
-      { label: "Mijozlar", href: "/mijozlar", icon: Users },
-      { label: "CRM voronka", href: "/crm", icon: Target },
+      { label: "Mijozlar ro'yxati", href: "/mijozlar", icon: Users },
       { label: "Kontragentlar", href: "/kontragentlar", icon: Building2 },
     ],
   },
@@ -99,7 +97,6 @@ const navigation: NavItem[] = [
     icon: UserCog,
     children: [
       { label: "Xodimlar ro'yxati", href: "/xodimlar", icon: UserSquare },
-      { label: "Davomad", href: "/xodimlar/davomad", icon: Calendar },
       { label: "Oyliklar", href: "/xodimlar/oylik", icon: Wallet },
     ],
   },
