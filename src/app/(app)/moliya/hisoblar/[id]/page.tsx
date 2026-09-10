@@ -46,16 +46,8 @@ export default async function AccountDetailPage({
 
   return (
     <div>
-      <div className="mb-4">
-        <Link
-          href="/moliya/hisoblar"
-          className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-primary"
-        >
-          <ArrowLeft size={14} /> Hisoblar
-        </Link>
-      </div>
-
       <PageHeader
+        back="/moliya/hisoblar"
         title={account.name}
         subtitle={`${accountTypeLabel[account.type]} • ${account.currency}`}
         actions={

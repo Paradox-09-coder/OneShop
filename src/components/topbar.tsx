@@ -17,10 +17,10 @@ export default async function Topbar() {
   });
 
   return (
-    <div className="fixed top-0 right-0 h-14 flex items-center gap-3 pr-6 pl-4 z-30">
+    <div className="fixed top-2 right-4 flex items-center gap-3 z-20">
       <Link
         href="/xabarnomalar"
-        className="relative p-2 rounded-xl hover:bg-white/70 transition"
+        className="relative p-2 rounded-xl bg-white/80 backdrop-blur border border-border hover:bg-white shadow-sm transition"
         aria-label="Bildirishnomalar"
         title="Bildirishnomalar"
       >

@@ -71,16 +71,8 @@ export default async function ClientDetailPage({
 
   return (
     <div>
-      <div className="mb-4">
-        <Link
-          href="/mijozlar"
-          className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-primary"
-        >
-          <ArrowLeft size={14} /> Mijozlar
-        </Link>
-      </div>
-
       <PageHeader
+        back="/mijozlar"
         title={client.name}
         subtitle={
           client.clientProfile

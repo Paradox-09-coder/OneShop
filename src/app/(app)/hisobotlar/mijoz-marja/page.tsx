@@ -108,16 +108,8 @@ export default async function ClientMarginReportPage({
 
   return (
     <div>
-      <div className="mb-4">
-        <Link
-          href="/hisobotlar"
-          className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-primary"
-        >
-          <ArrowLeft size={14} /> Hisobotlar
-        </Link>
-      </div>
-
       <PageHeader
+        back="/hisobotlar"
         title="Mijoz marja hisoboti"
         subtitle={`${from.toLocaleDateString("uz-UZ")} — ${to.toLocaleDateString("uz-UZ")}`}
       />

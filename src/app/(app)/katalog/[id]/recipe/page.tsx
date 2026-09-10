@@ -45,16 +45,8 @@ export default async function ProductRecipePage({
 
   return (
     <div>
-      <div className="mb-4">
-        <Link
-          href="/katalog"
-          className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-primary"
-        >
-          <ArrowLeft size={14} /> Katalog
-        </Link>
-      </div>
-
       <PageHeader
+        back="/katalog"
         title={`Retsept — ${product.name}`}
         subtitle={`SKU: ${product.sku} • Har 1 ${product.unitType.toLowerCase()} uchun qancha xomashyo`}
       />

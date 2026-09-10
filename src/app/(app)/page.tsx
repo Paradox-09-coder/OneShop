@@ -117,6 +117,7 @@ export default async function DashboardPage() {
   return (
     <div>
       <PageHeader
+        back={false}
         title="Bosh sahifa"
         subtitle={`Bugun: ${formatDate(new Date())}`}
       />
