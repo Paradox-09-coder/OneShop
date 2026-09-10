@@ -58,6 +58,7 @@ const navigation: NavItem[] = [
     children: [
       { label: "Mahsulotlar", href: "/omborxona", icon: PackageOpen },
       { label: "Katalog", href: "/katalog", icon: Layers },
+      { label: "Filiallar", href: "/filiallar", icon: Building2 },
       { label: "Konteynerlar", href: "/xaridlar", icon: Truck },
     ],
   },

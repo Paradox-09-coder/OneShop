@@ -18,7 +18,9 @@ import {
   Star,
   ShoppingCart,
   CreditCard,
+  ShieldAlert,
 } from "lucide-react";
+import CreditLimitPanel from "./credit-limit-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -162,6 +164,16 @@ export default async function ClientDetailPage({
               )}
             </dl>
           </div>
+
+          <CreditLimitPanel
+            clientId={client.id}
+            initial={{
+              creditLimit: client.clientProfile?.creditLimit ?? 0,
+              creditLimitCurrency: client.clientProfile?.creditLimitCurrency ?? "UZS",
+              creditLimitEnabled: client.clientProfile?.creditLimitEnabled ?? false,
+            }}
+            currentDebt={debt}
+          />
 
           <div className="panel p-5">
             <h3 className="font-bold mb-3">Statistika</h3>
