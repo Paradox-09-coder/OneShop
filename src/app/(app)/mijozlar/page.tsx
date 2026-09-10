@@ -57,7 +57,7 @@ export default async function ClientsPage() {
                   >
                     <td className="px-5 py-3">
                       <Link
-                        href={`/mijozlar/${c.id}`}
+                        href={`/mijozlar/${encodeURIComponent(c.id)}`}
                         className="font-semibold text-primary hover:underline"
                       >
                         {c.name}

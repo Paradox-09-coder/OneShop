@@ -29,7 +29,8 @@ export default async function ClientDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const raw = await params;
+  const id = decodeURIComponent(raw.id);
   const client = await prisma.counterparty.findUnique({
     where: { id },
     include: {

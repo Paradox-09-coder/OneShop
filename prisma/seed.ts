@@ -226,11 +226,12 @@ async function main() {
   ];
   const clientRecords = [];
   for (const c of clients) {
+    const safeId = "client-" + c.phone.replace(/[^\d]/g, "");
     const cp = await prisma.counterparty.upsert({
-      where: { id: `client-${c.phone}` },
+      where: { id: safeId },
       update: {},
       create: {
-        id: `client-${c.phone}`,
+        id: safeId,
         type: "CLIENT",
         name: c.name,
         phone: c.phone,
