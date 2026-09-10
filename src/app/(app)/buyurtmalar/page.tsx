@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import EmptyState from "@/components/empty-state";
 import { formatMoney, formatDate } from "@/lib/utils";
+import { getSession } from "@/lib/auth";
 import {
   orderStatusLabel,
   orderStatusColor,
@@ -10,7 +11,7 @@ import {
   orderPriorityLabel,
 } from "@/lib/labels";
 import { Plus, ShoppingCart } from "lucide-react";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus, Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,28 @@ export default async function OrdersPage({
 }) {
   const sp = await searchParams;
   const filter = sp.filter;
-  const where =
-    filter === "active"
+  const session = await getSession();
+
+  // Mas'ul (otvetstvenniy) bo'yicha filter: SOTUVCHI faqat o'zi biriktirilgan
+  // buyurtmalarni ko'radi.  Rahbar/Bosh admin — hammasini.
+  // Kelajakda `seller.userId = session.id` bilan aniqlash mumkin.
+  const isSotuvchi =
+    session?.role === "SOTUVCHI" || session?.role === "SELLER";
+
+  const where: Prisma.OrderWhereInput = {
+    ...(filter === "active"
       ? { status: { in: ACTIVE_STATUSES } }
       : filter === "debt"
         ? { status: { not: "CANCELLED" as const } }
-        : {};
+        : {}),
+    ...(isSotuvchi
+      ? {
+          seller: {
+            is: { employee: { is: { userId: session?.id ?? "__none__" } } },
+          },
+        }
+      : {}),
+  };
 
   const orders = await prisma.order.findMany({
     where,

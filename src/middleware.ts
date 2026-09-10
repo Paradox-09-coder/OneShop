@@ -44,7 +44,10 @@ export async function middleware(req: NextRequest) {
 
   try {
     await jwtVerify(token, SECRET);
-    return NextResponse.next();
+    // Server komponent (layout)'ga joriy pathname'ni yuborish uchun header o'rnatamiz
+    const headers = new Headers(req.headers);
+    headers.set("x-pathname", pathname);
+    return NextResponse.next({ request: { headers } });
   } catch {
     if (pathname.startsWith("/api")) {
       return NextResponse.json(

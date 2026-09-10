@@ -31,11 +31,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface NavChild {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  badge?: number;
+}
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
-  children?: { label: string; href: string; icon: React.ElementType; badge?: number }[];
+  children?: NavChild[];
   badge?: number;
 }
 
@@ -100,9 +106,25 @@ const navigation: NavItem[] = [
 
 interface Props {
   user: { name: string; role: string };
+  allowedHrefs: string[];
 }
 
-export default function Sidebar({ user }: Props) {
+function filterNav(items: NavItem[], allowed: Set<string>): NavItem[] {
+  const out: NavItem[] = [];
+  for (const item of items) {
+    const kids = item.children?.filter((c) => allowed.has(c.href)) ?? undefined;
+    // Item o'zi allowed OR kamida bitta bola allowed bo'lsa — ko'rsat
+    const selfOk = allowed.has(item.href);
+    if (selfOk || (kids && kids.length > 0)) {
+      out.push({ ...item, children: kids });
+    }
+  }
+  return out;
+}
+
+export default function Sidebar({ user, allowedHrefs }: Props) {
+  const allowedSet = new Set(allowedHrefs);
+  const filteredNav = filterNav(navigation, allowedSet);
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -159,7 +181,7 @@ export default function Sidebar({ user }: Props) {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-3">
-        {navigation.map((item) => {
+        {filteredNav.map((item) => {
           const active = isActive(item.href);
           const hasChildren = !!item.children?.length;
           const isOpen = openSections[item.href];

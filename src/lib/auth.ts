@@ -95,62 +95,88 @@ export async function buildSession(userId: string): Promise<SessionUser | null> 
 }
 
 export function defaultPermissionsForRole(role: Role): string[] {
+  // Meetingdan (1:13:17 va 1:01:41): har rolga faqat kerakli bo'limlar
+  // ko'rinishi kerak. Buxgalter'ga: mijozlar ro'yxati + moliya + hisobot.
+  // Sotuvchi: buyurtma + mijoz + CRM + POS. Omborchi: ombor + konteyner.
   switch (role) {
-    // Full access — director / super admin
+    // ── Bosh admin / Rahbar — barchasi ochiq ──
     case "SUPER_ADMIN":
     case "RAHBAR":
       return ["*"];
+
+    // ── Legacy Admin — deyarli hammasi ochiq ──
     case "ADMIN":
       return [
-        "orders.*", "warehouse.*", "clients.*", "counterparties.*",
-        "finance.*", "crm.*", "employees.*", "reports.*", "settings.*",
+        "dashboard.read",
+        "orders.*", "pos.*",
+        "warehouse.*", "catalog.*", "shipments.*",
+        "clients.*", "counterparties.*", "crm.*",
+        "finance.*", "employees.*", "payroll.*",
+        "reports.*", "settings.*",
       ];
-    // Manager — legacy
+
     case "MANAGER":
-      return ["orders.*", "clients.*", "crm.*", "reports.read"];
-    // Seller — sotuvchi
+      return [
+        "dashboard.read",
+        "orders.*", "clients.*", "counterparties.read",
+        "crm.*", "reports.read",
+      ];
+
+    // ── Sotuvchi ── buyurtmalar + mijoz + CRM + kassa
     case "SOTUVCHI":
     case "SELLER":
       return [
+        "dashboard.read",
         "orders.read", "orders.write",
+        "pos.read", "pos.write",
         "clients.read", "clients.write",
         "counterparties.read",
-        "crm.*", "pos.*",
+        "crm.*",
+        "catalog.read",
       ];
-    // Production manager — sex mudiri (Alisher aka)
+
+    // ── Sex mudiri (Alisher aka) ── ishlab chiqarish + ombor + retseptlar
     case "SEX_MUDIRI":
       return [
-        "orders.read", "orders.write",     // manufacturing orders
+        "dashboard.read",
+        "orders.read", "orders.write",
         "warehouse.read", "warehouse.write",
-        "production.*",
-        "employees.read",                   // sees team
+        "catalog.read", "catalog.write",     // retsept (BOM)
+        "shipments.read",
+        "employees.read",
       ];
-    // Warehouse keeper — omborchi
+
+    // ── Omborchi ── ombor + konteyner + katalog + buyurtma (o'qish)
     case "OMBORCHI":
     case "WAREHOUSE":
       return [
-        "warehouse.*",
-        "shipments.*",
+        "dashboard.read",
+        "warehouse.*", "shipments.*", "catalog.read",
         "orders.read",
-        "catalog.read",
       ];
-    // Accountant — buxgalter
+
+    // ── Buxgalter ── faqat moliya + kontragent + hisobot + mijoz ro'yxati
+    // Meetingda aytilgan: unga ombor/buyurtma ko'rinmaydi.  Faqat mijozlar
+    // ro'yxati (kim shot-faktura yopdi) + moliya + hisobot.
     case "BUXGALTER":
     case "ACCOUNTANT":
       return [
+        "dashboard.read",
         "finance.*",
         "reports.*",
+        "clients.read",           // mijozlar ro'yxati (shot-faktura status)
         "counterparties.read",
-        "orders.read",
-        "payroll.*",
+        "payroll.read",
       ];
-    // External-only (Telegram bot users) — no web access
+
+    // ── Tashqi (Telegram bot) — web'da hech narsa yo'q ──
     case "TAMINOTCHI":
     case "MIJOZ":
     case "HAYDOVCHI":
-      return ["telegram.read"];  // no web modules
+      return ["telegram.read"];
+
     default:
-      return ["orders.read", "warehouse.read"];
+      return ["dashboard.read"];
   }
 }
 
