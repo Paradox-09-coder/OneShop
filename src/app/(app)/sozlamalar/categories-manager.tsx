@@ -115,7 +115,7 @@ export default function CategoriesManager({ categories }: { categories: CatRow[]
             <div>
               <label className="block text-xs text-ink-soft mb-1">Tartib raqami</label>
               <input
-                type="number"
+                type="number" onFocus={(e) => e.currentTarget.select()}
                 value={draft.sortOrder}
                 onChange={(e) =>
                   setDraft({ ...draft, sortOrder: Number(e.target.value) })

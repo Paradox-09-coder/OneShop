@@ -99,7 +99,7 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
           <div>
             <label className="block text-xs text-ink-soft mb-1">Yo'l kira (so'm)</label>
             <input
-              type="number"
+              type="number" onFocus={(e) => e.currentTarget.select()}
               value={f.deliveryCost}
               onChange={(e) =>
                 setF({ ...f, deliveryCost: Number(e.target.value) })

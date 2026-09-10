@@ -32,7 +32,7 @@ export default function ExchangeRateManager({ current }: { current: number }) {
     <div className="flex items-center gap-3">
       <label className="text-sm font-medium whitespace-nowrap">1 USD =</label>
       <input
-        type="number"
+        type="number" onFocus={(e) => e.currentTarget.select()}
         min={1}
         value={rate}
         onChange={(e) => setRate(Number(e.target.value))}

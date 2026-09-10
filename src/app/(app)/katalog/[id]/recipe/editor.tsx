@@ -323,7 +323,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Chiqarish (miqdor)</label>
                   <input
-                    type="number"
+                    type="number" onFocus={(e) => e.currentTarget.select()}
                     value={draft.outputQty}
                     onChange={(e) =>
                       setDraft({ ...draft, outputQty: Number(e.target.value) })
@@ -334,7 +334,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Ish haqi (so'm/dona)</label>
                   <input
-                    type="number"
+                    type="number" onFocus={(e) => e.currentTarget.select()}
                     value={draft.laborCost}
                     onChange={(e) =>
                       setDraft({ ...draft, laborCost: Number(e.target.value) })
@@ -377,7 +377,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                           ))}
                         </select>
                         <input
-                          type="number"
+                          type="number" onFocus={(e) => e.currentTarget.select()}
                           step="0.01"
                           value={it.quantity}
                           onChange={(e) =>
@@ -390,7 +390,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                           {unitTypeLabel[it.unit]}
                         </span>
                         <input
-                          type="number"
+                          type="number" onFocus={(e) => e.currentTarget.select()}
                           value={it.wastePercent}
                           onChange={(e) =>
                             updateIngredient(i, {

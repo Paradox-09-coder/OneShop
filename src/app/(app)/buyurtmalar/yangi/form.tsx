@@ -208,7 +208,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                   Valyuta kursi (saqlanadi) — 1 {currency} = ? UZS
                 </label>
                 <input
-                  type="number"
+                  type="number" onFocus={(e) => e.currentTarget.select()}
                   min={1}
                   value={exchangeRate}
                   onChange={(e) => setExchangeRate(Number(e.target.value))}
@@ -225,7 +225,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
               <label className="block text-sm font-medium mb-1.5">Chegirma</label>
               <div className="flex gap-1">
                 <input
-                  type="number"
+                  type="number" onFocus={(e) => e.currentTarget.select()}
                   min={0}
                   value={discountValue}
                   onChange={(e) => setDiscountValue(Number(e.target.value))}
@@ -247,7 +247,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
               <label className="block text-sm font-medium mb-1.5">QQS</label>
               <div className="flex gap-1">
                 <input
-                  type="number"
+                  type="number" onFocus={(e) => e.currentTarget.select()}
                   min={0}
                   value={taxValue}
                   onChange={(e) => setTaxValue(Number(e.target.value))}
@@ -334,7 +334,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                       <Minus size={12} />
                     </button>
                     <input
-                      type="number"
+                      type="number" onFocus={(e) => e.currentTarget.select()}
                       min={0.01}
                       step="0.01"
                       value={l.quantity}
@@ -355,7 +355,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                   </div>
                   <div className="col-span-3">
                     <input
-                      type="number"
+                      type="number" onFocus={(e) => e.currentTarget.select()}
                       min={0}
                       value={l.unitPrice}
                       onChange={(e) =>

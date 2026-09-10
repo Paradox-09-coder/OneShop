@@ -5,12 +5,12 @@ import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
 const Create = z.object({
   sku: z.string().min(1),
   name: z.string().min(1),
-  categoryId: z.string().nullable().optional(),
+  categoryId: z.string().nullish(),
   unitType: z.enum(["DONA", "METR", "M2", "MM", "KG", "LITR"]).default("DONA"),
-  baseCost: z.number().nullable().optional(),
-  basePrice: z.number().nullable().optional(),
+  baseCost: z.number().nullish(),
+  basePrice: z.number().nullish(),
   baseCurrency: z.enum(["UZS", "USD", "EUR", "RUB"]).default("UZS"),
-  color: z.string().optional(),
+  color: z.string().nullish(),
   lowStockThreshold: z.number().default(0),
 });
 
@@ -27,13 +27,13 @@ export async function POST(req: Request) {
       data: {
         sku: body.sku,
         name: body.name,
-        categoryId: body.categoryId || null,
+        categoryId: body.categoryId ?? null,
         unitType: body.unitType,
-        baseCost: body.baseCost,
+        baseCost: body.baseCost ?? null,
         baseCostCurrency: body.baseCurrency,
-        basePrice: body.basePrice,
+        basePrice: body.basePrice ?? null,
         basePriceCurrency: body.baseCurrency,
-        color: body.color,
+        color: body.color ?? null,
         lowStockThreshold: body.lowStockThreshold,
       },
     });

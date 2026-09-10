@@ -271,7 +271,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Tannarx</label>
                   <input
-                    type="number"
+                    type="number" onFocus={(e) => e.currentTarget.select()}
                     value={draft.baseCost}
                     onChange={(e) =>
                       setDraft({ ...draft, baseCost: Number(e.target.value) })
@@ -282,7 +282,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Narx</label>
                   <input
-                    type="number"
+                    type="number" onFocus={(e) => e.currentTarget.select()}
                     value={draft.basePrice}
                     onChange={(e) =>
                       setDraft({ ...draft, basePrice: Number(e.target.value) })
@@ -311,7 +311,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
                   Kam qoldiq chegarasi (kam qoldiq belgisi uchun)
                 </label>
                 <input
-                  type="number"
+                  type="number" onFocus={(e) => e.currentTarget.select()}
                   value={draft.lowStockThreshold}
                   onChange={(e) =>
                     setDraft({

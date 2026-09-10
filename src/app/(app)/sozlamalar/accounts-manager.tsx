@@ -193,7 +193,7 @@ export default function AccountsManager({ accounts }: { accounts: AccountRow[] }
             <div>
               <label className="block text-xs text-ink-soft mb-1">Boshlang'ich balans</label>
               <input
-                type="number"
+                type="number" onFocus={(e) => e.currentTarget.select()}
                 value={draft.balanceCache}
                 onChange={(e) =>
                   setDraft({ ...draft, balanceCache: Number(e.target.value) })

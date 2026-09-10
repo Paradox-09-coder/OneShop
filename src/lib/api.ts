@@ -20,7 +20,14 @@ export function jsonErr(
 
 export function handleError(e: unknown) {
   if (e instanceof ZodError) {
-    return jsonErr("Validatsiya xatosi", 422, "VALIDATION", { issues: e.issues });
+    // Xato yagona field bo'lsa, uni foydalanuvchiga tushunarli qilib chiqarish
+    const first = e.issues[0];
+    const field = first?.path?.join(".") || "";
+    const detail = first?.message || "";
+    const message = field
+      ? `Validatsiya xatosi: "${field}" — ${detail}`
+      : `Validatsiya xatosi: ${detail}`;
+    return jsonErr(message, 422, "VALIDATION", { issues: e.issues });
   }
   if (e instanceof Error && e.message === "UNAUTHORIZED") {
     return jsonErr("Avtorizatsiya talab qilinadi", 401, "UNAUTHORIZED");

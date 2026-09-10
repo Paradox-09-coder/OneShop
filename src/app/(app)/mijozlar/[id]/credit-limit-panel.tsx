@@ -72,7 +72,7 @@ export default function CreditLimitPanel({ clientId, initial, currentDebt }: Pro
       <div className="space-y-2 text-sm">
         <div className="grid grid-cols-2 gap-2">
           <input
-            type="number"
+            type="number" onFocus={(e) => e.currentTarget.select()}
             value={limit}
             onChange={(e) => setLimit(Number(e.target.value))}
             disabled={!enabled}
