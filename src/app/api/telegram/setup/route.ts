@@ -22,9 +22,11 @@ export async function POST(req: Request) {
     if (!isTelegramConfigured())
       return jsonErr("TELEGRAM_BOT_TOKEN o'rnatilmagan", 400, "NOT_CONFIGURED");
 
-    // Auto-derive URL from request
-    const url = new URL(req.url);
-    const webhookUrl = `${url.origin}/api/telegram/webhook`;
+    // Auto-derive URL from request headers (Railway sets host header correctly,
+    // req.url uses internal port which Telegram rejects).
+    const host = req.headers.get("host") ?? new URL(req.url).host;
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
+    const webhookUrl = `${proto}://${host}/api/telegram/webhook`;
 
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
     const result = await setWebhook(webhookUrl, secret);
