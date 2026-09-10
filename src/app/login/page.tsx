@@ -12,6 +12,33 @@ export default function LoginPageWrapper() {
   );
 }
 
+function DemoRow({
+  login,
+  pw,
+  role,
+  onPick,
+}: {
+  login: string;
+  pw: string;
+  role: string;
+  onPick: (u: string, p: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(login, pw)}
+      className="w-full flex justify-between items-center p-1.5 rounded-lg hover:bg-white transition text-left"
+      title="Bosing — maydonlarga qo'yamiz"
+    >
+      <span>
+        <span className="text-primary font-bold">{login}</span>{" "}
+        <span className="text-ink-soft">/ {pw}</span>
+      </span>
+      <span className="text-ink-soft text-[10px]">{role}</span>
+    </button>
+  );
+}
+
 function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
@@ -100,9 +127,22 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="text-xs text-ink-soft text-center mt-6">
-          Demo: <span className="font-mono">admin / admin123</span>
-        </p>
+        <details className="mt-6 text-xs text-ink-soft">
+          <summary className="cursor-pointer text-center font-semibold hover:text-primary">
+            Demo hisoblar (bosib ko'ring)
+          </summary>
+          <div className="mt-3 space-y-1 font-mono text-[11px] bg-gray-50 rounded-xl p-3">
+            <DemoRow login="admin" pw="admin123" role="Bosh administrator" onPick={(u, p) => { setUsername(u); setPassword(p); }} />
+            <DemoRow login="rahbar" pw="rahbar123" role="Rahbar (egasi)" onPick={(u, p) => { setUsername(u); setPassword(p); }} />
+            <DemoRow login="sotuvchi" pw="sotuvchi123" role="Sotuvchi / Menejer" onPick={(u, p) => { setUsername(u); setPassword(p); }} />
+            <DemoRow login="alisher" pw="alisher123" role="Sex mudiri" onPick={(u, p) => { setUsername(u); setPassword(p); }} />
+            <DemoRow login="omborchi" pw="omborchi123" role="Omborchi" onPick={(u, p) => { setUsername(u); setPassword(p); }} />
+            <DemoRow login="buxgalter" pw="buxgalter123" role="Buxgalter" onPick={(u, p) => { setUsername(u); setPassword(p); }} />
+          </div>
+          <p className="mt-2 text-center text-[10px] text-ink-soft">
+            Ta'minotchi / Mijoz / Haydovchi rollari — Telegram bot orqali (@oneshop_erp_bot)
+          </p>
+        </details>
       </div>
     </div>
   );

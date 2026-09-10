@@ -36,6 +36,54 @@ async function main() {
     },
   });
 
+  // ── Demo foydalanuvchilar — meetingdagi 5 rol bo'yicha ────
+  const demoUsers = [
+    {
+      username: "rahbar",
+      name: "Bahodir aka (rahbar)",
+      password: "rahbar123",
+      role: "RAHBAR" as const,
+    },
+    {
+      username: "sotuvchi",
+      name: "Sanjar (sotuvchi)",
+      password: "sotuvchi123",
+      role: "SOTUVCHI" as const,
+    },
+    {
+      username: "alisher",
+      name: "Alisher aka (sex mudiri)",
+      password: "alisher123",
+      role: "SEX_MUDIRI" as const,
+    },
+    {
+      username: "omborchi",
+      name: "Umid (omborchi)",
+      password: "omborchi123",
+      role: "OMBORCHI" as const,
+    },
+    {
+      username: "buxgalter",
+      name: "Nilufar opa (buxgalter)",
+      password: "buxgalter123",
+      role: "BUXGALTER" as const,
+    },
+  ];
+  for (const u of demoUsers) {
+    const hash = await bcrypt.hash(u.password, 10);
+    await prisma.user.upsert({
+      where: { username: u.username },
+      update: { role: u.role, name: u.name },
+      create: {
+        username: u.username,
+        name: u.name,
+        password: hash,
+        role: u.role,
+      },
+    });
+  }
+  console.log(`✅ ${demoUsers.length} ta demo foydalanuvchi (rollar)`);
+
   // ── Warehouse ─────────────────────────────────────────────
   const mainWh = await prisma.warehouse.upsert({
     where: { name: "Asosiy ombor" },
