@@ -272,7 +272,7 @@ async function handleText(msg: TelegramMessage) {
 
   // Route by role
   if (user.type === "SUPPLIER") {
-    if (text.includes("Qarzim")) {
+    if (text.includes("Hisob-kitob") || text.includes("Qarzim")) {
       const balance = user.balanceValue;
       await sendMessage(
         chatId,

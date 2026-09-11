@@ -78,9 +78,12 @@ export function getWebhookInfo() {
 }
 
 // Shared inline keyboards
+// Eslatma: "Hisob-kitobimiz" (mijoznikidan farqli) — chunki odatiy holatda
+// TA'MINOTCHI emas, BIZ unga qarzdor bo'lamiz (undan tovar olamiz). "Qarzim
+// qancha?" degan nom ta'minotchi uchun teskari eshitiladi.
 export const supplierKeyboard = {
   keyboard: [
-    [{ text: "📊 Qarzim qancha?" }, { text: "📦 Oxirgi qabullar" }],
+    [{ text: "📊 Hisob-kitobimiz" }, { text: "📦 Oxirgi qabullar" }],
     [{ text: "💰 To'lovlar tarixi" }, { text: "☎️ Rahbariyat" }],
   ],
   resize_keyboard: true,
