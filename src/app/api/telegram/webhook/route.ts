@@ -553,8 +553,9 @@ async function handleCallback(query: NonNullable<Update["callback_query"]>) {
     );
   }
   await sendGroupMessage(
-    `🚚 <b>Yetkazildi</b> — ${escape(order.orderNumber)}\n` +
-      `👤 ${escape(order.clientNameSnapshot ?? "—")}\n` +
+    `🚚✅ <b>Yetkazib berildi!</b>\n` +
+      `📦 ${escape(order.orderNumber)}\n` +
+      `👤 ${escape(order.clientNameSnapshot ?? "—")} — ${escape(order.clientPhoneSnapshot ?? "—")}\n` +
       `🧑‍✈️ ${escape(driver.name)}`
   ).catch(() => {});
 
@@ -620,7 +621,10 @@ async function handleReceiptCallback(
       );
     }
     await sendGroupMessage(
-      `⚠️ Mijoz "${escape(order.orderNumber)}" ni olmaganini bildirdi — tekshirib chiqing`
+      `🚨 <b>Diqqat! Mijoz olmadi</b>\n` +
+        `📦 ${escape(order.orderNumber)}\n` +
+        `👤 ${escape(order.clientNameSnapshot ?? "—")} — ${escape(order.clientPhoneSnapshot ?? order.receiverPhone ?? "—")}\n` +
+        `👉 Tezroq bog'laning!`
     ).catch(() => {});
     return;
   }

@@ -9,6 +9,13 @@ import {
 } from "@/lib/production";
 import { sendGroupMessage, escape } from "@/lib/telegram";
 
+function itemsSummary(items: { productNameSnapshot: string; quantity: number }[]): string {
+  if (items.length === 0) return "—";
+  return items
+    .map((it) => `${it.quantity}× ${it.productNameSnapshot}`)
+    .join(", ");
+}
+
 const Body = z.object({
   to: z.enum([
     "YANGI_SOROV",
@@ -36,7 +43,10 @@ export async function POST(
     const { id } = await params;
     const { to, reason } = Body.parse(await req.json());
 
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
     if (!order) return jsonErr("Buyurtma topilmadi", 404);
 
     if (!canTransition(order.type, order.status, to)) {
@@ -113,10 +123,18 @@ export async function POST(
 
     // Guruhga xabar — bazaga yozilgandan keyin, tashqi so'rov sifatida
     // (muvaffaqiyatsiz bo'lsa ham asosiy jarayonga ta'sir qilmasin).
-    if (isManufacturing && enteringReady) {
+    // "Buyurtma tayyor/jo'natishga tayyor" bosqichi — ishlab chiqarishda
+    // READY, savdoda esa YETKAZILMOQDA (ikkalasi ham "haydovchiga topshirish
+    // uchun tayyor" degani, shuning uchun bitta xabar shakli ishlatiladi).
+    const enteringYetkazilmoqda =
+      !isManufacturing && to === "YETKAZILMOQDA" && order.status !== "YETKAZILMOQDA";
+    if ((isManufacturing && enteringReady) || enteringYetkazilmoqda) {
       await sendGroupMessage(
-        `✅ <b>Tayyor</b> — ${escape(order.orderNumber)}\n` +
-          `👤 ${escape(order.clientNameSnapshot ?? "—")}`
+        `🎉 <b>Buyurtma tayyor!</b>\n` +
+          `📦 ${escape(order.orderNumber)}\n` +
+          `👤 ${escape(order.clientNameSnapshot ?? "—")} — ${escape(order.clientPhoneSnapshot ?? "—")}\n` +
+          `🧾 ${escape(itemsSummary(order.items))}\n` +
+          `💰 ${(order.agreedAmount ?? 0).toLocaleString("ru-RU")} ${order.orderCurrency}`
       ).catch(() => {});
     }
     if (shortageWarning) {
