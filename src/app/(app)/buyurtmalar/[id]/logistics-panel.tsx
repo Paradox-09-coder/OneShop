@@ -70,15 +70,16 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
             Manzil
             <span className="text-ink-soft font-normal">
               {" "}
-              — mijoz Telegram'da joylashuv yuborgan bo'lsa, shu yerga
-              Google Maps havolasini qo'ysangiz bo'ladi (aniqroq bo'ladi)
+              — mijoz aniq lokatsiya yuborgan bo'lsa, o'sha Google Maps
+              havolasini qo'ying (eng aniqi); bilmasa, tuman/mahalla nomini
+              taxminan yozib qo'ysangiz ham bo'ladi
             </span>
           </label>
           <input
             value={f.deliveryAddress}
             onChange={(e) => setF({ ...f, deliveryAddress: e.target.value })}
+            placeholder="Google Maps havolasi yoki taxminiy manzil (tuman, mahalla...)"
             className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-            placeholder="Toshkent, Chilonzor..."
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
