@@ -173,7 +173,26 @@ async function handleContact(msg: TelegramMessage) {
 interface DriverOrClientMeta {
   telegram_id?: number;
   telegram_username?: string;
+  awaiting_order_request?: boolean;
 }
+
+// Menyu tugmalarining matni — erkin matn kutilayotganda ham, foydalanuvchi
+// tugma bossa, buni "buyurtma matni" deb noto'g'ri qabul qilib qo'ymaslik
+// uchun ro'yxat.
+const MENU_BUTTON_HINTS = [
+  "Buyurtmalarim",
+  "Qarzim",
+  "Yangi buyurtma",
+  "Menejer bilan",
+  "Bosh ofis",
+  "Rahbariyat",
+  "Bugungi",
+  "yetkazish",
+  "Yetkazdim",
+  "Yo'l kira",
+  "Yol kira",
+  "qabul",
+];
 
 async function handleText(msg: TelegramMessage) {
   const text = msg.text ?? "";
@@ -203,6 +222,42 @@ async function handleText(msg: TelegramMessage) {
   }
 
   const kb = keyboardFor(user.type);
+  const meta = (user.metadata as DriverOrClientMeta | null) ?? {};
+
+  // Mijoz "📦 Yangi buyurtma"ni bosgandan keyin yuborgan KEYINGI erkin
+  // matn — bu uning so'rovi. Menyu tugmasi bosilsa (masalan fikridan
+  // qaytib "Buyurtmalarim"ni bossa), buni so'rov deb hisoblamaymiz.
+  if (
+    user.type === "CLIENT" &&
+    meta.awaiting_order_request &&
+    !MENU_BUTTON_HINTS.some((h) => text.includes(h))
+  ) {
+    await prisma.counterparty.update({
+      where: { id: user.id },
+      data: { metadata: { ...meta, awaiting_order_request: false } },
+    });
+    await prisma.notification.create({
+      data: {
+        type: "INFO",
+        title: `🆕 Yangi buyurtma so'rovi — ${user.name}`,
+        body: text,
+        link: `/mijozlar/${user.id}`,
+      },
+    });
+    await prisma.counterpartyNote.create({
+      data: {
+        counterpartyId: user.id,
+        text: `[Telegram bot — Yangi buyurtma so'rovi]\n${text}`,
+      },
+    });
+    await sendMessage(
+      chatId,
+      "✅ So'rovingiz qabul qilindi!\n\nTez orada menejerlarimiz siz bilan " +
+        "bog'lanib, buyurtmangizni rasmiylashtirishadi.",
+      { reply_markup: kb }
+    );
+    return;
+  }
 
   if (
     text.includes("Bosh ofis") ||
@@ -250,6 +305,20 @@ async function handleText(msg: TelegramMessage) {
   }
 
   if (user.type === "CLIENT") {
+    if (text.includes("Yangi buyurtma")) {
+      await prisma.counterparty.update({
+        where: { id: user.id },
+        data: { metadata: { ...meta, awaiting_order_request: true } },
+      });
+      await sendMessage(
+        chatId,
+        "📦 Nima kerakligini bitta xabarda yozing — mahsulot nomi va " +
+          "miqdorini ko'rsating.\n\n" +
+          "Masalan: <i>\"Polizol 33kg standart, 20 dona\"</i>",
+        { reply_markup: kb }
+      );
+      return;
+    }
     if (text.includes("Buyurtmalarim")) {
       const orders = await prisma.order.findMany({
         where: { clientId: user.id },

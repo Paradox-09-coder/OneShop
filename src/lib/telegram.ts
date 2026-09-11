@@ -86,14 +86,10 @@ export const supplierKeyboard = {
   resize_keyboard: true,
 };
 
-// Mijoz botdan o'zi buyurtma bermaydi — real jarayon: mijoz qo'ng'iroq
-// qiladi, sotuvchi buyurtmani tizimga o'zi kiritadi (meeting stenogrammasi
-// bilan tasdiqlangan). Shuning uchun bu yerda "Yangi buyurtma" tugmasi yo'q —
-// bot faqat holat/qarz ko'rsatadi va bildirishnoma yuboradi.
 export const clientKeyboard = {
   keyboard: [
     [{ text: "🛒 Buyurtmalarim" }, { text: "💳 Qarzim qancha?" }],
-    [{ text: "☎️ Menejer bilan bog'lanish" }],
+    [{ text: "📦 Yangi buyurtma" }, { text: "☎️ Menejer bilan bog'lanish" }],
   ],
   resize_keyboard: true,
 };
