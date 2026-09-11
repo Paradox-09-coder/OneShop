@@ -14,6 +14,7 @@ import { Plus, ShoppingCart } from "lucide-react";
 import type { OrderStatus, OrderType, Prisma } from "@prisma/client";
 import ListToolbar from "@/components/list-toolbar";
 import LoadMore from "@/components/load-more";
+import ClickableRow from "@/components/clickable-row";
 
 export const dynamic = "force-dynamic";
 
@@ -204,8 +205,9 @@ export default async function OrdersPage({
                   const debt = total - o.paidAmount;
                   const paidFully = debt <= 0;
                   return (
-                    <tr
+                    <ClickableRow
                       key={o.id}
+                      href={`/buyurtmalar/${o.id}`}
                       className="border-b border-border/50 hover:bg-gray-50/50"
                     >
                       <td className="px-5 py-3">
@@ -264,7 +266,7 @@ export default async function OrdersPage({
                           </div>
                         )}
                       </td>
-                    </tr>
+                    </ClickableRow>
                   );
                 })}
               </tbody>

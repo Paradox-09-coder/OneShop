@@ -8,6 +8,7 @@ import { Users, Plus, Phone } from "lucide-react";
 import AddClientButton from "./add-client-button";
 import ListToolbar from "@/components/list-toolbar";
 import LoadMore from "@/components/load-more";
+import ClickableRow from "@/components/clickable-row";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -106,8 +107,9 @@ export default async function ClientsPage({
               </thead>
               <tbody>
                 {visible.map((c) => (
-                  <tr
+                  <ClickableRow
                     key={c.id}
+                    href={`/mijozlar/${encodeURIComponent(c.id)}`}
                     className="border-b border-border/50 hover:bg-gray-50/50"
                   >
                     <td className="px-5 py-3">
@@ -164,7 +166,7 @@ export default async function ClientsPage({
                     <td className="px-5 py-3 text-ink-soft">
                       {formatDate(c.createdAt)}
                     </td>
-                  </tr>
+                  </ClickableRow>
                 ))}
               </tbody>
             </table>
