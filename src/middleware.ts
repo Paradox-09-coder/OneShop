@@ -12,6 +12,7 @@ const PUBLIC = [
   "/api/auth/login",
   "/api/auth/logout",
   "/api/telegram/webhook", // Telegram calls without our cookies; secret token verifies.
+  "/api/cron", // External scheduler calls without our cookies; CRON_SECRET verifies.
 ];
 
 export async function middleware(req: NextRequest) {
