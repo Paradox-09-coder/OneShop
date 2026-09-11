@@ -6,6 +6,7 @@ import {
   computeRecipeRequirements,
   consumeMaterialsForOrder,
   restoreMaterialsForOrder,
+  type LowStockHit,
 } from "@/lib/production";
 import { sendGroupMessage, escape } from "@/lib/telegram";
 
@@ -64,6 +65,7 @@ export async function POST(
       to === "PROCESSING" && order.status !== "PROCESSING";
 
     let shortageWarning: string | null = null;
+    let lowStockHits: LowStockHit[] = [];
 
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
@@ -112,7 +114,7 @@ export async function POST(
 
       // READY'ga kirganda — xomashyoni haqiqatda ayiradi (StockMovement OUT)
       if (enteringReady) {
-        await consumeMaterialsForOrder(tx, id, session.id);
+        lowStockHits = await consumeMaterialsForOrder(tx, id, session.id);
       }
 
       // READY'dan chiqib ketilganda (orqaga yoki bekor) — qaytaradi
@@ -140,6 +142,17 @@ export async function POST(
     if (shortageWarning) {
       await sendGroupMessage(
         `⚠️ <b>Xomashyo yetmaydi</b> — ${escape(order.orderNumber)}\n${escape(shortageWarning)}`
+      ).catch(() => {});
+    }
+    if (lowStockHits.length > 0) {
+      const lines = lowStockHits
+        .map(
+          (h) =>
+            `${escape(h.materialName)} — qoldi ${h.remainingQty.toFixed(1)} ${h.unit.toLowerCase()}`
+        )
+        .join("\n");
+      await sendGroupMessage(
+        `📉 <b>Kam qoldiq!</b>\n${lines}`
       ).catch(() => {});
     }
 

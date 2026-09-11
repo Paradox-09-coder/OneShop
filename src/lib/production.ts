@@ -100,12 +100,19 @@ export async function computeRecipeRequirements(
  * to'xtaydi (Acham naqshi).  Yetmagan qism jimgina hisobdan chiqadi —
  * chunki bu bosqichda ogohlantirish allaqachon PROCESSING'da berilgan.
  */
+export interface LowStockHit {
+  materialName: string;
+  remainingQty: number;
+  unit: string;
+}
+
 export async function consumeMaterialsForOrder(
   tx: Prisma.TransactionClient,
   orderId: string,
   userId?: string
-): Promise<void> {
+): Promise<LowStockHit[]> {
   const reqs = await computeRecipeRequirements(tx, orderId);
+  const lowStockHits: LowStockHit[] = [];
 
   for (const req of reqs) {
     let remaining = req.requiredQty;
@@ -117,10 +124,18 @@ export async function consumeMaterialsForOrder(
     for (const lot of lots) {
       if (remaining <= 0) break;
       const deduct = Math.min(lot.qty, remaining);
+      const newQty = Math.max(0, lot.qty - deduct);
       await tx.inventoryLot.update({
         where: { id: lot.id },
-        data: { qty: Math.max(0, lot.qty - deduct) },
+        data: { qty: newQty },
       });
+      if (lot.lowStockThreshold > 0 && newQty <= lot.lowStockThreshold) {
+        lowStockHits.push({
+          materialName: req.materialName,
+          remainingQty: newQty,
+          unit: req.unit,
+        });
+      }
       await tx.stockMovement.create({
         data: {
           catalogProductId: req.materialProductId,
@@ -138,6 +153,8 @@ export async function consumeMaterialsForOrder(
     // remaining > 0 bo'lsa — lotlar tugagan, jimgina qoldiriladi (clamp-at-zero,
     // Acham naqshi). Ogohlantirish PROCESSING bosqichida allaqachon berilgan.
   }
+
+  return lowStockHits;
 }
 
 /**

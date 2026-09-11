@@ -40,6 +40,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
   const [clients, setClients] = useState(initialClients);
   const [clientId, setClientId] = useState("");
   const [type, setType] = useState<"RETAIL" | "WHOLESALE" | "MANUFACTURING" | "POS">("RETAIL");
+  const [priority, setPriority] = useState<"NORMAL" | "HIGH" | "VIP">("NORMAL");
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
   const [exchangeRate, setExchangeRate] = useState(defaultExchangeRate);
 
@@ -134,6 +135,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
         body: JSON.stringify({
           clientId,
           type,
+          priority,
           orderCurrency: currency,
           exchangeRate: currency === "UZS" ? null : exchangeRate,
           taxRate: taxMode === "PERCENT" ? taxValue : 0,
@@ -189,6 +191,18 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                 <option value="WHOLESALE">Ulgurji</option>
                 <option value="MANUFACTURING">Ishlab chiqarish</option>
                 <option value="POS">Kassa (POS)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Ustuvorlik</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as never)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              >
+                <option value="NORMAL">Odatiy</option>
+                <option value="HIGH">Yuqori</option>
+                <option value="VIP">VIP</option>
               </select>
             </div>
             <div>

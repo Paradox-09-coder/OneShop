@@ -2,10 +2,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { handleError, jsonOk, requireApiPermission } from "@/lib/api";
 import { generateOrderNumber } from "@/lib/utils";
+import { sendGroupMessage, escape } from "@/lib/telegram";
 
 const CreateOrder = z.object({
   clientId: z.string().min(1),
   type: z.enum(["RETAIL", "WHOLESALE", "MANUFACTURING", "POS"]),
+  priority: z.enum(["NORMAL", "HIGH", "VIP"]).default("NORMAL"),
   orderCurrency: z.enum(["UZS", "USD", "EUR", "RUB"]),
   exchangeRate: z.number().positive().nullable().optional(),
   taxRate: z.number().min(0).max(100).default(0),
@@ -123,6 +125,7 @@ export async function POST(req: Request) {
           ),
           type: body.type,
           status: initialStatus,
+          priority: body.priority,
           orderCurrency: body.orderCurrency,
           exchangeRateSnapshot: exchangeRate,
           taxRate: body.taxRate,
@@ -162,6 +165,15 @@ export async function POST(req: Request) {
       });
       return created;
     });
+
+    if (order.priority === "VIP") {
+      await sendGroupMessage(
+        `👑 <b>VIP buyurtma!</b>\n` +
+          `📦 ${escape(order.orderNumber)}\n` +
+          `👤 ${escape(order.clientNameSnapshot ?? "—")} — ${escape(order.clientPhoneSnapshot ?? "—")}\n` +
+          `💰 ${(order.agreedAmount ?? 0).toLocaleString("ru-RU")} ${order.orderCurrency}`
+      ).catch(() => {});
+    }
 
     return jsonOk({ order });
   } catch (e) {
