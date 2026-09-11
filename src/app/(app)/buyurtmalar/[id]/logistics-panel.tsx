@@ -15,6 +15,7 @@ interface Props {
     receiverName: string;
     receiverPhone: string;
     expectedDeliveryDate: string;
+    deliveryPaid: boolean;
   };
 }
 
@@ -40,6 +41,7 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
           receiverName: f.receiverName || null,
           receiverPhone: f.receiverPhone || null,
           expectedDeliveryDate: f.expectedDeliveryDate || null,
+          deliveryPaidAt: f.deliveryPaid ? new Date().toISOString() : null,
         }),
       });
       const d = await res.json();
@@ -108,6 +110,22 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
             />
           </div>
         </div>
+        <label className="flex items-center gap-2 p-2 rounded-xl bg-gray-50 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={f.deliveryPaid}
+            onChange={(e) => setF({ ...f, deliveryPaid: e.target.checked })}
+            className="w-4 h-4"
+          />
+          <span className="text-xs">
+            <span className="font-semibold">Yo'l kira haydovchiga to'landi</span>
+            <br />
+            <span className="text-ink-soft">
+              Belgilansa — haydovchi Telegram botdagi "Yo'l kira" bo'limida
+              buni to'langan deb ko'radi.
+            </span>
+          </span>
+        </label>
         <div>
           <label className="block text-xs text-ink-soft mb-1">
             Rejalashtirilgan sana

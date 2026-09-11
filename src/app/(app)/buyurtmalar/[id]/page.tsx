@@ -299,6 +299,7 @@ export default async function OrderDetailPage({
               expectedDeliveryDate: order.expectedDeliveryDate
                 ? order.expectedDeliveryDate.toISOString().slice(0, 10)
                 : "",
+              deliveryPaid: !!order.deliveryPaidAt,
             }}
           />
         </div>

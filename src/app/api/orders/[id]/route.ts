@@ -9,6 +9,7 @@ const Patch = z.object({
   driverCarNumber: z.string().nullable().optional(),
   deliveryCost: z.number().nullable().optional(),
   deliveryPaidToId: z.string().nullable().optional(),
+  deliveryPaidAt: z.string().nullable().optional(),
   receiverName: z.string().nullable().optional(),
   receiverPhone: z.string().nullable().optional(),
   deliveredAt: z.string().nullable().optional(),
@@ -57,6 +58,8 @@ export async function PATCH(
     if (body.driverCarNumber !== undefined) patch.driverCarNumber = body.driverCarNumber;
     if (body.deliveryCost !== undefined) patch.deliveryCost = body.deliveryCost;
     if (body.deliveryPaidToId !== undefined) patch.deliveryPaidToId = body.deliveryPaidToId;
+    if (body.deliveryPaidAt !== undefined)
+      patch.deliveryPaidAt = body.deliveryPaidAt ? new Date(body.deliveryPaidAt) : null;
     if (body.receiverName !== undefined) patch.receiverName = body.receiverName;
     if (body.receiverPhone !== undefined) patch.receiverPhone = body.receiverPhone;
     if (body.deliveredAt !== undefined)
