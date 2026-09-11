@@ -6,6 +6,7 @@ import { formatMoney, formatNumber } from "@/lib/utils";
 import { unitTypeLabel, rollStatusLabel } from "@/lib/labels";
 import { Package, Plus, AlertTriangle } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +14,16 @@ export const dynamic = "force-dynamic";
 export default async function WarehousePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; q?: string; categoryId?: string }>;
+  searchParams: Promise<{
+    filter?: string;
+    q?: string;
+    categoryId?: string;
+    take?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const isLowStock = sp.filter === "low-stock";
+  const take = Number(sp.take) || 30;
 
   const productWhere: Prisma.CatalogProductWhereInput = {
     status: "active",
@@ -35,7 +42,7 @@ export default async function WarehousePage({
     prisma.catalogProduct.findMany({
       where: productWhere,
       orderBy: { name: "asc" },
-      take: 100,
+      take: take + 1,
       include: {
         _count: { select: { lots: true, rolls: true } },
         category: { select: { name: true } },
@@ -59,7 +66,9 @@ export default async function WarehousePage({
   ]);
 
   const lowStock = lots.filter((l) => l.qty <= l.lowStockThreshold && l.lowStockThreshold > 0);
-  const visibleLots = isLowStock ? lowStock : lots.slice(0, 30);
+  const visibleLots = isLowStock ? lowStock : lots;
+  const hasMoreProducts = products.length > take;
+  const visibleProducts = products.slice(0, take);
 
   return (
     <div>
@@ -118,8 +127,8 @@ export default async function WarehousePage({
           {rolls.length === 0 ? (
             <p className="text-sm text-ink-soft py-4 text-center">Rulonlar yo'q</p>
           ) : (
-            <div className="space-y-2">
-              {rolls.slice(0, 8).map((r) => (
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              {rolls.map((r) => (
                 <div
                   key={r.id}
                   className="flex justify-between items-center p-3 rounded-xl bg-gray-50"
@@ -159,8 +168,8 @@ export default async function WarehousePage({
               {isLowStock ? "Kam qoldiqli partiyalar yo'q — hammasi yetarli!" : "Partiyalar yo'q"}
             </p>
           ) : (
-            <div className="space-y-2">
-              {visibleLots.slice(0, isLowStock ? visibleLots.length : 8).map((l) => (
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              {visibleLots.map((l) => (
                 <div
                   key={l.id}
                   className="flex justify-between items-center p-3 rounded-xl bg-gray-50"
@@ -221,7 +230,7 @@ export default async function WarehousePage({
                 </tr>
               </thead>
               <tbody>
-                {products.map((p) => (
+                {visibleProducts.map((p) => (
                   <tr
                     key={p.id}
                     className="border-b border-border/50 hover:bg-gray-50/50"
@@ -243,6 +252,7 @@ export default async function WarehousePage({
             </table>
           </div>
         )}
+        <LoadMore hasMore={hasMoreProducts} />
       </div>
     </div>
   );

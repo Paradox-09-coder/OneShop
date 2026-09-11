@@ -5,6 +5,7 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { shipmentStatusLabel } from "@/lib/labels";
 import { Truck } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 import type { Prisma, ShipmentStatus } from "@prisma/client";
 
 export default async function ShipmentsPage({
@@ -15,9 +16,11 @@ export default async function ShipmentsPage({
     status?: string;
     from?: string;
     to?: string;
+    take?: string;
   }>;
 }) {
   const sp = await searchParams;
+  const take = Number(sp.take) || 30;
 
   const where: Prisma.ShipmentWhereInput = {
     ...(sp.status ? { status: sp.status as ShipmentStatus } : {}),
@@ -43,8 +46,10 @@ export default async function ShipmentsPage({
     where,
     orderBy: { createdAt: "desc" },
     include: { supplier: true, _count: { select: { items: true } } },
-    take: 50,
+    take: take + 1,
   });
+  const hasMore = shipments.length > take;
+  const visible = shipments.slice(0, take);
 
   return (
     <div>
@@ -89,7 +94,7 @@ export default async function ShipmentsPage({
                 </tr>
               </thead>
               <tbody>
-                {shipments.map((s) => (
+                {visible.map((s) => (
                   <tr key={s.id} className="border-b border-border/50">
                     <td className="px-5 py-3 font-semibold">
                       {s.containerNumber ?? "—"}
@@ -123,6 +128,7 @@ export default async function ShipmentsPage({
             </table>
           </div>
         )}
+        <LoadMore hasMore={hasMore} />
       </div>
     </div>
   );

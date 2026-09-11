@@ -4,6 +4,7 @@ import PageHeader from "@/components/page-header";
 import { Layers, Package, Zap, Battery, Plug, Cable } from "lucide-react";
 import ProductManager from "./product-manager";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 
 export const dynamic = "force-dynamic";
 
@@ -32,12 +33,18 @@ function getStyle(name: string) {
 export default async function CatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string; q?: string; turi?: string }>;
+  searchParams: Promise<{
+    cat?: string;
+    q?: string;
+    turi?: string;
+    take?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const categoryId = sp.cat;
+  const take = Number(sp.take) || 30;
 
-  const [categories, products, productCounts] = await Promise.all([
+  const [categories, allMatching, productCounts] = await Promise.all([
     prisma.productCategory.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.catalogProduct.findMany({
       where: {
@@ -70,6 +77,8 @@ export default async function CatalogPage({
   );
   const totalCount = productCounts.reduce((s, c) => s + c._count, 0);
   const activeCategory = categories.find((c) => c.id === categoryId);
+  const hasMore = allMatching.length > take;
+  const products = allMatching.slice(0, take);
 
   return (
     <div>
@@ -77,7 +86,7 @@ export default async function CatalogPage({
         title="Katalog"
         subtitle={
           activeCategory
-            ? `${activeCategory.name} — ${products.length} ta mahsulot`
+            ? `${activeCategory.name} — ${allMatching.length} ta mahsulot`
             : `${totalCount} ta mahsulot • ${categories.length} ta kategoriya`
         }
       />
@@ -162,6 +171,7 @@ export default async function CatalogPage({
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             defaultCategoryId={categoryId && categoryId !== "all" ? categoryId : undefined}
           />
+          <LoadMore hasMore={hasMore} />
         </div>
       </div>
     </div>

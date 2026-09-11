@@ -56,7 +56,7 @@ export default function ListToolbar({
   const hasFilters = Array.from(sp.keys()).length > 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-4">
+    <div className="flex flex-wrap items-end gap-2 mb-4">
       <div className="relative flex-1 min-w-[200px] max-w-xs">
         <Search
           size={15}
@@ -71,23 +71,29 @@ export default function ListToolbar({
       </div>
 
       {selects.map((s) => (
-        <select
-          key={s.key}
-          value={sp.get(s.key) ?? ""}
-          onChange={(e) => update(s.key, e.target.value)}
-          className="px-3 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
-        >
-          <option value="">{s.label}</option>
-          {s.options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <label key={s.key} className="flex flex-col gap-0.5">
+          <span className="text-[11px] text-ink-soft px-0.5">{s.label}</span>
+          <select
+            value={sp.get(s.key) ?? ""}
+            onChange={(e) => update(s.key, e.target.value)}
+            className="px-3 py-2 rounded-xl border border-border bg-white text-sm"
+          >
+            <option value="">Barchasi</option>
+            {s.options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
       ))}
 
       {dateRange && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[11px] text-ink-soft px-0.5">
+            {dateRange.label ?? "Sana"}
+          </span>
+          <div className="flex items-center gap-1.5">
           <input
             type="date"
             value={sp.get(fromKey) ?? ""}
@@ -103,6 +109,7 @@ export default function ListToolbar({
             className="px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
             title={`${dateRange.label ?? "Sana"} — gacha`}
           />
+          </div>
         </div>
       )}
 

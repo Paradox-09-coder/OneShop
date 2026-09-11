@@ -13,6 +13,7 @@ import {
 import { Plus, ShoppingCart } from "lucide-react";
 import type { OrderStatus, OrderType, Prisma } from "@prisma/client";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +36,12 @@ export default async function OrdersPage({
     to?: string;
     type?: string;
     status?: string;
+    take?: string;
   }>;
 }) {
   const sp = await searchParams;
   const filter = sp.filter;
+  const take = Number(sp.take) || 30;
   const session = await getSession();
 
   // Mas'ul (otvetstvenniy) bo'yicha filter: SOTUVCHI faqat o'zi biriktirilgan
@@ -84,13 +87,15 @@ export default async function OrdersPage({
   const orders = await prisma.order.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: take + 1,
     include: { client: { select: { name: true } } },
   });
+  const hasMore = orders.length > take;
+  const page = orders.slice(0, take);
 
   const list = filter === "debt"
-    ? orders.filter((o) => (o.agreedAmount ?? 0) - o.paidAmount > 0)
-    : orders;
+    ? page.filter((o) => (o.agreedAmount ?? 0) - o.paidAmount > 0)
+    : page;
 
   const subtitle =
     filter === "active"
@@ -266,6 +271,7 @@ export default async function OrdersPage({
             </table>
           </div>
         )}
+        <LoadMore hasMore={hasMore} />
       </div>
     </div>
   );

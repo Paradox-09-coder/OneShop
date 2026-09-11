@@ -2,14 +2,16 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 import type { Prisma } from "@prisma/client";
 
 export default async function PayrollPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; period?: string }>;
+  searchParams: Promise<{ q?: string; period?: string; take?: string }>;
 }) {
   const sp = await searchParams;
+  const take = Number(sp.take) || 30;
 
   const where: Prisma.PayrollAccrualWhereInput = {
     ...(sp.period ? { period: sp.period } : {}),
@@ -30,7 +32,7 @@ export default async function PayrollPage({
     prisma.payrollAccrual.findMany({
       where,
       orderBy: [{ period: "desc" }],
-      take: 100,
+      take: take + 1,
       include: { employee: { include: { counterparty: true } } },
     }),
     prisma.payrollAccrual.findMany({
@@ -40,6 +42,8 @@ export default async function PayrollPage({
       take: 24,
     }),
   ]);
+  const hasMore = accruals.length > take;
+  const visible = accruals.slice(0, take);
 
   return (
     <div>
@@ -65,7 +69,7 @@ export default async function PayrollPage({
             </tr>
           </thead>
           <tbody>
-            {accruals.map((a) => (
+            {visible.map((a) => (
               <tr key={a.id} className="border-b border-border/50">
                 <td className="px-5 py-3 font-semibold">{a.period}</td>
                 <td className="px-5 py-3">{a.employee.counterparty.name}</td>
@@ -75,7 +79,7 @@ export default async function PayrollPage({
                 <td className="px-5 py-3 text-ink-soft">{a.note ?? "—"}</td>
               </tr>
             ))}
-            {accruals.length === 0 && (
+            {visible.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-5 py-8 text-center text-ink-soft">
                   Oylik hisoblari yo'q
@@ -84,6 +88,7 @@ export default async function PayrollPage({
             )}
           </tbody>
         </table>
+        <LoadMore hasMore={hasMore} />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { counterpartyTypeLabel } from "@/lib/labels";
 import CounterpartyForm from "./form";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 import type { CounterpartyType, Prisma } from "@prisma/client";
 
 export default async function CounterpartiesPage({
@@ -14,9 +15,11 @@ export default async function CounterpartiesPage({
     type?: string;
     from?: string;
     to?: string;
+    take?: string;
   }>;
 }) {
   const sp = await searchParams;
+  const take = Number(sp.take) || 30;
 
   const where: Prisma.CounterpartyWhereInput = {
     deletedAt: null,
@@ -42,8 +45,10 @@ export default async function CounterpartiesPage({
   const parties = await prisma.counterparty.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: take + 1,
   });
+  const hasMore = parties.length > take;
+  const visible = parties.slice(0, take);
 
   return (
     <div>
@@ -87,7 +92,7 @@ export default async function CounterpartiesPage({
                 </tr>
               </thead>
               <tbody>
-                {parties.map((p) => (
+                {visible.map((p) => (
                   <tr key={p.id} className="border-b border-border/50">
                     <td className="px-4 py-2 font-semibold">{p.name}</td>
                     <td className="px-4 py-2">
@@ -104,7 +109,7 @@ export default async function CounterpartiesPage({
                     </td>
                   </tr>
                 ))}
-                {parties.length === 0 && (
+                {visible.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-ink-soft">
                       Kontragentlar yo'q
@@ -114,6 +119,7 @@ export default async function CounterpartiesPage({
               </tbody>
             </table>
           </div>
+          <LoadMore hasMore={hasMore} />
         </div>
       </div>
     </div>

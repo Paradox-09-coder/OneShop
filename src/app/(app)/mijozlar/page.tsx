@@ -7,6 +7,7 @@ import { customerKindLabel } from "@/lib/labels";
 import { Users, Plus, Phone } from "lucide-react";
 import AddClientButton from "./add-client-button";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +20,11 @@ export default async function ClientsPage({
     kind?: string;
     from?: string;
     to?: string;
+    take?: string;
   }>;
 }) {
   const sp = await searchParams;
+  const take = Number(sp.take) || 30;
 
   const where: Prisma.CounterpartyWhereInput = {
     type: "CLIENT",
@@ -52,14 +55,16 @@ export default async function ClientsPage({
       clientProfile: true,
       _count: { select: { ordersAsClient: true } },
     },
-    take: 200,
+    take: take + 1,
   });
+  const hasMore = clients.length > take;
+  const visible = clients.slice(0, take);
 
   return (
     <div>
       <PageHeader
         title="Mijozlar"
-        subtitle={`${clients.length} ta mijoz`}
+        subtitle={`${visible.length}${hasMore ? "+" : ""} ta mijoz`}
         actions={<AddClientButton />}
       />
 
@@ -79,7 +84,7 @@ export default async function ClientsPage({
       />
 
       <div className="panel overflow-hidden">
-        {clients.length === 0 ? (
+        {visible.length === 0 ? (
           <EmptyState
             title="Mijozlar yo'q"
             message="Yangi mijoz qo'shish uchun yuqoridagi tugmani bosing"
@@ -100,7 +105,7 @@ export default async function ClientsPage({
                 </tr>
               </thead>
               <tbody>
-                {clients.map((c) => (
+                {visible.map((c) => (
                   <tr
                     key={c.id}
                     className="border-b border-border/50 hover:bg-gray-50/50"
@@ -165,6 +170,7 @@ export default async function ClientsPage({
             </table>
           </div>
         )}
+        <LoadMore hasMore={hasMore} />
       </div>
     </div>
   );

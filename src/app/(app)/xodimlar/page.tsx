@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
 import type { Prisma, SalaryType } from "@prisma/client";
 
 export default async function EmployeesPage({
@@ -12,9 +13,11 @@ export default async function EmployeesPage({
     salaryType?: string;
     from?: string;
     to?: string;
+    take?: string;
   }>;
 }) {
   const sp = await searchParams;
+  const take = Number(sp.take) || 30;
 
   const where: Prisma.EmployeeWhereInput = {
     ...(sp.salaryType ? { salaryType: sp.salaryType as SalaryType } : {}),
@@ -52,14 +55,16 @@ export default async function EmployeesPage({
       _count: { select: { attendance: true } },
     },
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: take + 1,
   });
+  const hasMore = employees.length > take;
+  const visible = employees.slice(0, take);
 
   return (
     <div>
       <PageHeader
         title="Xodimlar"
-        subtitle={`${employees.length} ta xodim`}
+        subtitle={`${visible.length}${hasMore ? "+" : ""} ta xodim`}
       />
       <ListToolbar
         searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..."
@@ -90,7 +95,7 @@ export default async function EmployeesPage({
             </tr>
           </thead>
           <tbody>
-            {employees.map((e) => (
+            {visible.map((e) => (
               <tr key={e.counterpartyId} className="border-b border-border/50">
                 <td className="px-5 py-3 font-semibold">
                   {e.counterparty.name}
@@ -116,7 +121,7 @@ export default async function EmployeesPage({
                 </td>
               </tr>
             ))}
-            {employees.length === 0 && (
+            {visible.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-5 py-8 text-center text-ink-soft">
                   Xodimlar yo'q. Kontragentlar sahifasidan xodim qo'shing.
@@ -125,6 +130,7 @@ export default async function EmployeesPage({
             )}
           </tbody>
         </table>
+        <LoadMore hasMore={hasMore} />
       </div>
     </div>
   );
