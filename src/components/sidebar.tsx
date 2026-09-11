@@ -241,23 +241,26 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
                   <button
                     onClick={() => toggleSection(item.href)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                      active ? "text-ink bg-gray-50" : "text-ink-soft hover:text-ink hover:bg-gray-50"
+                      "w-full flex items-center gap-2.5 px-3 rounded-lg transition-colors",
+                      collapsed ? "py-2.5 justify-center" : "py-2 mt-2",
+                      active ? "text-ink" : "text-ink-soft/70 hover:text-ink-soft"
                     )}
                   >
-                    <item.icon size={20} />
+                    <item.icon size={16} className="opacity-70" />
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left">{item.label}</span>
+                        <span className="flex-1 text-left text-[11px] font-bold uppercase tracking-wider">
+                          {item.label}
+                        </span>
                         <ChevronDown
-                          size={16}
-                          className={cn("transition-transform", isOpen && "rotate-180")}
+                          size={14}
+                          className={cn("transition-transform opacity-60", isOpen && "rotate-180")}
                         />
                       </>
                     )}
                   </button>
                   {!collapsed && isOpen && (
-                    <div className="ml-4 mt-0.5 space-y-0.5">
+                    <div className="ml-2 mt-0.5 pl-3 border-l-2 border-border space-y-0.5">
                       {item.children!.map((child) => {
                         const childActive = pathname === child.href;
                         return (
