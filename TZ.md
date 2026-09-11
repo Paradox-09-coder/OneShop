@@ -189,7 +189,13 @@ Qarz: [Z] USD
 - Barcha buyurtmalar tarixi
 - Joriy qarz + muddati
 - Buyurtma statusi (ishlab chiqarilyapti, tayyor, yo'lda, yetkazildi)
-- "Yangi buyurtma" tugmasi
+- Menejer bilan bog'lanish (bosh ofis raqami)
+
+> **Eslatma**: "Yangi buyurtma" tugmasi qasddan yo'q — meeting stenogrammasi
+> tasdiqlaganidek, mijoz buyurtmani telefon orqali beradi, sotuvchi buni
+> o'zi tizimga kiritadi (23:24, 31:41-31:46). Bot mijozga faqat bir
+> tomonlama xabar (holat, qarz eslatmasi) yuboradi, undan buyurtma matnini
+> qabul qilmaydi.
 
 #### 6.1.4. Haydovchi boti
 **Funksiyalari**:
