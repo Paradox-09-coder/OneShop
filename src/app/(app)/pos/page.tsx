@@ -24,8 +24,11 @@ export default async function PosPage() {
     prisma.counterparty.findFirst({
       where: { name: "Walk-in mijoz", type: "CLIENT" },
     }),
+    // Kassa (POS) narxlari faqat so'mda saqlanadi (hozircha), shuning uchun
+    // faqat so'mlik naqd hisoblar tanlanadi — aks holda USD hisobga so'mlik
+    // summa to'g'ridan-to'g'ri qo'shilib, balans buzilib qolardi.
     prisma.account.findMany({
-      where: { isActive: true, type: "CASH" },
+      where: { isActive: true, type: "CASH", currency: "UZS" },
     }),
     prisma.productCategory.findMany({
       orderBy: { sortOrder: "asc" },

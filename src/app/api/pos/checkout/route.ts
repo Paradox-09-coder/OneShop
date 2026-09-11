@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { handleError, jsonOk, requireApiPermission } from "@/lib/api";
+import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
 import { generateOrderNumber } from "@/lib/utils";
 
 const Body = z.object({
@@ -26,6 +26,19 @@ export async function POST(req: Request) {
       (s, it) => s + it.quantity * it.unitPrice,
       0
     );
+
+    const account = await prisma.account.findUnique({
+      where: { id: body.accountId },
+    });
+    if (!account) return jsonErr("Hisob topilmadi", 404);
+    // POS narxlari hozircha faqat so'mda — boshqa valyutadagi hisobga
+    // to'g'ridan-to'g'ri (kursiz) qo'shib bo'lmaydi, balans buziladi.
+    if (account.currency !== "UZS") {
+      return jsonErr(
+        "Bu hisob so'mda emas — Kassa hozircha faqat so'mlik hisoblarga tushiradi",
+        422
+      );
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       const client = await tx.counterparty.findUnique({
