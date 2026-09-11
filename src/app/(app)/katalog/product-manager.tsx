@@ -7,6 +7,7 @@ import { unitTypeLabel } from "@/lib/labels";
 import { formatMoney } from "@/lib/utils";
 import type { UnitType, Currency } from "@prisma/client";
 import { Plus, Pencil, Trash2, X, Utensils } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 interface Product {
   id: string;
@@ -67,6 +68,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { confirm, alert, Dialog } = useDialog();
 
   function openCreate() {
     setDraft({ ...EMPTY, categoryId: defaultCategoryId ?? categories[0]?.id ?? "" });
@@ -130,7 +132,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`"${name}" mahsulotini o'chirmoqchimisiz?`)) return;
+    if (!(await confirm(`"${name}" mahsulotini o'chirmoqchimisiz?`))) return;
     const res = await fetch(`/api/catalog-products/${id}`, { method: "DELETE" });
     const d = await res.json();
     if (!d.ok) return alert(d.error?.message ?? "Xato");
@@ -378,6 +380,7 @@ export default function ProductManager({ products, categories, defaultCategoryId
           </div>
         </div>
       )}
+      {Dialog}
     </div>
   );
 }

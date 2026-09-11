@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
 import { Plus, Minus, Trash2, Receipt, Search, ChevronDown, ChevronRight, Clock } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 interface Product {
   id: string;
@@ -65,6 +66,7 @@ export default function PosClient({
   const [lines, setLines] = useState<Line[]>([]);
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
+  const { alert, Dialog } = useDialog();
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     () => {
       // First category open by default
@@ -372,6 +374,7 @@ export default function PosClient({
         </div>
 
       </div>
+      {Dialog}
     </div>
   );
 }

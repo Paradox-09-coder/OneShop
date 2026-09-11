@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { OrderStatus, OrderType } from "@prisma/client";
 import { allowedTransitions } from "@/lib/state-machine";
 import { orderStatusLabel } from "@/lib/labels";
+import { useDialog } from "@/components/use-dialog";
 
 interface Props {
   orderId: string;
@@ -15,10 +16,14 @@ interface Props {
 export default function TransitionButton({ orderId, currentStatus, type }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { confirm, alert, Dialog } = useDialog();
   const next = allowedTransitions(type, currentStatus);
 
   async function transition(to: OrderStatus) {
-    if (!confirm(`Holat "${orderStatusLabel[to]}" ga o'zgartirilsinmi?`)) return;
+    const ok = await confirm(`Holat "${orderStatusLabel[to]}" ga o'zgartirilsinmi?`, {
+      danger: to === "CANCELLED",
+    });
+    if (!ok) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/transition`, {
@@ -71,6 +76,7 @@ export default function TransitionButton({ orderId, currentStatus, type }: Props
           </button>
         ))}
       </div>
+      {Dialog}
     </div>
   );
 }

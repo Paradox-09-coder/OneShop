@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 interface CatRow {
   id: string;
@@ -21,6 +22,7 @@ export default function CategoriesManager({ categories }: { categories: CatRow[]
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { confirm, alert, Dialog } = useDialog();
 
   async function save() {
     if (!draft) return;
@@ -49,7 +51,7 @@ export default function CategoriesManager({ categories }: { categories: CatRow[]
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`"${name}" kategoriyasini o'chirmoqchimisiz?`)) return;
+    if (!(await confirm(`"${name}" kategoriyasini o'chirmoqchimisiz?`))) return;
     const res = await fetch(`/api/product-categories/${id}`, { method: "DELETE" });
     const d = await res.json();
     if (!d.ok) return alert(d.error?.message ?? "O'chirib bo'lmadi");
@@ -146,6 +148,7 @@ export default function CategoriesManager({ categories }: { categories: CatRow[]
           </div>
         </Modal>
       )}
+      {Dialog}
     </div>
   );
 }

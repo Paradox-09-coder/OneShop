@@ -192,7 +192,9 @@ export default async function OrdersPage({
                         {formatMoney(total, o.orderCurrency)}
                       </td>
                       <td className="px-5 py-3 text-right whitespace-nowrap">
-                        {paidFully ? (
+                        {o.status === "CANCELLED" ? (
+                          <span className="text-ink-soft">—</span>
+                        ) : paidFully ? (
                           <span className="text-success font-semibold">
                             ✓ {formatMoney(o.paidAmount, o.orderCurrency)}
                           </span>

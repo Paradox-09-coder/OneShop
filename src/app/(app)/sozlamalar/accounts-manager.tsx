@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
 import { accountTypeLabel } from "@/lib/labels";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 type AccountType = "CASH" | "BANK";
 type Currency = "UZS" | "USD" | "EUR" | "RUB";
@@ -40,6 +41,7 @@ export default function AccountsManager({ accounts }: { accounts: AccountRow[] }
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { confirm, alert, Dialog } = useDialog();
 
   async function save() {
     if (!draft) return;
@@ -68,7 +70,7 @@ export default function AccountsManager({ accounts }: { accounts: AccountRow[] }
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`"${name}" hisobini o'chirmoqchimisiz?`)) return;
+    if (!(await confirm(`"${name}" hisobini o'chirmoqchimisiz?`))) return;
     const res = await fetch(`/api/accounts/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!data.ok) {
@@ -232,6 +234,7 @@ export default function AccountsManager({ accounts }: { accounts: AccountRow[] }
           </div>
         </Modal>
       )}
+      {Dialog}
     </div>
   );
 }

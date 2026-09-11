@@ -6,6 +6,7 @@ import { formatMoney, formatNumber } from "@/lib/utils";
 import { unitTypeLabel } from "@/lib/labels";
 import type { UnitType, Currency } from "@prisma/client";
 import { Plus, Pencil, Trash2, X, Utensils, Calculator } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 interface Material {
   id: string;
@@ -60,6 +61,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { confirm, alert, Dialog } = useDialog();
 
   function openNew() {
     setDraft({
@@ -178,7 +180,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`"${name}" retseptini o'chirmoqchimisiz?`)) return;
+    if (!(await confirm(`"${name}" retseptini o'chirmoqchimisiz?`))) return;
     const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
     const d = await res.json();
     if (!d.ok) return alert(d.error?.message ?? "Xato");
@@ -456,6 +458,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
           </div>
         </div>
       )}
+      {Dialog}
     </div>
   );
 }

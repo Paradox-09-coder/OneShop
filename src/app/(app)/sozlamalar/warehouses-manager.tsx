@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 interface Row {
   id: string;
@@ -22,6 +23,7 @@ export default function WarehousesManager({ warehouses }: { warehouses: Row[] })
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { confirm, alert, Dialog } = useDialog();
 
   async function save() {
     if (!draft) return;
@@ -50,7 +52,7 @@ export default function WarehousesManager({ warehouses }: { warehouses: Row[] })
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`"${name}" omborini o'chirmoqchimisiz?`)) return;
+    if (!(await confirm(`"${name}" omborini o'chirmoqchimisiz?`))) return;
     const res = await fetch(`/api/warehouses/${id}`, { method: "DELETE" });
     const d = await res.json();
     if (!d.ok) return alert(d.error?.message ?? "O'chirib bo'lmadi");
@@ -164,6 +166,7 @@ export default function WarehousesManager({ warehouses }: { warehouses: Row[] })
           </div>
         </Modal>
       )}
+      {Dialog}
     </div>
   );
 }
