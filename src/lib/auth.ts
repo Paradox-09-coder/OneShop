@@ -119,10 +119,14 @@ export function defaultPermissionsForRole(role: Role): string[] {
       return [
         "dashboard.read",
         "orders.*", "clients.*", "counterparties.read",
-        "crm.*", "reports.read",
+        "reports.read",
       ];
 
-    // ── Sotuvchi ── buyurtmalar + mijoz + CRM + kassa
+    // ── Sotuvchi ── buyurtmalar + mijoz + kassa
+    // Eslatma: CRM (voronka) meeting stenogrammasida umuman tilga
+    // olinmagan — "crm.*" ataylab olib tashlandi, aks holda sidebar'dan
+    // yashirilgan bo'lsa ham to'g'ridan-to'g'ri /crm manziliga kirish
+    // qolib ketardi.
     case "SOTUVCHI":
     case "SELLER":
       return [
@@ -131,7 +135,6 @@ export function defaultPermissionsForRole(role: Role): string[] {
         "pos.read", "pos.write",
         "clients.read", "clients.write",
         "counterparties.read",
-        "crm.*",
         "catalog.read",
       ];
 
