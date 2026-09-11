@@ -8,13 +8,12 @@ import type { Prisma } from "@prisma/client";
 export default async function PayrollPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; period?: string; take?: string }>;
+  searchParams: Promise<{ q?: string; take?: string }>;
 }) {
   const sp = await searchParams;
   const take = Number(sp.take) || 30;
 
   const where: Prisma.PayrollAccrualWhereInput = {
-    ...(sp.period ? { period: sp.period } : {}),
     ...(sp.q
       ? {
           employee: {
@@ -28,36 +27,19 @@ export default async function PayrollPage({
       : {}),
   };
 
-  const [accruals, periods] = await Promise.all([
-    prisma.payrollAccrual.findMany({
-      where,
-      orderBy: [{ period: "desc" }],
-      take: take + 1,
-      include: { employee: { include: { counterparty: true } } },
-    }),
-    prisma.payrollAccrual.findMany({
-      distinct: ["period"],
-      orderBy: { period: "desc" },
-      select: { period: true },
-      take: 24,
-    }),
-  ]);
+  const accruals = await prisma.payrollAccrual.findMany({
+    where,
+    orderBy: [{ period: "desc" }],
+    take: take + 1,
+    include: { employee: { include: { counterparty: true } } },
+  });
   const hasMore = accruals.length > take;
   const visible = accruals.slice(0, take);
 
   return (
     <div>
       <PageHeader title="Oyliklar" subtitle="Xodimlar oylik hisoblari" />
-      <ListToolbar
-        searchPlaceholder="Xodim ismi bo'yicha qidirish..."
-        selects={[
-          {
-            key: "period",
-            label: "Oy",
-            options: periods.map((p) => ({ value: p.period, label: p.period })),
-          },
-        ]}
-      />
+      <ListToolbar searchPlaceholder="Xodim ismi bo'yicha qidirish..." />
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">
           <thead>

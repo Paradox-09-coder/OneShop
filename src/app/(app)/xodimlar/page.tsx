@@ -3,32 +3,17 @@ import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
 import LoadMore from "@/components/load-more";
-import type { Prisma, SalaryType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 export default async function EmployeesPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    q?: string;
-    salaryType?: string;
-    from?: string;
-    to?: string;
-    take?: string;
-  }>;
+  searchParams: Promise<{ q?: string; take?: string }>;
 }) {
   const sp = await searchParams;
   const take = Number(sp.take) || 30;
 
   const where: Prisma.EmployeeWhereInput = {
-    ...(sp.salaryType ? { salaryType: sp.salaryType as SalaryType } : {}),
-    ...(sp.from || sp.to
-      ? {
-          startDate: {
-            ...(sp.from ? { gte: new Date(sp.from) } : {}),
-            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
-          },
-        }
-      : {}),
     ...(sp.q
       ? {
           OR: [
@@ -66,21 +51,7 @@ export default async function EmployeesPage({
         title="Xodimlar"
         subtitle={`${visible.length}${hasMore ? "+" : ""} ta xodim`}
       />
-      <ListToolbar
-        searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..."
-        selects={[
-          {
-            key: "salaryType",
-            label: "Oylik turi",
-            options: [
-              { value: "FIXED", label: "Belgilangan" },
-              { value: "KPI", label: "KPI" },
-              { value: "MIXED", label: "Aralash" },
-            ],
-          },
-        ]}
-        dateRange={{ label: "Boshlagan sana" }}
-      />
+      <ListToolbar searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..." />
 
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">

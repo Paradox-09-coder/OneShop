@@ -4,17 +4,58 @@ import EmptyState from "@/components/empty-state";
 import { formatMoney, formatDateTime } from "@/lib/utils";
 import { paymentTxLabel, paymentSourceLabel } from "@/lib/labels";
 import { CreditCard } from "lucide-react";
+import ListToolbar from "@/components/list-toolbar";
+import LoadMore from "@/components/load-more";
+import type { PaymentTxType, Prisma } from "@prisma/client";
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    type?: string;
+    from?: string;
+    to?: string;
+    take?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+  const take = Number(sp.take) || 30;
+
+  const where: Prisma.PaymentWhereInput = {
+    ...(sp.type ? { type: sp.type as PaymentTxType } : {}),
+    ...(sp.from || sp.to
+      ? {
+          date: {
+            ...(sp.from ? { gte: new Date(sp.from) } : {}),
+            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+          },
+        }
+      : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { counterpartyNameSnapshot: { contains: sp.q, mode: "insensitive" } },
+            { counterparty: { is: { name: { contains: sp.q, mode: "insensitive" } } } },
+            { category: { is: { name: { contains: sp.q, mode: "insensitive" } } } },
+            { description: { contains: sp.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
   const payments = await prisma.payment.findMany({
+    where,
     orderBy: { date: "desc" },
-    take: 100,
+    take: take + 1,
     include: {
       account: { select: { name: true } },
       counterparty: { select: { name: true } },
       category: { select: { name: true } },
     },
   });
+  const hasMore = payments.length > take;
+  const visible = payments.slice(0, take);
 
   return (
     <div>
@@ -22,8 +63,22 @@ export default async function TransactionsPage() {
         title="Tranzaksiyalar"
         subtitle="Barcha pul harakatlari"
       />
+      <ListToolbar
+        searchPlaceholder="Kim/nima, kategoriya bo'yicha qidirish..."
+        selects={[
+          {
+            key: "type",
+            label: "Turi",
+            options: Object.entries(paymentTxLabel).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          },
+        ]}
+        dateRange={{ label: "Sana" }}
+      />
       <div className="panel overflow-hidden">
-        {payments.length === 0 ? (
+        {visible.length === 0 ? (
           <EmptyState
             title="Tranzaksiyalar yo'q"
             icon={<CreditCard size={22} />}
@@ -43,7 +98,7 @@ export default async function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p) => {
+                {visible.map((p) => {
                   const isIn = ["CASH_IN", "BANK_IN"].includes(p.type);
                   return (
                     <tr
@@ -83,6 +138,7 @@ export default async function TransactionsPage() {
             </table>
           </div>
         )}
+        <LoadMore hasMore={hasMore} />
       </div>
     </div>
   );
