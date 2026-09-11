@@ -14,7 +14,9 @@ import {
   escape,
   isGroupConfigured,
   sendGroupMessage,
+  downloadTelegramFile,
 } from "@/lib/telegram";
+import { transcribeAudio, isGeminiConfigured } from "@/lib/gemini";
 import { stagesFor } from "@/lib/state-machine";
 import { NextResponse } from "next/server";
 import type { OrderStatus } from "@prisma/client";
@@ -53,6 +55,12 @@ interface TelegramMessage {
     first_name?: string;
     last_name?: string;
     user_id?: number;
+  };
+  voice?: {
+    file_id: string;
+    duration: number;
+    mime_type?: string;
+    file_size?: number;
   };
 }
 
@@ -196,8 +204,59 @@ const MENU_BUTTON_HINTS = [
   "qabul",
 ];
 
-async function handleText(msg: TelegramMessage) {
-  const text = msg.text ?? "";
+async function handleVoice(msg: TelegramMessage) {
+  const chatId = msg.chat.id;
+  if (!msg.voice) return;
+
+  const users = await prisma.counterparty.findMany({
+    where: { deletedAt: null },
+    take: 200,
+  });
+  const user = users.find(
+    (u) =>
+      (u.metadata as DriverOrClientMeta | null)?.telegram_id === msg.from?.id
+  );
+  if (!user) {
+    await sendMessage(chatId, "Iltimos, avval /start orqali tanishuv.", {
+      reply_markup: contactRequestKeyboard,
+    });
+    return;
+  }
+
+  if (!isGeminiConfigured()) {
+    await sendMessage(
+      chatId,
+      "Kechirasiz, hozircha ovozli xabarlar qabul qilinmaydi — iltimos, matn qilib yozing.",
+      { reply_markup: keyboardFor(user.type) }
+    );
+    return;
+  }
+
+  try {
+    const audio = await downloadTelegramFile(msg.voice.file_id);
+    const transcript = await transcribeAudio(
+      audio,
+      msg.voice.mime_type ?? "audio/ogg"
+    );
+    await sendMessage(
+      chatId,
+      `🎙 Eshitib oldim:\n<i>"${escape(transcript)}"</i>`
+    );
+    await handleText(msg, transcript);
+  } catch (e) {
+    console.error("[Telegram webhook] ovozli xabarni o'girishda xato:", e);
+    await sendMessage(
+      chatId,
+      "Kechirasiz, ovozli xabarni tushunolmadim — iltimos, matn qilib yozing.",
+      { reply_markup: keyboardFor(user.type) }
+    );
+  }
+}
+
+async function handleText(msg: TelegramMessage, overrideText?: string) {
+  // overrideText — ovozli xabar Gemini orqali matnga o'girilganda shu yerdan
+  // keladi (handleVoice), aks holda foydalanuvchi yozgan matnning o'zi.
+  const text = overrideText ?? msg.text ?? "";
   const chatId = msg.chat.id;
 
   // Find who this user is by their telegram_id
@@ -697,6 +756,8 @@ export async function POST(req: Request) {
 
     if (update.message?.contact) {
       await handleContact(update.message);
+    } else if (update.message?.voice) {
+      await handleVoice(update.message);
     } else if (update.message?.text) {
       await handleText(update.message);
     } else if (update.callback_query) {

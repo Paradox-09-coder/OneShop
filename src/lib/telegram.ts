@@ -80,6 +80,22 @@ export function editMessageText(
   });
 }
 
+/**
+ * Telegram'ga yuklangan faylni (masalan ovozli xabar) yuklab olib, Buffer
+ * qilib qaytaradi — Gemini'ga yuborish uchun.
+ */
+export async function downloadTelegramFile(fileId: string): Promise<Buffer> {
+  if (!TOKEN) throw new Error("TELEGRAM_BOT_TOKEN not set");
+  const file = await call("getFile", { file_id: fileId });
+  const filePath = file.file_path as string;
+  const res = await fetch(
+    `https://api.telegram.org/file/bot${TOKEN}/${filePath}`
+  );
+  if (!res.ok) throw new Error(`Faylni yuklab bo'lmadi: ${res.statusText}`);
+  const arrayBuffer = await res.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
 export function setWebhook(url: string, secretToken?: string) {
   return call("setWebhook", {
     url,
