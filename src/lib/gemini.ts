@@ -2,7 +2,11 @@
 // Meeting: "ovozli xabar tashlasalar ham o'zi kiritib qo'yadi robotni o'zi."
 
 const API_KEY = process.env.GEMINI_API_KEY ?? "";
-const MODEL = "gemini-2.0-flash";
+// "gemini-2.0-flash" google tomonidan butunlay o'chirilgan ("no longer
+// available"). "-latest" alias'ini ishlatamiz — Google eski modelni
+// o'chirganda ham bu doim joriy flash modelga ishora qiladi, kodni qayta
+// o'zgartirish kerak bo'lmaydi.
+const MODEL = "gemini-flash-latest";
 
 export function isGeminiConfigured() {
   return !!API_KEY;
