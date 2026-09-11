@@ -50,6 +50,21 @@ export function answerCallbackQuery(
   });
 }
 
+export function editMessageText(
+  chatId: number | string,
+  messageId: number,
+  text: string,
+  extra?: Record<string, unknown>
+) {
+  return call("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+    parse_mode: "HTML",
+    ...extra,
+  });
+}
+
 export function setWebhook(url: string, secretToken?: string) {
   return call("setWebhook", {
     url,
@@ -79,9 +94,12 @@ export const clientKeyboard = {
   resize_keyboard: true,
 };
 
+// "Yetkazdim" bu yerda yo'q — u har bir buyurtma kartochkasi ostida
+// alohida (inline) tugma sifatida chiqadi, chunki qaysi buyurtmaga
+// tegishli ekanini bildirish kerak (bitta umumiy tugma buni bilolmaydi).
 export const driverKeyboard = {
   keyboard: [
-    [{ text: "📋 Bugungi yetkazishlar" }, { text: "✅ Yetkazdim" }],
+    [{ text: "📋 Bugungi yetkazishlar" }],
     [{ text: "💰 Yo'l kira" }, { text: "☎️ Bosh ofis" }],
   ],
   resize_keyboard: true,

@@ -5,6 +5,8 @@
 import { prisma } from "@/lib/prisma";
 import {
   sendMessage,
+  editMessageText,
+  answerCallbackQuery,
   supplierKeyboard,
   clientKeyboard,
   driverKeyboard,
@@ -12,6 +14,12 @@ import {
   escape,
 } from "@/lib/telegram";
 import { NextResponse } from "next/server";
+
+// Aniq GPS koordinata bazada yo'q (mijoz manzili — erkin matn), shuning
+// uchun Google Maps qidiruv havolasi orqali navigatsiya qilamiz.
+function mapsLink(address: string): string {
+  return `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+}
 
 interface TelegramMessage {
   message_id: number;
@@ -165,6 +173,15 @@ async function handleText(msg: TelegramMessage) {
     return;
   }
 
+  if (
+    text.includes("Bosh ofis") ||
+    text.includes("Rahbariyat") ||
+    text.includes("Menejer bilan")
+  ) {
+    await sendMessage(chatId, "☎️ Bosh ofis: <b>+998 71 200 00 00</b>");
+    return;
+  }
+
   // Route by role
   if (user.type === "SUPPLIER") {
     if (text.includes("Qarzim")) {
@@ -233,42 +250,173 @@ async function handleText(msg: TelegramMessage) {
 
   if (user.type === "OTHER") {
     if (text.includes("Bugungi") || text.includes("yetkazish")) {
-      // Faqat SHU haydovchiga biriktirilgan yetkazishlar — telefon bo'yicha.
-      // Sana filtri qo'llanilmaydi: agar yetkazish kechikkan bo'lsa ham
-      // (rejalashtirilgan sana o'tib ketgan bo'lsa ham), u hali "Yetkazilmoqda"
-      // holatida ekan — botdan g'oyib bo'lmasligi kerak.
+      await sendDeliveryList(chatId, user);
+      return;
+    }
+
+    if (text.includes("Yetkazdim")) {
+      await sendMessage(
+        chatId,
+        "Qaysi buyurtmani yetkazganingizni belgilash uchun " +
+          "«📋 Bugungi yetkazishlar»ni oching — har bir buyurtma tagida " +
+          "o'zining «✅ Yetkazdim» tugmasi bor."
+      );
+      return;
+    }
+
+    if (text.includes("Yo'l kira") || text.includes("Yol kira")) {
       const driverPhoneNorm = normalizePhone(user.phone ?? "");
-      const allActive = await prisma.order.findMany({
-        where: { status: "YETKAZILMOQDA" },
-        orderBy: [{ expectedDeliveryDate: "asc" }],
-        take: 50,
-        include: { client: true },
+      const recent = await prisma.order.findMany({
+        where: {
+          status: { in: ["YETKAZILMOQDA", "YAKUNLANDI"] },
+          driverPhone: { not: null },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 100,
       });
-      const orders = allActive.filter(
+      const mine = recent.filter(
         (o) => o.driverPhone && normalizePhone(o.driverPhone) === driverPhoneNorm
       );
-      if (orders.length === 0)
-        return sendMessage(chatId, "Sizga biriktirilgan yetkazishlar yo'q");
+      if (mine.length === 0)
+        return sendMessage(chatId, "Sizga biriktirilgan yo'l kira topilmadi");
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const lines = orders
-        .map((o) => {
-          const overdue =
-            o.expectedDeliveryDate && o.expectedDeliveryDate < today;
-          return (
-            `${overdue ? "⚠️ KECHIKMOQDA" : "🚚"} ${escape(o.orderNumber)} — ${escape(o.client?.name ?? "—")}\n` +
-            `📍 ${escape(o.deliveryAddress ?? "—")}\n` +
-            `📱 ${escape(o.client?.phone ?? "—")}`
-          );
-        })
-        .join("\n\n");
-      await sendMessage(chatId, `<b>Yetkazishlaringiz:</b>\n\n${lines}`);
+      const total = mine.reduce((s, o) => s + (o.deliveryCost ?? 0), 0);
+      const paid = mine
+        .filter((o) => o.deliveryPaidAt)
+        .reduce((s, o) => s + (o.deliveryCost ?? 0), 0);
+      const unpaid = total - paid;
+      const lines = mine
+        .slice(0, 10)
+        .map(
+          (o) =>
+            `${o.deliveryPaidAt ? "✅" : "⏳"} ${escape(o.orderNumber)} — ${(o.deliveryCost ?? 0).toLocaleString("ru-RU")} so'm` +
+            (o.deliveryPaidAt ? "" : " (to'lanmagan)")
+        )
+        .join("\n");
+      await sendMessage(
+        chatId,
+        `<b>Yo'l kira hisobingiz</b>\n\n` +
+          `Jami belgilangan: <b>${total.toLocaleString("ru-RU")} so'm</b>\n` +
+          `To'langan: ${paid.toLocaleString("ru-RU")} so'm\n` +
+          `Qolgan (to'lanmagan): <b>${unpaid.toLocaleString("ru-RU")} so'm</b>\n\n` +
+          `${lines}`
+      );
       return;
     }
   }
 
   await sendMessage(chatId, "Menyudan tanlang.");
+}
+
+async function sendDeliveryList(
+  chatId: number,
+  driver: { phone: string | null }
+) {
+  // Faqat SHU haydovchiga biriktirilgan yetkazishlar — telefon bo'yicha.
+  // Sana filtri qo'llanilmaydi: yetkazish kechikkan bo'lsa ham (rejalashtirilgan
+  // sana o'tib ketgan bo'lsa ham), u hali "Yetkazilmoqda" holatida ekan —
+  // botdan g'oyib bo'lmasligi kerak.
+  const driverPhoneNorm = normalizePhone(driver.phone ?? "");
+  const allActive = await prisma.order.findMany({
+    where: { status: "YETKAZILMOQDA" },
+    orderBy: [{ expectedDeliveryDate: "asc" }],
+    take: 50,
+    include: { client: true },
+  });
+  const orders = allActive.filter(
+    (o) => o.driverPhone && normalizePhone(o.driverPhone) === driverPhoneNorm
+  );
+  if (orders.length === 0) {
+    await sendMessage(chatId, "Sizga biriktirilgan yetkazishlar yo'q");
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  await sendMessage(chatId, `<b>Yetkazishlaringiz (${orders.length}):</b>`);
+
+  // Har bir buyurtma — alohida xabar, o'zining "Yetkazdim" tugmasi bilan
+  // (bitta umumiy tugma qaysi buyurtmaga tegishli ekanini bildirmasdi).
+  for (const o of orders) {
+    const overdue = o.expectedDeliveryDate && o.expectedDeliveryDate < today;
+    const address = o.deliveryAddress || "—";
+    const text =
+      `${overdue ? "⚠️ KECHIKMOQDA" : "🚚"} <b>${escape(o.orderNumber)}</b>\n` +
+      `👤 ${escape(o.client?.name ?? "—")}\n` +
+      `📍 <a href="${mapsLink(address)}">${escape(address)}</a>\n` +
+      `📱 ${escape(o.client?.phone ?? "—")}`;
+    await sendMessage(chatId, text, {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "✅ Yetkazdim", callback_data: `deliver:${o.id}` }],
+        ],
+      },
+    });
+  }
+}
+
+async function handleCallback(query: NonNullable<Update["callback_query"]>) {
+  const data = query.data ?? "";
+  const [action, orderId] = data.split(":");
+  if (action !== "deliver" || !orderId) {
+    await answerCallbackQuery(query.id);
+    return;
+  }
+
+  const users = await prisma.counterparty.findMany({
+    where: { deletedAt: null, type: "OTHER" },
+    take: 200,
+  });
+  const driver = users.find(
+    (u) =>
+      (u.metadata as { telegram_id?: number } | null)?.telegram_id ===
+      query.from.id
+  );
+  if (!driver) {
+    await answerCallbackQuery(query.id, "Siz haydovchi sifatida topilmadingiz");
+    return;
+  }
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  const driverPhoneNorm = normalizePhone(driver.phone ?? "");
+  if (
+    !order ||
+    !order.driverPhone ||
+    normalizePhone(order.driverPhone) !== driverPhoneNorm
+  ) {
+    await answerCallbackQuery(query.id, "Bu buyurtma sizga tegishli emas");
+    return;
+  }
+  if (order.status !== "YETKAZILMOQDA") {
+    await answerCallbackQuery(query.id, "Bu buyurtma allaqachon yakunlangan");
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id: orderId },
+      data: { status: "YAKUNLANDI", deliveredAt: new Date() },
+    }),
+    prisma.orderStatusHistory.create({
+      data: {
+        orderId,
+        fromStatus: order.status,
+        toStatus: "YAKUNLANDI",
+        changedById: `telegram:${driver.id}`,
+        reason: "Haydovchi botda \"Yetkazdim\" tugmasini bosdi",
+      },
+    }),
+  ]);
+
+  await answerCallbackQuery(query.id, "✅ Yetkazildi deb belgilandi!");
+  if (query.message) {
+    await editMessageText(
+      query.message.chat.id,
+      query.message.message_id,
+      `✅ <b>YETKAZILDI</b> — ${escape(order.orderNumber)}`,
+      { reply_markup: { inline_keyboard: [] } }
+    );
+  }
 }
 
 export async function POST(req: Request) {
@@ -288,6 +436,8 @@ export async function POST(req: Request) {
       await handleContact(update.message);
     } else if (update.message?.text) {
       await handleText(update.message);
+    } else if (update.callback_query) {
+      await handleCallback(update.callback_query);
     }
 
     return NextResponse.json({ ok: true });
