@@ -56,6 +56,17 @@ function normalizePhone(s: string): string {
   return s.replace(/\D/g, "").replace(/^998/, "+998");
 }
 
+// Telegram klaviaturasi qurilmada saqlanib qoladi — bot yangilansa ham,
+// bot yangi reply_markup yubormaguncha eski tugmalar ko'rinib turadi.
+// Shuning uchun har bir javobga joriy rolga mos klaviaturani qayta
+// biriktiramiz — shu bilan u o'z-o'zidan yangilanib boradi.
+function keyboardFor(type: string) {
+  if (type === "SUPPLIER") return supplierKeyboard;
+  if (type === "CLIENT") return clientKeyboard;
+  if (type === "OTHER") return driverKeyboard;
+  return undefined;
+}
+
 async function findRoleByPhone(phone: string): Promise<{
   role: "SUPPLIER" | "CLIENT" | "DRIVER" | "UNKNOWN";
   counterparty?: { id: string; name: string; type: string };
@@ -173,12 +184,16 @@ async function handleText(msg: TelegramMessage) {
     return;
   }
 
+  const kb = keyboardFor(user.type);
+
   if (
     text.includes("Bosh ofis") ||
     text.includes("Rahbariyat") ||
     text.includes("Menejer bilan")
   ) {
-    await sendMessage(chatId, "☎️ Bosh ofis: <b>+998 71 200 00 00</b>");
+    await sendMessage(chatId, "☎️ Bosh ofis: <b>+998 71 200 00 00</b>", {
+      reply_markup: kb,
+    });
     return;
   }
 
@@ -190,7 +205,8 @@ async function handleText(msg: TelegramMessage) {
         chatId,
         `<b>${escape(user.name)}</b>\n\n` +
           `Sizga qarzimiz: <b>${Math.abs(balance).toLocaleString("ru-RU")} ${user.balanceCurrency}</b>` +
-          (balance >= 0 ? " (biz qarzdormiz)" : " (siz qarzdorsiz)")
+          (balance >= 0 ? " (biz qarzdormiz)" : " (siz qarzdorsiz)"),
+        { reply_markup: kb }
       );
       return;
     }
@@ -201,14 +217,16 @@ async function handleText(msg: TelegramMessage) {
         orderBy: { createdAt: "desc" },
       });
       if (shipments.length === 0)
-        return sendMessage(chatId, "Qabullar yo'q");
+        return sendMessage(chatId, "Qabullar yo'q", { reply_markup: kb });
       const lines = shipments
         .map(
           (s) =>
             `📦 ${escape(s.containerNumber ?? "—")} — ${s.totalCost.toLocaleString("ru-RU")} ${s.currency}`
         )
         .join("\n");
-      await sendMessage(chatId, `<b>So'nggi qabullar:</b>\n${lines}`);
+      await sendMessage(chatId, `<b>So'nggi qabullar:</b>\n${lines}`, {
+        reply_markup: kb,
+      });
       return;
     }
   }
@@ -220,14 +238,17 @@ async function handleText(msg: TelegramMessage) {
         take: 5,
         orderBy: { createdAt: "desc" },
       });
-      if (orders.length === 0) return sendMessage(chatId, "Buyurtmalar yo'q");
+      if (orders.length === 0)
+        return sendMessage(chatId, "Buyurtmalar yo'q", { reply_markup: kb });
       const lines = orders
         .map(
           (o) =>
             `📋 ${escape(o.orderNumber)} — ${o.status} — ${(o.agreedAmount ?? 0).toLocaleString("ru-RU")} ${o.orderCurrency}`
         )
         .join("\n");
-      await sendMessage(chatId, `<b>Buyurtmalaringiz:</b>\n${lines}`);
+      await sendMessage(chatId, `<b>Buyurtmalaringiz:</b>\n${lines}`, {
+        reply_markup: kb,
+      });
       return;
     }
     if (text.includes("Qarzim")) {
@@ -242,7 +263,8 @@ async function handleText(msg: TelegramMessage) {
         `<b>${escape(user.name)}</b>\n\n` +
           (debt > 0
             ? `Qarzingiz: <b>${debt.toLocaleString("ru-RU")} ${user.balanceCurrency}</b>`
-            : `Qarzingiz yo'q ✓`)
+            : `Qarzingiz yo'q ✓`),
+        { reply_markup: kb }
       );
       return;
     }
@@ -250,7 +272,7 @@ async function handleText(msg: TelegramMessage) {
 
   if (user.type === "OTHER") {
     if (text.includes("Bugungi") || text.includes("yetkazish")) {
-      await sendDeliveryList(chatId, user);
+      await sendDeliveryList(chatId, user, kb);
       return;
     }
 
@@ -259,7 +281,8 @@ async function handleText(msg: TelegramMessage) {
         chatId,
         "Qaysi buyurtmani yetkazganingizni belgilash uchun " +
           "«📋 Bugungi yetkazishlar»ni oching — har bir buyurtma tagida " +
-          "o'zining «✅ Yetkazdim» tugmasi bor."
+          "o'zining «✅ Yetkazdim» tugmasi bor.",
+        { reply_markup: kb }
       );
       return;
     }
@@ -278,7 +301,9 @@ async function handleText(msg: TelegramMessage) {
         (o) => o.driverPhone && normalizePhone(o.driverPhone) === driverPhoneNorm
       );
       if (mine.length === 0)
-        return sendMessage(chatId, "Sizga biriktirilgan yo'l kira topilmadi");
+        return sendMessage(chatId, "Sizga biriktirilgan yo'l kira topilmadi", {
+          reply_markup: kb,
+        });
 
       const total = mine.reduce((s, o) => s + (o.deliveryCost ?? 0), 0);
       const paid = mine
@@ -299,18 +324,20 @@ async function handleText(msg: TelegramMessage) {
           `Jami belgilangan: <b>${total.toLocaleString("ru-RU")} so'm</b>\n` +
           `To'langan: ${paid.toLocaleString("ru-RU")} so'm\n` +
           `Qolgan (to'lanmagan): <b>${unpaid.toLocaleString("ru-RU")} so'm</b>\n\n` +
-          `${lines}`
+          `${lines}`,
+        { reply_markup: kb }
       );
       return;
     }
   }
 
-  await sendMessage(chatId, "Menyudan tanlang.");
+  await sendMessage(chatId, "Menyudan tanlang.", { reply_markup: kb });
 }
 
 async function sendDeliveryList(
   chatId: number,
-  driver: { phone: string | null }
+  driver: { phone: string | null },
+  kb?: ReturnType<typeof keyboardFor>
 ) {
   // Faqat SHU haydovchiga biriktirilgan yetkazishlar — telefon bo'yicha.
   // Sana filtri qo'llanilmaydi: yetkazish kechikkan bo'lsa ham (rejalashtirilgan
@@ -327,13 +354,17 @@ async function sendDeliveryList(
     (o) => o.driverPhone && normalizePhone(o.driverPhone) === driverPhoneNorm
   );
   if (orders.length === 0) {
-    await sendMessage(chatId, "Sizga biriktirilgan yetkazishlar yo'q");
+    await sendMessage(chatId, "Sizga biriktirilgan yetkazishlar yo'q", {
+      reply_markup: kb,
+    });
     return;
   }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  await sendMessage(chatId, `<b>Yetkazishlaringiz (${orders.length}):</b>`);
+  await sendMessage(chatId, `<b>Yetkazishlaringiz (${orders.length}):</b>`, {
+    reply_markup: kb,
+  });
 
   // Har bir buyurtma — alohida xabar, o'zining "Yetkazdim" tugmasi bilan
   // (bitta umumiy tugma qaysi buyurtmaga tegishli ekanini bildirmasdi).
