@@ -13,7 +13,15 @@ import {
   contactRequestKeyboard,
   escape,
 } from "@/lib/telegram";
+import { stagesFor } from "@/lib/state-machine";
 import { NextResponse } from "next/server";
+import type { OrderStatus } from "@prisma/client";
+
+// Savdo (retail/wholesale) buyurtmalari "Yetkazilmoqda"ga, ishlab chiqarish
+// buyurtmalari esa "Tayyor"ga yetganda haydovchiga topshiriladi — ikkala
+// bosqich ham "hali yetkazilmagan, lekin haydovchiga tayyor" degani.
+const ACTIVE_DELIVERY_STATUSES: OrderStatus[] = ["YETKAZILMOQDA", "READY"];
+const DELIVERED_STATUSES: OrderStatus[] = ["YAKUNLANDI", "DELIVERED"];
 
 // Aniq GPS koordinata bazada yo'q (mijoz manzili — erkin matn), shuning
 // uchun Google Maps qidiruv havolasi orqali navigatsiya qilamiz.
@@ -291,7 +299,7 @@ async function handleText(msg: TelegramMessage) {
       const driverPhoneNorm = normalizePhone(user.phone ?? "");
       const recent = await prisma.order.findMany({
         where: {
-          status: { in: ["YETKAZILMOQDA", "YAKUNLANDI"] },
+          status: { in: [...ACTIVE_DELIVERY_STATUSES, ...DELIVERED_STATUSES] },
           driverPhone: { not: null },
         },
         orderBy: { updatedAt: "desc" },
@@ -345,7 +353,7 @@ async function sendDeliveryList(
   // botdan g'oyib bo'lmasligi kerak.
   const driverPhoneNorm = normalizePhone(driver.phone ?? "");
   const allActive = await prisma.order.findMany({
-    where: { status: "YETKAZILMOQDA" },
+    where: { status: { in: ACTIVE_DELIVERY_STATUSES } },
     orderBy: [{ expectedDeliveryDate: "asc" }],
     take: 50,
     include: { client: true },
@@ -418,21 +426,27 @@ async function handleCallback(query: NonNullable<Update["callback_query"]>) {
     await answerCallbackQuery(query.id, "Bu buyurtma sizga tegishli emas");
     return;
   }
-  if (order.status !== "YETKAZILMOQDA") {
+  if (!ACTIVE_DELIVERY_STATUSES.includes(order.status)) {
     await answerCallbackQuery(query.id, "Bu buyurtma allaqachon yakunlangan");
     return;
   }
 
+  // Savdo buyurtmasi uchun keyingi bosqich "Yakunlandi", ishlab chiqarish
+  // buyurtmasi uchun "Yetkazildi" — ikkalasi ham o'sha pipeline'ning
+  // "topshirildi" bosqichi, shuning uchun holat grafigidan olinadi.
+  const flow = stagesFor(order.type);
+  const nextStatus = flow[flow.indexOf(order.status) + 1] as OrderStatus;
+
   await prisma.$transaction([
     prisma.order.update({
       where: { id: orderId },
-      data: { status: "YAKUNLANDI", deliveredAt: new Date() },
+      data: { status: nextStatus, deliveredAt: new Date() },
     }),
     prisma.orderStatusHistory.create({
       data: {
         orderId,
         fromStatus: order.status,
-        toStatus: "YAKUNLANDI",
+        toStatus: nextStatus,
         changedById: `telegram:${driver.id}`,
         reason: "Haydovchi botda \"Yetkazdim\" tugmasini bosdi",
       },
