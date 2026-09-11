@@ -233,27 +233,37 @@ async function handleText(msg: TelegramMessage) {
 
   if (user.type === "OTHER") {
     if (text.includes("Bugungi") || text.includes("yetkazish")) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const orders = await prisma.order.findMany({
-        where: {
-          status: "YETKAZILMOQDA",
-          expectedDeliveryDate: { gte: today },
-        },
-        take: 10,
+      // Faqat SHU haydovchiga biriktirilgan yetkazishlar — telefon bo'yicha.
+      // Sana filtri qo'llanilmaydi: agar yetkazish kechikkan bo'lsa ham
+      // (rejalashtirilgan sana o'tib ketgan bo'lsa ham), u hali "Yetkazilmoqda"
+      // holatida ekan — botdan g'oyib bo'lmasligi kerak.
+      const driverPhoneNorm = normalizePhone(user.phone ?? "");
+      const allActive = await prisma.order.findMany({
+        where: { status: "YETKAZILMOQDA" },
+        orderBy: [{ expectedDeliveryDate: "asc" }],
+        take: 50,
         include: { client: true },
       });
+      const orders = allActive.filter(
+        (o) => o.driverPhone && normalizePhone(o.driverPhone) === driverPhoneNorm
+      );
       if (orders.length === 0)
-        return sendMessage(chatId, "Bugungi yetkazishlar yo'q");
+        return sendMessage(chatId, "Sizga biriktirilgan yetkazishlar yo'q");
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const lines = orders
-        .map(
-          (o) =>
-            `🚚 ${escape(o.orderNumber)} — ${escape(o.client?.name ?? "—")}\n` +
+        .map((o) => {
+          const overdue =
+            o.expectedDeliveryDate && o.expectedDeliveryDate < today;
+          return (
+            `${overdue ? "⚠️ KECHIKMOQDA" : "🚚"} ${escape(o.orderNumber)} — ${escape(o.client?.name ?? "—")}\n` +
             `📍 ${escape(o.deliveryAddress ?? "—")}\n` +
             `📱 ${escape(o.client?.phone ?? "—")}`
-        )
+          );
+        })
         .join("\n\n");
-      await sendMessage(chatId, `<b>Bugungi yetkazishlar:</b>\n\n${lines}`);
+      await sendMessage(chatId, `<b>Yetkazishlaringiz:</b>\n\n${lines}`);
       return;
     }
   }
