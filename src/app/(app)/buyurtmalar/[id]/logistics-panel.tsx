@@ -66,7 +66,14 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
       </h3>
       <div className="space-y-2 text-sm">
         <div>
-          <label className="block text-xs text-ink-soft mb-1">Manzil</label>
+          <label className="block text-xs text-ink-soft mb-1">
+            Manzil
+            <span className="text-ink-soft font-normal">
+              {" "}
+              — mijoz Telegram'da joylashuv yuborgan bo'lsa, shu yerga
+              Google Maps havolasini qo'ysangiz bo'ladi (aniqroq bo'ladi)
+            </span>
+          </label>
           <input
             value={f.deliveryAddress}
             onChange={(e) => setF({ ...f, deliveryAddress: e.target.value })}

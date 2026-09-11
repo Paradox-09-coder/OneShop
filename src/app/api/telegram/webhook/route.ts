@@ -23,9 +23,14 @@ import type { OrderStatus } from "@prisma/client";
 const ACTIVE_DELIVERY_STATUSES: OrderStatus[] = ["YETKAZILMOQDA", "READY"];
 const DELIVERED_STATUSES: OrderStatus[] = ["YAKUNLANDI", "DELIVERED"];
 
-// Aniq GPS koordinata bazada yo'q (mijoz manzili — erkin matn), shuning
-// uchun Google Maps qidiruv havolasi orqali navigatsiya qilamiz.
+// Aniq GPS koordinata bazada yo'q — "Manzil" oddiy matn maydoni. Agar shu
+// maydonga tayyor Google Maps (yoki boshqa) havola qo'yilgan bo'lsa (masalan,
+// mijoz Telegram'da joylashuvini yuborgan, sotuvchi o'sha havolani nusxalab
+// shu yerga qo'ygan bo'lsa) — uni o'zgartirmasdan ishlatamiz, chunki u aniq
+// nuqtaga ishora qiladi. Aks holda matn bo'yicha Maps qidiruviga tushamiz.
 function mapsLink(address: string): string {
+  const trimmed = address.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://maps.google.com/?q=${encodeURIComponent(address)}`;
 }
 
