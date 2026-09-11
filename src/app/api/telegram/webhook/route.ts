@@ -12,6 +12,8 @@ import {
   driverKeyboard,
   contactRequestKeyboard,
   escape,
+  isGroupConfigured,
+  sendGroupMessage,
 } from "@/lib/telegram";
 import { stagesFor } from "@/lib/state-machine";
 import { NextResponse } from "next/server";
@@ -256,6 +258,9 @@ async function handleText(msg: TelegramMessage) {
         "bog'lanib, buyurtmangizni rasmiylashtirishadi.",
       { reply_markup: kb }
     );
+    await sendGroupMessage(
+      `🆕 <b>Yangi buyurtma so'rovi</b> — ${escape(user.name)}\n${escape(text)}`
+    ).catch(() => {});
     return;
   }
 
@@ -541,6 +546,11 @@ async function handleCallback(query: NonNullable<Update["callback_query"]>) {
       { reply_markup: { inline_keyboard: [] } }
     );
   }
+  await sendGroupMessage(
+    `🚚 <b>Yetkazildi</b> — ${escape(order.orderNumber)}\n` +
+      `👤 ${escape(order.clientNameSnapshot ?? "—")}\n` +
+      `🧑‍✈️ ${escape(driver.name)}`
+  ).catch(() => {});
 }
 
 export async function POST(req: Request) {
@@ -555,6 +565,25 @@ export async function POST(req: Request) {
 
   try {
     const update: Update = await req.json();
+
+    // Guruh ID'sini topish rejimi: TELEGRAM_GROUP_CHAT_ID hali sozlanmagan
+    // bo'lsa, bot qo'shilgan har qanday guruh/superguruhdagi xabarga o'sha
+    // guruhning ID'sini javob qilib yozadi — shuni nusxalab, .env'ga
+    // GROUP_CHAT_ID sifatida saqlash kifoya. Sozlangandan keyin bu bloк
+    // ishlamay qoladi (jim, spam qilmaydi).
+    const chatType = update.message?.chat.type;
+    if (
+      !isGroupConfigured() &&
+      update.message &&
+      (chatType === "group" || chatType === "supergroup")
+    ) {
+      await sendMessage(
+        update.message.chat.id,
+        `🆔 Bu guruhning ID'si: <code>${update.message.chat.id}</code>\n\n` +
+          `Buni nusxalab, botni sozlagan odamga yuboring.`
+      );
+      return NextResponse.json({ ok: true });
+    }
 
     if (update.message?.contact) {
       await handleContact(update.message);

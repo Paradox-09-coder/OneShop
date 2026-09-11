@@ -7,6 +7,7 @@ import {
   consumeMaterialsForOrder,
   restoreMaterialsForOrder,
 } from "@/lib/production";
+import { sendGroupMessage, escape } from "@/lib/telegram";
 
 const Body = z.object({
   to: z.enum([
@@ -109,6 +110,20 @@ export async function POST(
         await restoreMaterialsForOrder(tx, id, session.id);
       }
     });
+
+    // Guruhga xabar — bazaga yozilgandan keyin, tashqi so'rov sifatida
+    // (muvaffaqiyatsiz bo'lsa ham asosiy jarayonga ta'sir qilmasin).
+    if (isManufacturing && enteringReady) {
+      await sendGroupMessage(
+        `✅ <b>Tayyor</b> — ${escape(order.orderNumber)}\n` +
+          `👤 ${escape(order.clientNameSnapshot ?? "—")}`
+      ).catch(() => {});
+    }
+    if (shortageWarning) {
+      await sendGroupMessage(
+        `⚠️ <b>Xomashyo yetmaydi</b> — ${escape(order.orderNumber)}\n${escape(shortageWarning)}`
+      ).catch(() => {});
+    }
 
     return jsonOk({ ok: true, shortageWarning });
   } catch (e) {

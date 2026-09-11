@@ -7,6 +7,21 @@ export function isTelegramConfigured() {
   return !!TOKEN;
 }
 
+const GROUP_CHAT_ID = process.env.TELEGRAM_GROUP_CHAT_ID ?? "";
+
+export function isGroupConfigured() {
+  return !!GROUP_CHAT_ID;
+}
+
+// Umumiy Telegram guruhga avtomatik xabar — zakaz tayyor, yetkazildi,
+// xomashyo yetmadi va h.k. GROUP_CHAT_ID hali sozlanmagan bo'lsa, jim
+// o'tkazib yuboradi (xato tashlamaydi) — sozlanmagunча boshqa funksiyalar
+// ishlashiga to'sqinlik qilmasin.
+export async function sendGroupMessage(text: string) {
+  if (!GROUP_CHAT_ID) return;
+  await sendMessage(GROUP_CHAT_ID, text);
+}
+
 async function call(method: string, body: Record<string, unknown>) {
   if (!TOKEN) throw new Error("TELEGRAM_BOT_TOKEN not set");
   const res = await fetch(`${API_BASE}/${method}`, {
