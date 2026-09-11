@@ -4,9 +4,43 @@ import EmptyState from "@/components/empty-state";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { shipmentStatusLabel } from "@/lib/labels";
 import { Truck } from "lucide-react";
+import ListToolbar from "@/components/list-toolbar";
+import type { Prisma, ShipmentStatus } from "@prisma/client";
 
-export default async function ShipmentsPage() {
+export default async function ShipmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    from?: string;
+    to?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+
+  const where: Prisma.ShipmentWhereInput = {
+    ...(sp.status ? { status: sp.status as ShipmentStatus } : {}),
+    ...(sp.from || sp.to
+      ? {
+          createdAt: {
+            ...(sp.from ? { gte: new Date(sp.from) } : {}),
+            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+          },
+        }
+      : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { containerNumber: { contains: sp.q, mode: "insensitive" } },
+            { supplier: { is: { name: { contains: sp.q, mode: "insensitive" } } } },
+          ],
+        }
+      : {}),
+  };
+
   const shipments = await prisma.shipment.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     include: { supplier: true, _count: { select: { items: true } } },
     take: 50,
@@ -17,6 +51,21 @@ export default async function ShipmentsPage() {
       <PageHeader
         title="Konteynerlar"
         subtitle="Ta'minotchidan qabul qilingan konteynerlar"
+      />
+
+      <ListToolbar
+        searchPlaceholder="Konteyner raqami yoki ta'minotchi bo'yicha qidirish..."
+        selects={[
+          {
+            key: "status",
+            label: "Holat",
+            options: Object.entries(shipmentStatusLabel).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          },
+        ]}
+        dateRange={{ label: "Sana" }}
       />
 
       <div className="panel overflow-hidden">

@@ -5,20 +5,35 @@ import EmptyState from "@/components/empty-state";
 import { formatMoney, formatNumber } from "@/lib/utils";
 import { unitTypeLabel, rollStatusLabel } from "@/lib/labels";
 import { Package, Plus, AlertTriangle } from "lucide-react";
+import ListToolbar from "@/components/list-toolbar";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 export default async function WarehousePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: string; q?: string; categoryId?: string }>;
 }) {
   const sp = await searchParams;
   const isLowStock = sp.filter === "low-stock";
 
-  const [products, rolls, lots] = await Promise.all([
+  const productWhere: Prisma.CatalogProductWhereInput = {
+    status: "active",
+    ...(sp.categoryId ? { categoryId: sp.categoryId } : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { name: { contains: sp.q, mode: "insensitive" } },
+            { sku: { contains: sp.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  const [products, rolls, lots, categories] = await Promise.all([
     prisma.catalogProduct.findMany({
-      where: { status: "active" },
+      where: productWhere,
       orderBy: { name: "asc" },
       take: 100,
       include: {
@@ -36,6 +51,10 @@ export default async function WarehousePage({
       orderBy: { createdAt: "desc" },
       take: 100,
       include: { catalogProduct: { select: { name: true, sku: true } } },
+    }),
+    prisma.productCategory.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 
@@ -169,7 +188,17 @@ export default async function WarehousePage({
 
       <div className="panel overflow-hidden">
         <div className="p-4 border-b border-border">
-          <h3 className="font-bold">Katalog mahsulotlari</h3>
+          <h3 className="font-bold mb-3">Katalog mahsulotlari</h3>
+          <ListToolbar
+            searchPlaceholder="Nomi yoki SKU bo'yicha qidirish..."
+            selects={[
+              {
+                key: "categoryId",
+                label: "Kategoriya",
+                options: categories.map((c) => ({ value: c.id, label: c.name })),
+              },
+            ]}
+          />
         </div>
         {products.length === 0 ? (
           <EmptyState

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { Layers, Package, Zap, Battery, Plug, Cable } from "lucide-react";
 import ProductManager from "./product-manager";
+import ListToolbar from "@/components/list-toolbar";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ function getStyle(name: string) {
 export default async function CatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string }>;
+  searchParams: Promise<{ cat?: string; q?: string; turi?: string }>;
 }) {
   const sp = await searchParams;
   const categoryId = sp.cat;
@@ -43,6 +44,15 @@ export default async function CatalogPage({
         status: "active",
         ...(categoryId && categoryId !== "all"
           ? { categoryId }
+          : {}),
+        ...(sp.turi ? { isSellable: sp.turi === "sotiladi" } : {}),
+        ...(sp.q
+          ? {
+              OR: [
+                { name: { contains: sp.q, mode: "insensitive" } },
+                { sku: { contains: sp.q, mode: "insensitive" } },
+              ],
+            }
           : {}),
       },
       orderBy: { name: "asc" },
@@ -120,6 +130,19 @@ export default async function CatalogPage({
 
         {/* Mahsulotlar jadvali — o'ngda */}
         <div className="lg:col-span-3">
+          <ListToolbar
+            searchPlaceholder="Nomi yoki SKU bo'yicha qidirish..."
+            selects={[
+              {
+                key: "turi",
+                label: "Turi",
+                options: [
+                  { value: "sotiladi", label: "Sotiladi" },
+                  { value: "xomashyo", label: "Xomashyo" },
+                ],
+              },
+            ]}
+          />
           <ProductManager
             products={products.map((p) => ({
               id: p.id,

@@ -11,7 +11,8 @@ import {
   orderPriorityLabel,
 } from "@/lib/labels";
 import { Plus, ShoppingCart } from "lucide-react";
-import type { OrderStatus, Prisma } from "@prisma/client";
+import type { OrderStatus, OrderType, Prisma } from "@prisma/client";
+import ListToolbar from "@/components/list-toolbar";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,14 @@ const ACTIVE_STATUSES: OrderStatus[] = [
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{
+    filter?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+    type?: string;
+    status?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const filter = sp.filter;
@@ -50,6 +58,25 @@ export default async function OrdersPage({
           seller: {
             is: { employee: { is: { userId: session?.id ?? "__none__" } } },
           },
+        }
+      : {}),
+    ...(sp.type ? { type: sp.type as OrderType } : {}),
+    ...(sp.status ? { status: sp.status as OrderStatus } : {}),
+    ...(sp.from || sp.to
+      ? {
+          createdAt: {
+            ...(sp.from ? { gte: new Date(sp.from) } : {}),
+            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+          },
+        }
+      : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { orderNumber: { contains: sp.q, mode: "insensitive" } },
+            { clientNameSnapshot: { contains: sp.q, mode: "insensitive" } },
+            { client: { is: { name: { contains: sp.q, mode: "insensitive" } } } },
+          ],
         }
       : {}),
   };
@@ -113,6 +140,29 @@ export default async function OrdersPage({
             </Link>
           </div>
         }
+      />
+
+      <ListToolbar
+        searchPlaceholder="Raqami yoki mijoz bo'yicha qidirish..."
+        selects={[
+          {
+            key: "type",
+            label: "Turi",
+            options: Object.entries(orderTypeLabel).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          },
+          {
+            key: "status",
+            label: "Holat",
+            options: Object.entries(orderStatusLabel).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          },
+        ]}
+        dateRange={{ label: "Sana" }}
       />
 
       <div className="panel overflow-hidden">

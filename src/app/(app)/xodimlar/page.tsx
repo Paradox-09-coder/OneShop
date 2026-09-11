@@ -1,9 +1,52 @@
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
+import ListToolbar from "@/components/list-toolbar";
+import type { Prisma, SalaryType } from "@prisma/client";
 
-export default async function EmployeesPage() {
+export default async function EmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    salaryType?: string;
+    from?: string;
+    to?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+
+  const where: Prisma.EmployeeWhereInput = {
+    ...(sp.salaryType ? { salaryType: sp.salaryType as SalaryType } : {}),
+    ...(sp.from || sp.to
+      ? {
+          startDate: {
+            ...(sp.from ? { gte: new Date(sp.from) } : {}),
+            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+          },
+        }
+      : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { position: { contains: sp.q, mode: "insensitive" } },
+            {
+              counterparty: {
+                is: {
+                  OR: [
+                    { name: { contains: sp.q, mode: "insensitive" } },
+                    { phone: { contains: sp.q, mode: "insensitive" } },
+                  ],
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
   const employees = await prisma.employee.findMany({
+    where,
     include: {
       counterparty: true,
       _count: { select: { attendance: true } },
@@ -18,6 +61,22 @@ export default async function EmployeesPage() {
         title="Xodimlar"
         subtitle={`${employees.length} ta xodim`}
       />
+      <ListToolbar
+        searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..."
+        selects={[
+          {
+            key: "salaryType",
+            label: "Oylik turi",
+            options: [
+              { value: "FIXED", label: "Belgilangan" },
+              { value: "KPI", label: "KPI" },
+              { value: "MIXED", label: "Aralash" },
+            ],
+          },
+        ]}
+        dateRange={{ label: "Boshlagan sana" }}
+      />
+
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -40,7 +99,7 @@ export default async function EmployeesPage() {
                 <td className="px-5 py-3 text-ink-soft">
                   {e.counterparty.phone ?? "—"}
                 </td>
-                <td className="px-5 py-3 text-right font-semibold">
+                <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">
                   {formatMoney(e.baseSalary, e.salaryCurrency)}
                 </td>
                 <td className="px-5 py-3 text-center">

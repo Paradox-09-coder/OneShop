@@ -3,10 +3,44 @@ import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { counterpartyTypeLabel } from "@/lib/labels";
 import CounterpartyForm from "./form";
+import ListToolbar from "@/components/list-toolbar";
+import type { CounterpartyType, Prisma } from "@prisma/client";
 
-export default async function CounterpartiesPage() {
+export default async function CounterpartiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    type?: string;
+    from?: string;
+    to?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+
+  const where: Prisma.CounterpartyWhereInput = {
+    deletedAt: null,
+    ...(sp.type ? { type: sp.type as CounterpartyType } : {}),
+    ...(sp.from || sp.to
+      ? {
+          createdAt: {
+            ...(sp.from ? { gte: new Date(sp.from) } : {}),
+            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+          },
+        }
+      : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { name: { contains: sp.q, mode: "insensitive" } },
+            { phone: { contains: sp.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
   const parties = await prisma.counterparty.findMany({
-    where: { deletedAt: null },
+    where,
     orderBy: { createdAt: "desc" },
     take: 200,
   });
@@ -26,7 +60,20 @@ export default async function CounterpartiesPage() {
 
         <div className="lg:col-span-2 panel overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h3 className="font-bold">Ro'yxat</h3>
+            <h3 className="font-bold mb-3">Ro'yxat</h3>
+            <ListToolbar
+              searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
+              selects={[
+                {
+                  key: "type",
+                  label: "Turi",
+                  options: Object.entries(counterpartyTypeLabel).map(
+                    ([value, label]) => ({ value, label })
+                  ),
+                },
+              ]}
+              dateRange={{ label: "Sana" }}
+            />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

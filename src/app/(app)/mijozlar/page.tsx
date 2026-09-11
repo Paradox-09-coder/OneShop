@@ -6,12 +6,47 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { customerKindLabel } from "@/lib/labels";
 import { Users, Plus, Phone } from "lucide-react";
 import AddClientButton from "./add-client-button";
+import ListToolbar from "@/components/list-toolbar";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    kind?: string;
+    from?: string;
+    to?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+
+  const where: Prisma.CounterpartyWhereInput = {
+    type: "CLIENT",
+    deletedAt: null,
+    ...(sp.kind ? { clientProfile: { is: { customerKind: sp.kind as "RETAIL" | "RESELLER" } } } : {}),
+    ...(sp.from || sp.to
+      ? {
+          createdAt: {
+            ...(sp.from ? { gte: new Date(sp.from) } : {}),
+            ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+          },
+        }
+      : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { name: { contains: sp.q, mode: "insensitive" } },
+            { phone: { contains: sp.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
   const clients = await prisma.counterparty.findMany({
-    where: { type: "CLIENT", deletedAt: null },
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       clientProfile: true,
@@ -26,6 +61,21 @@ export default async function ClientsPage() {
         title="Mijozlar"
         subtitle={`${clients.length} ta mijoz`}
         actions={<AddClientButton />}
+      />
+
+      <ListToolbar
+        searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
+        selects={[
+          {
+            key: "kind",
+            label: "Turi",
+            options: [
+              { value: "RETAIL", label: "Chakana" },
+              { value: "RESELLER", label: "Qayta sotuvchi" },
+            ],
+          },
+        ]}
+        dateRange={{ label: "Qo'shilgan sana" }}
       />
 
       <div className="panel overflow-hidden">
