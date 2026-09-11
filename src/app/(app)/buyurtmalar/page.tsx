@@ -188,10 +188,10 @@ export default async function OrdersPage({
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold">
+                      <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">
                         {formatMoney(total, o.orderCurrency)}
                       </td>
-                      <td className="px-5 py-3 text-right">
+                      <td className="px-5 py-3 text-right whitespace-nowrap">
                         {paidFully ? (
                           <span className="text-success font-semibold">
                             ✓ {formatMoney(o.paidAmount, o.orderCurrency)}

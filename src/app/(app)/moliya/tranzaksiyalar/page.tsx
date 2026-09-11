@@ -69,7 +69,7 @@ export default async function TransactionsPage() {
                         {paymentSourceLabel[p.sourceType]}
                       </td>
                       <td
-                        className={`px-4 py-2 text-right font-bold ${
+                        className={`px-4 py-2 text-right font-bold whitespace-nowrap ${
                           isIn ? "text-success" : "text-danger"
                         }`}
                       >

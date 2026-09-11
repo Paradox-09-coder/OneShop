@@ -56,7 +56,7 @@ export default async function DebtsPage() {
                 className="flex justify-between p-3 rounded-xl bg-gray-50"
               >
                 <span className="text-sm font-semibold">{p.name}</span>
-                <span className="font-bold text-danger">
+                <span className="font-bold text-danger whitespace-nowrap">
                   {formatMoney(Math.abs(p.balanceValue), p.balanceCurrency)}
                 </span>
               </div>
@@ -75,7 +75,7 @@ export default async function DebtsPage() {
                 className="flex justify-between p-3 rounded-xl bg-gray-50"
               >
                 <span className="text-sm font-semibold">{p.name}</span>
-                <span className="font-bold text-warning">
+                <span className="font-bold text-warning whitespace-nowrap">
                   {formatMoney(p.balanceValue, p.balanceCurrency)}
                 </span>
               </div>

@@ -49,7 +49,7 @@ export default async function CounterpartiesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-2 text-ink-soft">{p.phone ?? "—"}</td>
-                    <td className="px-4 py-2 text-right font-semibold">
+                    <td className="px-4 py-2 text-right font-semibold whitespace-nowrap">
                       {formatMoney(p.balanceValue, p.balanceCurrency)}
                     </td>
                     <td className="px-4 py-2 text-ink-soft">

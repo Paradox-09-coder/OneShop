@@ -65,7 +65,7 @@ export default async function ShipmentsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3 text-center">{s._count.items}</td>
-                    <td className="px-5 py-3 text-right font-semibold">
+                    <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">
                       {formatMoney(s.totalCost, s.currency)}
                     </td>
                   </tr>

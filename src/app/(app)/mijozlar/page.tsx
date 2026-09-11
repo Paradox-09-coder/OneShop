@@ -93,7 +93,7 @@ export default async function ClientsPage() {
                     <td className="px-5 py-3 text-center">
                       {c._count.ordersAsClient}
                     </td>
-                    <td className="px-5 py-3 text-right font-semibold">
+                    <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">
                       <span
                         className={
                           c.balanceValue < 0
