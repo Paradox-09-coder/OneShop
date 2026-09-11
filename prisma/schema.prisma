@@ -609,6 +609,7 @@ model Order {
   receiverName          String?
   receiverPhone         String?
   receiverSignatureUrl  String?
+  receiverConfirmedAt   DateTime?
 
   note                  String?
   createdAt             DateTime      @default(now())

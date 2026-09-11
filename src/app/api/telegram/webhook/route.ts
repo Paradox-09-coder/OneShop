@@ -481,6 +481,12 @@ async function sendDeliveryList(
 async function handleCallback(query: NonNullable<Update["callback_query"]>) {
   const data = query.data ?? "";
   const [action, orderId] = data.split(":");
+
+  if (action === "confirm_receipt" || action === "deny_receipt") {
+    await handleReceiptCallback(query, orderId, action === "confirm_receipt");
+    return;
+  }
+
   if (action !== "deliver" || !orderId) {
     await answerCallbackQuery(query.id);
     return;
@@ -551,6 +557,106 @@ async function handleCallback(query: NonNullable<Update["callback_query"]>) {
       `👤 ${escape(order.clientNameSnapshot ?? "—")}\n` +
       `🧑‍✈️ ${escape(driver.name)}`
   ).catch(() => {});
+
+  // Qabul qiluvchi ham botdan foydalansa (telefon raqami orqali topilsa) —
+  // undan "oldingizmi?" deb so'raladi. Topilmasa (u bot bilan tanishmagan),
+  // jim o'tkazib yuboriladi — haydovchi tomonidan belgilangani yetarli.
+  if (order.receiverPhone) {
+    const receiverPhoneNorm = normalizePhone(order.receiverPhone);
+    const receiver = await prisma.counterparty.findFirst({
+      where: {
+        deletedAt: null,
+        OR: [
+          { phone: { contains: receiverPhoneNorm } },
+          { phone2: { contains: receiverPhoneNorm } },
+        ],
+      },
+    });
+    const receiverTelegramId = (
+      receiver?.metadata as { telegram_id?: number } | null
+    )?.telegram_id;
+    if (receiverTelegramId) {
+      await sendMessage(
+        receiverTelegramId,
+        `📦 <b>${escape(order.orderNumber)}</b> yetkazildi.\n\nOldingizmi?`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "✅ Ha, oldim", callback_data: `confirm_receipt:${orderId}` },
+                { text: "❌ Yo'q", callback_data: `deny_receipt:${orderId}` },
+              ],
+            ],
+          },
+        }
+      ).catch(() => {});
+    }
+  }
+}
+
+async function handleReceiptCallback(
+  query: NonNullable<Update["callback_query"]>,
+  orderId: string | undefined,
+  confirmed: boolean
+) {
+  if (!orderId) {
+    await answerCallbackQuery(query.id);
+    return;
+  }
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) {
+    await answerCallbackQuery(query.id, "Buyurtma topilmadi");
+    return;
+  }
+
+  if (!confirmed) {
+    await answerCallbackQuery(query.id, "Xabaringiz uchun rahmat");
+    if (query.message) {
+      await editMessageText(
+        query.message.chat.id,
+        query.message.message_id,
+        `❌ <b>${escape(order.orderNumber)}</b> — qabul qilinmagani bildirildi`,
+        { reply_markup: { inline_keyboard: [] } }
+      );
+    }
+    await sendGroupMessage(
+      `⚠️ Mijoz "${escape(order.orderNumber)}" ni olmaganini bildirdi — tekshirib chiqing`
+    ).catch(() => {});
+    return;
+  }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { receiverConfirmedAt: new Date() },
+  });
+
+  await answerCallbackQuery(query.id, "✅ Rahmat!");
+  if (query.message) {
+    await editMessageText(
+      query.message.chat.id,
+      query.message.message_id,
+      `✅ <b>${escape(order.orderNumber)}</b> — qabul qilingani tasdiqlandi. Rahmat!`,
+      { reply_markup: { inline_keyboard: [] } }
+    );
+  }
+
+  // Meeting'da aytilganidek — tasdiqlagandan keyin joriy hisob-kitob
+  // (schyot) yuboriladi, toki mijoz qarzini har safar eslab tursin.
+  if (order.clientId) {
+    const debtAgg = await prisma.order.aggregate({
+      where: { clientId: order.clientId, status: { not: "CANCELLED" } },
+      _sum: { agreedAmount: true, paidAmount: true },
+    });
+    const debt =
+      (debtAgg._sum.agreedAmount ?? 0) - (debtAgg._sum.paidAmount ?? 0);
+    if (debt > 0 && query.message) {
+      await sendMessage(
+        query.message.chat.id,
+        `<b>Hisobingiz</b>\n\n` +
+          `Joriy qarzingiz: <b>${debt.toLocaleString("ru-RU")} ${order.orderCurrency}</b>`
+      ).catch(() => {});
+    }
+  }
 }
 
 export async function POST(req: Request) {
