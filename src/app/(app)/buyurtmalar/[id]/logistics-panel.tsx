@@ -22,6 +22,12 @@ interface Props {
 export default function LogisticsPanel({ orderId, initial }: Props) {
   const router = useRouter();
   const [f, setF] = useState(initial);
+  // Raqam maydoni alohida matn sifatida boshqariladi — aks holda foydalanuvchi
+  // "0" ni butunlay o'chirib bo'sh qoldira olmaydi (bo'sh qiymat darhol 0'ga
+  // aylanib, ekranda yana "0" bo'lib qolaveradi).
+  const [costText, setCostText] = useState(
+    initial.deliveryCost ? String(initial.deliveryCost) : ""
+  );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -36,7 +42,7 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
           driverName: f.driverName || null,
           driverPhone: f.driverPhone || null,
           driverCarNumber: f.driverCarNumber || null,
-          deliveryCost: Number(f.deliveryCost) || null,
+          deliveryCost: Number(costText) || null,
           deliveryAddress: f.deliveryAddress || null,
           receiverName: f.receiverName || null,
           receiverPhone: f.receiverPhone || null,
@@ -101,11 +107,11 @@ export default function LogisticsPanel({ orderId, initial }: Props) {
           <div>
             <label className="block text-xs text-ink-soft mb-1">Yo'l kira (so'm)</label>
             <input
-              type="number" onFocus={(e) => e.currentTarget.select()}
-              value={f.deliveryCost}
-              onChange={(e) =>
-                setF({ ...f, deliveryCost: Number(e.target.value) })
-              }
+              type="number"
+              inputMode="numeric"
+              placeholder="0"
+              value={costText}
+              onChange={(e) => setCostText(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-border bg-white"
             />
           </div>
