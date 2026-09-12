@@ -1,21 +1,23 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-primary: #7c3aed;
-  --color-primary-light: #8b5cf6;
-  --color-primary-dark: #6d28d9;
+  /* "ERP Premium" referens dizayniga moslashtirildi (ko'k asosiy rang,
+     sovuqroq kulrang fon, https://github.com/data365-git/iselll) */
+  --color-primary: #2563eb;
+  --color-primary-light: #3b82f6;
+  --color-primary-dark: #1d4ed8;
   --color-danger: #ef4444;
   --color-danger-light: #fca5a5;
-  --color-success: #22c55e;
+  --color-success: #10b981;
   --color-warning: #f59e0b;
-  --color-info: #0ea5e9;
-  --color-bg: #f8f7f4;
+  --color-info: #3b82f6;
+  --color-bg: #f5f6fa;
   --color-panel: #ffffff;
-  --color-border: #e5e5e5;
-  --color-ink: #1a1a1a;
-  --color-ink-soft: #6b7280;
+  --color-border: #e6e8ee;
+  --color-ink: #0f172a;
+  --color-ink-soft: #64748b;
   --color-sidebar-bg: #ffffff;
-  --color-sidebar-active: #7c3aed;
+  --color-sidebar-active: #2563eb;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
@@ -51,7 +53,8 @@ input:focus, select:focus, textarea:focus {
 .panel {
   background: var(--color-panel);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 }
 .chip {
   display: inline-flex;

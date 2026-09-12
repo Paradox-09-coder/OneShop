@@ -194,18 +194,19 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
         )}
       >
         {collapsed ? (
-          <Link
-            href="/"
-            className="text-base font-black tracking-tight text-ink leading-none"
-          >
-            ERP
+          <Link href="/" aria-label="OneShop ERP">
+            <span className="w-9 h-9 rounded-xl bg-primary text-white grid place-items-center font-black text-base">
+              O
+            </span>
           </Link>
         ) : (
-          <Link
-            href="/"
-            className="text-lg font-black tracking-tight text-ink leading-tight"
-          >
-            ONESHOP<br />ERP
+          <Link href="/" className="flex items-center gap-2.5">
+            <span className="w-9 h-9 shrink-0 rounded-xl bg-primary text-white grid place-items-center font-black text-base">
+              O
+            </span>
+            <span className="text-base font-black tracking-tight text-ink leading-tight">
+              OneShop<br />ERP
+            </span>
           </Link>
         )}
         <div className="flex gap-1">

@@ -78,7 +78,7 @@ export async function GET(
   .sig { border-top: 1px solid #000; padding-top: 5px; text-align: center; font-size: 12px; }
   .print-btn {
     position: fixed; top: 15px; right: 15px;
-    background: #7c3aed; color: white; border: none;
+    background: #2563eb; color: white; border: none;
     padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer;
   }
   @media print {
