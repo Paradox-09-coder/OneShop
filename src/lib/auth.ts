@@ -119,7 +119,6 @@ export function defaultPermissionsForRole(role: Role): string[] {
       return [
         "dashboard.read",
         "orders.*", "clients.*", "counterparties.read",
-        "crm.*",
         "reports.read",
       ];
 

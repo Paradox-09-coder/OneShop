@@ -181,7 +181,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-white border-r border-border flex flex-col z-50 transition-all duration-200",
+          "fixed left-0 top-0 h-screen bg-[#0f172a] flex flex-col z-50 transition-all duration-200",
           collapsed ? "w-[68px]" : "w-[260px]",
           // Mobile: drawer sifatida yopiladi/ochiladi
           mobileOpen
@@ -191,7 +191,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
       >
       <div
         className={cn(
-          "flex items-center h-16 border-b border-border",
+          "flex items-center h-16 border-b border-white/10",
           collapsed ? "flex-col justify-center gap-1 px-0" : "justify-between px-5"
         )}
       >
@@ -206,7 +206,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
             <span className="w-9 h-9 shrink-0 rounded-xl bg-primary text-white grid place-items-center font-black text-base">
               O
             </span>
-            <span className="text-base font-black tracking-tight text-ink leading-tight">
+            <span className="text-base font-black tracking-tight text-white leading-tight">
               OneShop<br />ERP
             </span>
           </Link>
@@ -215,7 +215,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
           {/* Mobile: yopish */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft"
+            className="md:hidden p-1.5 rounded-lg hover:bg-white/10 text-slate-400"
             aria-label="Yopish"
           >
             <X size={18} />
@@ -223,7 +223,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
           {/* Desktop: yig'ish/kengaytirish */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden md:block p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft"
+            className="hidden md:block p-1.5 rounded-lg hover:bg-white/10 text-slate-400"
             aria-label="Toggle sidebar"
           >
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
@@ -246,7 +246,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
                     className={cn(
                       "w-full flex items-center gap-2.5 px-3 rounded-lg transition-colors",
                       collapsed ? "py-2.5 justify-center" : "py-2 mt-2",
-                      active ? "text-ink" : "text-ink-soft/70 hover:text-ink-soft"
+                      active ? "text-slate-300" : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     <item.icon size={16} className="opacity-70" />
@@ -263,7 +263,7 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
                     )}
                   </button>
                   {!collapsed && isOpen && (
-                    <div className="ml-2 mt-0.5 pl-3 border-l-2 border-border space-y-0.5">
+                    <div className="ml-2 mt-0.5 pl-3 border-l-2 border-white/10 space-y-0.5">
                       {item.children!.map((child) => {
                         const childActive = pathname === child.href;
                         return (
@@ -271,13 +271,13 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
                             key={child.href}
                             href={child.href}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors",
+                              "flex items-center gap-3 px-3 py-2 rounded-xl text-sm border-l-2 transition-colors",
                               childActive
-                                ? "bg-primary text-white font-semibold"
-                                : "text-ink-soft hover:text-ink hover:bg-gray-50"
+                                ? "bg-primary/15 border-primary text-white font-semibold"
+                                : "border-transparent text-slate-400 hover:text-white hover:bg-white/5"
                             )}
                           >
-                            <child.icon size={17} />
+                            <child.icon size={17} className={childActive ? "text-primary-light" : ""} />
                             <span className="flex-1">{child.label}</span>
                             {child.badge && (
                               <span className="bg-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -294,13 +294,13 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border-l-2 transition-colors",
                     active
-                      ? "bg-primary text-white font-semibold"
-                      : "text-ink-soft hover:text-ink hover:bg-gray-50"
+                      ? "bg-primary/15 border-primary text-white font-semibold"
+                      : "border-transparent text-slate-400 hover:text-white hover:bg-white/5"
                   )}
                 >
-                  <item.icon size={20} />
+                  <item.icon size={20} className={active ? "text-primary-light" : ""} />
                   {!collapsed && <span>{item.label}</span>}
                 </Link>
               )}
@@ -310,19 +310,19 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
       </nav>
 
       {!collapsed && (
-        <div className="border-t border-border p-3">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50">
+        <div className="border-t border-white/10 p-3">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5">
             <div className="w-9 h-9 rounded-full bg-primary text-white grid place-items-center font-bold">
               {user.name.slice(0, 1).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-ink truncate">{user.name}</p>
-              <p className="text-xs text-ink-soft truncate">{user.role}</p>
+              <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+              <p className="text-xs text-slate-400 truncate">{user.role}</p>
             </div>
             <form action="/api/auth/logout" method="POST">
               <button
                 type="submit"
-                className="p-1.5 rounded-lg hover:bg-white text-ink-soft hover:text-danger"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-danger"
                 aria-label="Chiqish"
                 title="Chiqish"
               >
