@@ -1,7 +1,7 @@
 import type { OrderStatus, OrderType } from "@prisma/client";
 
 // Retail / Wholesale pipeline (iSell-derived)
-const RETAIL_FLOW: OrderStatus[] = [
+export const RETAIL_FLOW: OrderStatus[] = [
   "YANGI_SOROV",
   "MASLAHAT_BERILDI",
   "NARX_KELISHILDI",
@@ -11,7 +11,7 @@ const RETAIL_FLOW: OrderStatus[] = [
 ];
 
 // Manufacturing pipeline (Beltech-derived)
-const MANUFACTURING_FLOW: OrderStatus[] = [
+export const MANUFACTURING_FLOW: OrderStatus[] = [
   "PROPOSAL",
   "NEW",
   "PROCESSING",
@@ -20,6 +20,15 @@ const MANUFACTURING_FLOW: OrderStatus[] = [
 ];
 
 const TERMINAL: OrderStatus[] = ["CANCELLED"];
+
+// Kanban board uchun — ikkala pipeline'ning barcha bosqichlari + bekor
+// qilingan, mantiqiy tartibda (chakana/ulgurji oldin, keyin ishlab
+// chiqarish, oxirida bekor qilingan).
+export const ALL_STAGES_ORDERED: OrderStatus[] = [
+  ...RETAIL_FLOW,
+  ...MANUFACTURING_FLOW,
+  ...TERMINAL,
+];
 
 export function stagesFor(type: OrderType): OrderStatus[] {
   switch (type) {

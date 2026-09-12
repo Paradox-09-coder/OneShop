@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 
 interface SelectOption {
   value: string;
@@ -20,6 +20,10 @@ interface Props {
   searchKey?: string;
   selects?: SelectFilter[];
   dateRange?: { fromKey?: string; toKey?: string; label?: string };
+  // true bo'lsa — select/sana filtrlari alohida oynada (popover) ochiladi,
+  // qidiruv qatori yonidagi filtr belgisi bosilganda. Standart: filtrlar
+  // to'g'ridan-to'g'ri qatorda ko'rinadi (eski xatti-harakat).
+  popover?: boolean;
 }
 
 // Har bir ro'yxat sahifasi uchun qayta ishlatiladigan qidiruv+filtr paneli.
@@ -30,17 +34,34 @@ export default function ListToolbar({
   searchKey = "q",
   selects = [],
   dateRange,
+  popover = false,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
   const [q, setQ] = useState(sp.get(searchKey) ?? "");
+  const [panelOpen, setPanelOpen] = useState(false);
+  // Popover ichida — "Tayyor" bosilgunga qadar draft holatda saqlanadi
+  const [draft, setDraft] = useState<Record<string, string>>({});
 
   function update(key: string, value: string) {
     const params = new URLSearchParams(sp.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    // Sahifalash mavjud bo'lsa, filtr o'zgarganda 1-sahifaga qaytamiz
+    params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function applyDraft() {
+    const params = new URLSearchParams(sp.toString());
+    for (const [k, v] of Object.entries(draft)) {
+      if (v) params.set(k, v);
+      else params.delete(k);
+    }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+    setPanelOpen(false);
   }
 
   useEffect(() => {
@@ -53,7 +74,134 @@ export default function ListToolbar({
 
   const fromKey = dateRange?.fromKey ?? "from";
   const toKey = dateRange?.toKey ?? "to";
-  const hasFilters = Array.from(sp.keys()).length > 0;
+  const filterKeys = [...selects.map((s) => s.key), ...(dateRange ? [fromKey, toKey] : [])];
+  const hasActiveFilters = filterKeys.some((k) => sp.get(k));
+  const hasFilters = Array.from(sp.keys()).some((k) => k !== "view");
+
+  function openPanel() {
+    const initial: Record<string, string> = {};
+    for (const k of filterKeys) initial[k] = sp.get(k) ?? "";
+    setDraft(initial);
+    setPanelOpen(true);
+  }
+
+  const selectField = (s: SelectFilter, value: string, onChange: (v: string) => void) => (
+    <label key={s.key} className="flex flex-col gap-1">
+      <span className="text-xs text-ink-soft font-medium">{s.label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="px-3 py-2 rounded-xl border border-border bg-white text-sm"
+      >
+        <option value="">Barchasi</option>
+        {s.options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
+  if (popover) {
+    return (
+      <div className="flex items-center gap-2 mb-4 relative">
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-white text-sm"
+          />
+        </div>
+        <button
+          onClick={openPanel}
+          className={`relative p-2.5 rounded-xl border transition ${
+            hasActiveFilters
+              ? "border-primary text-primary bg-primary/5"
+              : "border-border text-ink-soft hover:bg-gray-50"
+          }`}
+          aria-label="Filtrlar"
+        >
+          <SlidersHorizontal size={17} />
+          {hasActiveFilters && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary" />
+          )}
+        </button>
+
+        {panelOpen && (
+          <>
+            <div className="fixed inset-0 z-20" onClick={() => setPanelOpen(false)} />
+            <div className="absolute right-0 top-12 z-30 panel p-4 w-[min(92vw,420px)]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-sm">Filtrlar</h3>
+                <button
+                  onClick={() => setPanelOpen(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100 text-ink-soft"
+                  aria-label="Yopish"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {selects.map((s) =>
+                  selectField(s, draft[s.key] ?? "", (v) =>
+                    setDraft((d) => ({ ...d, [s.key]: v }))
+                  )
+                )}
+              </div>
+              {dateRange && (
+                <div className="mt-3">
+                  <span className="text-xs text-ink-soft font-medium">
+                    {dateRange.label ?? "Sana oralig'i"}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <input
+                      type="date"
+                      value={draft[fromKey] ?? ""}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, [fromKey]: e.target.value }))
+                      }
+                      className="flex-1 px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
+                    />
+                    <span className="text-ink-soft text-sm">—</span>
+                    <input
+                      type="date"
+                      value={draft[toKey] ?? ""}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, [toKey]: e.target.value }))
+                      }
+                      className="flex-1 px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between mt-4">
+                <button
+                  onClick={() => {
+                    setDraft(Object.fromEntries(filterKeys.map((k) => [k, ""])));
+                  }}
+                  className="text-sm text-ink-soft hover:text-ink font-medium"
+                >
+                  Tozalash
+                </button>
+                <button
+                  onClick={applyDraft}
+                  className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
+                >
+                  Tayyor
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-end gap-2 mb-4">
@@ -70,23 +218,7 @@ export default function ListToolbar({
         />
       </div>
 
-      {selects.map((s) => (
-        <label key={s.key} className="flex flex-col gap-0.5">
-          <span className="text-[11px] text-ink-soft px-0.5">{s.label}</span>
-          <select
-            value={sp.get(s.key) ?? ""}
-            onChange={(e) => update(s.key, e.target.value)}
-            className="px-3 py-2 rounded-xl border border-border bg-white text-sm"
-          >
-            <option value="">Barchasi</option>
-            {s.options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      ))}
+      {selects.map((s) => selectField(s, sp.get(s.key) ?? "", (v) => update(s.key, v)))}
 
       {dateRange && (
         <div className="flex flex-col gap-0.5">

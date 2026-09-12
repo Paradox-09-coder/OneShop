@@ -26,7 +26,6 @@ import {
   LogOut,
   Menu,
   X,
-  Target,
 } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -73,7 +72,6 @@ const navigation: NavItem[] = [
     icon: Users,
     children: [
       { label: "Mijozlar ro'yxati", href: "/mijozlar", icon: Users },
-      { label: "CRM (Kanban)", href: "/crm", icon: Target },
       { label: "Kontragentlar", href: "/kontragentlar", icon: Building2 },
     ],
   },
