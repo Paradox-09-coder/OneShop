@@ -5,6 +5,7 @@ import DateRangePicker from "./date-range-picker";
 import { formatMoney } from "@/lib/utils";
 import { accountTypeLabel, paymentTxLabel } from "@/lib/labels";
 import { Wallet, TrendingUp, TrendingDown, CreditCard } from "lucide-react";
+import TransferButton from "./transfer-button";
 
 export const dynamic = "force-dynamic";
 
@@ -154,7 +155,19 @@ export default async function FinancePage({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="panel p-5">
-          <h3 className="font-bold mb-3">Hisoblar</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold">Hisoblar</h3>
+            {accounts.length >= 2 && (
+              <TransferButton
+                accounts={accounts.map((a) => ({
+                  id: a.id,
+                  name: a.name,
+                  currency: a.currency,
+                  balanceCache: a.balanceCache,
+                }))}
+              />
+            )}
+          </div>
           {accounts.length === 0 ? (
             <p className="text-sm text-ink-soft py-4 text-center">
               Hisoblar qo'shilmagan
