@@ -5,6 +5,7 @@ import { Layers, Package, Zap, Battery, Plug, Cable } from "lucide-react";
 import ProductManager from "./product-manager";
 import ListToolbar from "@/components/list-toolbar";
 import LoadMore from "@/components/load-more";
+import SectionTabs from "@/components/section-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +90,14 @@ export default async function CatalogPage({
             ? `${activeCategory.name} — ${allMatching.length} ta mahsulot`
             : `${totalCount} ta mahsulot • ${categories.length} ta kategoriya`
         }
+      />
+
+      <SectionTabs
+        tabs={[
+          { label: "Mahsulotlar", href: "/omborxona" },
+          { label: "Katalog", href: "/katalog" },
+          { label: "Konteynerlar", href: "/xaridlar" },
+        ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

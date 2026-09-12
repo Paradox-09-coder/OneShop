@@ -4,9 +4,10 @@ import PageHeader from "@/components/page-header";
 import EmptyState from "@/components/empty-state";
 import { formatMoney, formatNumber } from "@/lib/utils";
 import { unitTypeLabel, rollStatusLabel } from "@/lib/labels";
-import { Package, Plus, AlertTriangle } from "lucide-react";
+import { Package, AlertTriangle } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
 import LoadMore from "@/components/load-more";
+import SectionTabs from "@/components/section-tabs";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -99,14 +100,16 @@ export default async function WarehousePage({
                 Kam qoldiq
               </Link>
             </div>
-            <Link
-              href="/katalog"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border font-semibold hover:bg-gray-50"
-            >
-              <Plus size={16} /> Katalog
-            </Link>
           </div>
         }
+      />
+
+      <SectionTabs
+        tabs={[
+          { label: "Mahsulotlar", href: "/omborxona" },
+          { label: "Katalog", href: "/katalog" },
+          { label: "Konteynerlar", href: "/xaridlar" },
+        ]}
       />
 
       {lowStock.length > 0 && (

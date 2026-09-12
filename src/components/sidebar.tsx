@@ -17,9 +17,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
-  Truck,
-  Layers,
-  PackageOpen,
   Receipt,
   CreditCard,
   Calendar,
@@ -46,6 +43,10 @@ interface NavItem {
   icon: React.ElementType;
   children?: NavChild[];
   badge?: number;
+  // Shu href'dan tashqari, boshqa qaysi yo'llarda ham bu band "faol"
+  // ko'rinishi kerak — masalan Ombor bo'limi endi bitta tugma, lekin
+  // Katalog/Konteynerlar ham o'sha bo'limning ichki tab'lari.
+  matchHrefs?: string[];
 }
 
 const navigation: NavItem[] = [
@@ -61,14 +62,10 @@ const navigation: NavItem[] = [
     ],
   },
   {
-    label: "Ombor",
+    label: "Omborxona",
     href: "/omborxona",
     icon: Package,
-    children: [
-      { label: "Mahsulotlar", href: "/omborxona", icon: PackageOpen },
-      { label: "Katalog", href: "/katalog", icon: Layers },
-      { label: "Konteynerlar", href: "/xaridlar", icon: Truck },
-    ],
+    matchHrefs: ["/katalog", "/xaridlar"],
   },
   {
     label: "Mijozlar",
@@ -233,7 +230,8 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
 
       <nav className="flex-1 overflow-y-auto py-3 px-3">
         {filteredNav.map((item) => {
-          const active = isActive(item.href);
+          const active =
+            isActive(item.href) || (item.matchHrefs?.some(isActive) ?? false);
           const hasChildren = !!item.children?.length;
           const isOpen = openSections[item.href];
 

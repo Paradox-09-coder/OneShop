@@ -6,6 +6,7 @@ import { shipmentStatusLabel } from "@/lib/labels";
 import { Truck } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
 import LoadMore from "@/components/load-more";
+import SectionTabs from "@/components/section-tabs";
 import type { Prisma, ShipmentStatus } from "@prisma/client";
 
 export default async function ShipmentsPage({
@@ -56,6 +57,14 @@ export default async function ShipmentsPage({
       <PageHeader
         title="Konteynerlar"
         subtitle="Ta'minotchidan qabul qilingan konteynerlar"
+      />
+
+      <SectionTabs
+        tabs={[
+          { label: "Mahsulotlar", href: "/omborxona" },
+          { label: "Katalog", href: "/katalog" },
+          { label: "Konteynerlar", href: "/xaridlar" },
+        ]}
       />
 
       <ListToolbar
