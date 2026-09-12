@@ -5,7 +5,7 @@ import { formatMoney, formatDateTime } from "@/lib/utils";
 import { paymentTxLabel, paymentSourceLabel } from "@/lib/labels";
 import { CreditCard } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import type { PaymentTxType, Prisma } from "@prisma/client";
 
 export default async function TransactionsPage({
@@ -16,11 +16,19 @@ export default async function TransactionsPage({
     type?: string;
     from?: string;
     to?: string;
-    take?: string;
+    page?: string;
   }>;
 }) {
   const sp = await searchParams;
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/moliya/tranzaksiyalar?${qs}` : "/moliya/tranzaksiyalar";
+  }
 
   const where: Prisma.PaymentWhereInput = {
     ...(sp.type ? { type: sp.type as PaymentTxType } : {}),
@@ -44,18 +52,21 @@ export default async function TransactionsPage({
       : {}),
   };
 
-  const payments = await prisma.payment.findMany({
-    where,
-    orderBy: { date: "desc" },
-    take: take + 1,
-    include: {
-      account: { select: { name: true } },
-      counterparty: { select: { name: true } },
-      category: { select: { name: true } },
-    },
-  });
-  const hasMore = payments.length > take;
-  const visible = payments.slice(0, take);
+  const [visible, totalCount] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      orderBy: { date: "desc" },
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+      include: {
+        account: { select: { name: true } },
+        counterparty: { select: { name: true } },
+        category: { select: { name: true } },
+      },
+    }),
+    prisma.payment.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
@@ -138,7 +149,13 @@ export default async function TransactionsPage({
             </table>
           </div>
         )}
-        <LoadMore hasMore={hasMore} />
+        <Pagination
+          page={pageNum}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          buildHref={(p) => hrefWith({ page: String(p) })}
+        />
       </div>
     </div>
   );

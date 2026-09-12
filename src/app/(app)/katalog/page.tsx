@@ -4,7 +4,7 @@ import PageHeader from "@/components/page-header";
 import { Layers, Package, Zap, Battery, Plug, Cable } from "lucide-react";
 import ProductManager from "./product-manager";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import SectionTabs from "@/components/section-tabs";
 
 export const dynamic = "force-dynamic";
@@ -38,34 +38,45 @@ export default async function CatalogPage({
     cat?: string;
     q?: string;
     turi?: string;
-    take?: string;
+    page?: string;
   }>;
 }) {
   const sp = await searchParams;
   const categoryId = sp.cat;
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/katalog?${qs}` : "/katalog";
+  }
 
-  const [categories, allMatching, productCounts] = await Promise.all([
+  const productWhere = {
+    status: "active" as const,
+    ...(categoryId && categoryId !== "all" ? { categoryId } : {}),
+    ...(sp.turi ? { isSellable: sp.turi === "sotiladi" } : {}),
+    ...(sp.q
+      ? {
+          OR: [
+            { name: { contains: sp.q, mode: "insensitive" as const } },
+            { sku: { contains: sp.q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [categories, products, matchingCount, productCounts] = await Promise.all([
     prisma.productCategory.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.catalogProduct.findMany({
-      where: {
-        status: "active",
-        ...(categoryId && categoryId !== "all"
-          ? { categoryId }
-          : {}),
-        ...(sp.turi ? { isSellable: sp.turi === "sotiladi" } : {}),
-        ...(sp.q
-          ? {
-              OR: [
-                { name: { contains: sp.q, mode: "insensitive" } },
-                { sku: { contains: sp.q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
+      where: productWhere,
       orderBy: { name: "asc" },
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
       include: { category: true },
     }),
+    prisma.catalogProduct.count({ where: productWhere }),
     prisma.catalogProduct.groupBy({
       by: ["categoryId"],
       where: { status: "active" },
@@ -78,8 +89,7 @@ export default async function CatalogPage({
   );
   const totalCount = productCounts.reduce((s, c) => s + c._count, 0);
   const activeCategory = categories.find((c) => c.id === categoryId);
-  const hasMore = allMatching.length > take;
-  const products = allMatching.slice(0, take);
+  const totalPages = Math.max(1, Math.ceil(matchingCount / pageSize));
 
   return (
     <div>
@@ -87,7 +97,7 @@ export default async function CatalogPage({
         title="Katalog"
         subtitle={
           activeCategory
-            ? `${activeCategory.name} — ${allMatching.length} ta mahsulot`
+            ? `${activeCategory.name} — ${matchingCount} ta mahsulot`
             : `${totalCount} ta mahsulot • ${categories.length} ta kategoriya`
         }
       />
@@ -180,7 +190,13 @@ export default async function CatalogPage({
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             defaultCategoryId={categoryId && categoryId !== "all" ? categoryId : undefined}
           />
-          <LoadMore hasMore={hasMore} />
+          <Pagination
+            page={pageNum}
+            totalPages={totalPages}
+            totalCount={matchingCount}
+            pageSize={pageSize}
+            buildHref={(p) => hrefWith({ page: String(p) })}
+          />
         </div>
       </div>
     </div>

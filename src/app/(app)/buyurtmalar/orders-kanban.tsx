@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
   ClipboardList,
@@ -169,16 +168,14 @@ export default function OrdersKanban({
                     draggable
                     onDragStart={() => setDraggingId(o.id)}
                     onDragEnd={() => setDraggingId(null)}
+                    onClick={() => router.push(`/buyurtmalar/${o.id}`)}
                     className={`p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-md border border-transparent hover:border-border cursor-grab active:cursor-grabbing transition ${
                       draggingId === o.id ? "opacity-40" : ""
                     }`}
                   >
-                    <Link
-                      href={`/buyurtmalar/${o.id}`}
-                      className="text-xs font-semibold text-primary"
-                    >
+                    <span className="text-xs font-semibold text-primary">
                       {o.orderNumber}
-                    </Link>
+                    </span>
                     <p className="text-sm font-semibold mt-0.5 truncate">
                       {o.clientName}
                     </p>

@@ -6,7 +6,7 @@ import { formatMoney, formatNumber } from "@/lib/utils";
 import { unitTypeLabel, rollStatusLabel } from "@/lib/labels";
 import { Package, AlertTriangle } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import SectionTabs from "@/components/section-tabs";
 import type { Prisma } from "@prisma/client";
 
@@ -19,12 +19,20 @@ export default async function WarehousePage({
     filter?: string;
     q?: string;
     categoryId?: string;
-    take?: string;
+    page?: string;
   }>;
 }) {
   const sp = await searchParams;
   const isLowStock = sp.filter === "low-stock";
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/omborxona?${qs}` : "/omborxona";
+  }
 
   const productWhere: Prisma.CatalogProductWhereInput = {
     status: "active",
@@ -39,16 +47,18 @@ export default async function WarehousePage({
       : {}),
   };
 
-  const [products, rolls, lots, categories] = await Promise.all([
+  const [products, productCount, rolls, lots, categories] = await Promise.all([
     prisma.catalogProduct.findMany({
       where: productWhere,
       orderBy: { name: "asc" },
-      take: take + 1,
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
       include: {
         _count: { select: { lots: true, rolls: true } },
         category: { select: { name: true } },
       },
     }),
+    prisma.catalogProduct.count({ where: productWhere }),
     prisma.inventoryRoll.findMany({
       where: { status: { not: "DEPLETED" } },
       orderBy: { createdAt: "desc" },
@@ -68,8 +78,8 @@ export default async function WarehousePage({
 
   const lowStock = lots.filter((l) => l.qty <= l.lowStockThreshold && l.lowStockThreshold > 0);
   const visibleLots = isLowStock ? lowStock : lots;
-  const hasMoreProducts = products.length > take;
-  const visibleProducts = products.slice(0, take);
+  const visibleProducts = products;
+  const totalPages = Math.max(1, Math.ceil(productCount / pageSize));
 
   return (
     <div>
@@ -255,7 +265,13 @@ export default async function WarehousePage({
             </table>
           </div>
         )}
-        <LoadMore hasMore={hasMoreProducts} />
+        <Pagination
+          page={pageNum}
+          totalPages={totalPages}
+          totalCount={productCount}
+          pageSize={pageSize}
+          buildHref={(p) => hrefWith({ page: String(p) })}
+        />
       </div>
     </div>
   );

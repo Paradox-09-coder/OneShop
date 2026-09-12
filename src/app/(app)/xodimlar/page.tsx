@@ -2,16 +2,24 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import type { Prisma } from "@prisma/client";
 
 export default async function EmployeesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; take?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   const sp = await searchParams;
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/xodimlar?${qs}` : "/xodimlar";
+  }
 
   const where: Prisma.EmployeeWhereInput = {
     ...(sp.q
@@ -33,23 +41,26 @@ export default async function EmployeesPage({
       : {}),
   };
 
-  const employees = await prisma.employee.findMany({
-    where,
-    include: {
-      counterparty: true,
-      _count: { select: { attendance: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: take + 1,
-  });
-  const hasMore = employees.length > take;
-  const visible = employees.slice(0, take);
+  const [visible, totalCount] = await Promise.all([
+    prisma.employee.findMany({
+      where,
+      include: {
+        counterparty: true,
+        _count: { select: { attendance: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.employee.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
       <PageHeader
         title="Xodimlar"
-        subtitle={`${visible.length}${hasMore ? "+" : ""} ta xodim`}
+        subtitle={`${totalCount} ta xodim`}
       />
       <ListToolbar searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..." />
 
@@ -101,7 +112,13 @@ export default async function EmployeesPage({
             )}
           </tbody>
         </table>
-        <LoadMore hasMore={hasMore} />
+        <Pagination
+          page={pageNum}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          buildHref={(p) => hrefWith({ page: String(p) })}
+        />
       </div>
     </div>
   );

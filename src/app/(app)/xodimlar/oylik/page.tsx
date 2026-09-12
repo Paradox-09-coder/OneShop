@@ -2,16 +2,24 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import type { Prisma } from "@prisma/client";
 
 export default async function PayrollPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; take?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   const sp = await searchParams;
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/xodimlar/oylik?${qs}` : "/xodimlar/oylik";
+  }
 
   const where: Prisma.PayrollAccrualWhereInput = {
     ...(sp.q
@@ -27,14 +35,17 @@ export default async function PayrollPage({
       : {}),
   };
 
-  const accruals = await prisma.payrollAccrual.findMany({
-    where,
-    orderBy: [{ period: "desc" }],
-    take: take + 1,
-    include: { employee: { include: { counterparty: true } } },
-  });
-  const hasMore = accruals.length > take;
-  const visible = accruals.slice(0, take);
+  const [visible, totalCount] = await Promise.all([
+    prisma.payrollAccrual.findMany({
+      where,
+      orderBy: [{ period: "desc" }],
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+      include: { employee: { include: { counterparty: true } } },
+    }),
+    prisma.payrollAccrual.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
@@ -70,7 +81,13 @@ export default async function PayrollPage({
             )}
           </tbody>
         </table>
-        <LoadMore hasMore={hasMore} />
+        <Pagination
+          page={pageNum}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          buildHref={(p) => hrefWith({ page: String(p) })}
+        />
       </div>
     </div>
   );

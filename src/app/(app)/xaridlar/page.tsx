@@ -5,7 +5,7 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { shipmentStatusLabel } from "@/lib/labels";
 import { Truck } from "lucide-react";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import SectionTabs from "@/components/section-tabs";
 import type { Prisma, ShipmentStatus } from "@prisma/client";
 
@@ -17,11 +17,19 @@ export default async function ShipmentsPage({
     status?: string;
     from?: string;
     to?: string;
-    take?: string;
+    page?: string;
   }>;
 }) {
   const sp = await searchParams;
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/xaridlar?${qs}` : "/xaridlar";
+  }
 
   const where: Prisma.ShipmentWhereInput = {
     ...(sp.status ? { status: sp.status as ShipmentStatus } : {}),
@@ -43,14 +51,17 @@ export default async function ShipmentsPage({
       : {}),
   };
 
-  const shipments = await prisma.shipment.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    include: { supplier: true, _count: { select: { items: true } } },
-    take: take + 1,
-  });
-  const hasMore = shipments.length > take;
-  const visible = shipments.slice(0, take);
+  const [visible, totalCount] = await Promise.all([
+    prisma.shipment.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: { supplier: true, _count: { select: { items: true } } },
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.shipment.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
@@ -83,7 +94,7 @@ export default async function ShipmentsPage({
       />
 
       <div className="panel overflow-hidden">
-        {shipments.length === 0 ? (
+        {visible.length === 0 ? (
           <EmptyState
             title="Konteynerlar yo'q"
             message="Ta'minotchidan mahsulot qabul qilinganda bu yerda ko'rinadi"
@@ -137,7 +148,13 @@ export default async function ShipmentsPage({
             </table>
           </div>
         )}
-        <LoadMore hasMore={hasMore} />
+        <Pagination
+          page={pageNum}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          buildHref={(p) => hrefWith({ page: String(p) })}
+        />
       </div>
     </div>
   );

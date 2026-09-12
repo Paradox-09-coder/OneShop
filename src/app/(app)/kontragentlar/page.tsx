@@ -4,7 +4,7 @@ import { formatMoney, formatDate } from "@/lib/utils";
 import { counterpartyTypeLabel } from "@/lib/labels";
 import CounterpartyForm from "./form";
 import ListToolbar from "@/components/list-toolbar";
-import LoadMore from "@/components/load-more";
+import Pagination from "@/components/pagination";
 import type { CounterpartyType, Prisma } from "@prisma/client";
 
 export default async function CounterpartiesPage({
@@ -15,11 +15,19 @@ export default async function CounterpartiesPage({
     type?: string;
     from?: string;
     to?: string;
-    take?: string;
+    page?: string;
   }>;
 }) {
   const sp = await searchParams;
-  const take = Number(sp.take) || 30;
+  const pageSize = 30;
+  const pageNum = Math.max(1, Number(sp.page) || 1);
+  function hrefWith(patch: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged: Record<string, string | undefined> = { ...sp, ...patch };
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return qs ? `/kontragentlar?${qs}` : "/kontragentlar";
+  }
 
   const where: Prisma.CounterpartyWhereInput = {
     deletedAt: null,
@@ -42,13 +50,16 @@ export default async function CounterpartiesPage({
       : {}),
   };
 
-  const parties = await prisma.counterparty.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    take: take + 1,
-  });
-  const hasMore = parties.length > take;
-  const visible = parties.slice(0, take);
+  const [visible, totalCount] = await Promise.all([
+    prisma.counterparty.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.counterparty.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
@@ -119,7 +130,13 @@ export default async function CounterpartiesPage({
               </tbody>
             </table>
           </div>
-          <LoadMore hasMore={hasMore} />
+          <Pagination
+            page={pageNum}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            buildHref={(p) => hrefWith({ page: String(p) })}
+          />
         </div>
       </div>
     </div>
