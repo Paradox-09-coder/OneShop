@@ -161,7 +161,7 @@ export default function OrdersKanban({
                   {formatMoney(columnTotal, "UZS")}
                 </p>
               </div>
-              <div className="space-y-2 p-3 max-h-[65vh] overflow-y-auto">
+              <div className="space-y-3 p-3 bg-gray-50/50 max-h-[65vh] overflow-y-auto">
                 {col.orders.map((o) => (
                   <div
                     key={o.id}
@@ -169,7 +169,7 @@ export default function OrdersKanban({
                     onDragStart={() => setDraggingId(o.id)}
                     onDragEnd={() => setDraggingId(null)}
                     onClick={() => router.push(`/buyurtmalar/${o.id}`)}
-                    className={`p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-md border border-transparent hover:border-border cursor-grab active:cursor-grabbing transition ${
+                    className={`p-3 rounded-xl bg-white shadow-sm hover:shadow-md border border-border hover:border-primary/40 cursor-grab active:cursor-grabbing transition ${
                       draggingId === o.id ? "opacity-40" : ""
                     }`}
                   >

@@ -137,7 +137,7 @@ export default function ListToolbar({
         {panelOpen && (
           <>
             <div className="fixed inset-0 z-20" onClick={() => setPanelOpen(false)} />
-            <div className="absolute right-0 top-12 z-30 panel p-4 w-[min(92vw,420px)]">
+            <div className="absolute left-0 top-12 z-30 panel p-4 w-[min(92vw,420px)]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-sm">Filtrlar</h3>
                 <button
