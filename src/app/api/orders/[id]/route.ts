@@ -18,7 +18,9 @@ const Patch = z.object({
   note: z.string().optional(),
   expectedDeliveryDate: z.string().nullable().optional(),
   deliveryAddress: z.string().nullable().optional(),
-  priority: z.enum(["NORMAL", "HIGH", "VIP"]).optional(),
+  priority: z
+    .enum(["NORMAL", "HIGH", "VIP", "URGENT_1D", "URGENT_3D", "URGENT_7D"])
+    .optional(),
 });
 
 export async function GET(

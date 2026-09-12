@@ -40,7 +40,9 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
   const [clients, setClients] = useState(initialClients);
   const [clientId, setClientId] = useState("");
   const [type, setType] = useState<"RETAIL" | "WHOLESALE" | "MANUFACTURING" | "POS">("RETAIL");
-  const [priority, setPriority] = useState<"NORMAL" | "HIGH" | "VIP">("NORMAL");
+  const [priority, setPriority] = useState<
+    "NORMAL" | "HIGH" | "VIP" | "URGENT_1D" | "URGENT_3D" | "URGENT_7D"
+  >("NORMAL");
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
   const [exchangeRate, setExchangeRate] = useState(defaultExchangeRate);
 
@@ -190,7 +192,6 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                 <option value="RETAIL">Chakana</option>
                 <option value="WHOLESALE">Ulgurji</option>
                 <option value="MANUFACTURING">Ishlab chiqarish</option>
-                <option value="POS">Kassa (POS)</option>
               </select>
             </div>
             <div>
@@ -203,6 +204,9 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                 <option value="NORMAL">Odatiy</option>
                 <option value="HIGH">Yuqori</option>
                 <option value="VIP">VIP</option>
+                <option value="URGENT_1D">1 kun ichida</option>
+                <option value="URGENT_3D">3 kun ichida</option>
+                <option value="URGENT_7D">7 kun ichida</option>
               </select>
             </div>
             <div>

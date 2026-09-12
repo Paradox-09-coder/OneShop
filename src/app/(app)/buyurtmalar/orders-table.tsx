@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Columns3, Download } from "lucide-react";
 import type { OrderStatus, OrderType, OrderPriority, Currency } from "@prisma/client";
-import { orderStatusLabel, orderStatusColor, orderTypeLabel, orderPriorityLabel } from "@/lib/labels";
+import { orderStatusLabel, orderStatusColor, orderTypeLabel, orderPriorityLabel, orderPriorityColor } from "@/lib/labels";
 import { formatMoney, formatDate } from "@/lib/utils";
 import ClickableRow from "@/components/clickable-row";
 import EmptyState from "@/components/empty-state";
@@ -200,13 +200,7 @@ export default function OrdersTable({
                       );
                     case "priority":
                       return o.priority !== "NORMAL" ? (
-                        <span
-                          className={
-                            o.priority === "VIP"
-                              ? "chip bg-fuchsia-100 text-fuchsia-700"
-                              : "chip bg-amber-100 text-amber-700"
-                          }
-                        >
+                        <span className={`chip ${orderPriorityColor[o.priority]}`}>
                           {orderPriorityLabel[o.priority]}
                         </span>
                       ) : null;

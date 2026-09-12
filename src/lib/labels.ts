@@ -64,6 +64,18 @@ export const orderPriorityLabel: Record<OrderPriority, string> = {
   NORMAL: "Odatiy",
   HIGH: "Yuqori",
   VIP: "VIP",
+  URGENT_1D: "1 kun ichida",
+  URGENT_3D: "3 kun ichida",
+  URGENT_7D: "7 kun ichida",
+};
+
+export const orderPriorityColor: Record<OrderPriority, string> = {
+  NORMAL: "bg-slate-100 text-slate-700",
+  HIGH: "bg-amber-100 text-amber-700",
+  VIP: "bg-fuchsia-100 text-fuchsia-700",
+  URGENT_1D: "bg-rose-100 text-rose-700",
+  URGENT_3D: "bg-amber-100 text-amber-700",
+  URGENT_7D: "bg-sky-100 text-sky-700",
 };
 
 export const orderChannelLabel: Record<OrderChannel, string> = {

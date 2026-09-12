@@ -662,6 +662,11 @@ enum OrderPriority {
   NORMAL
   HIGH
   VIP
+  // Bajarish/yetkazish muddatiga qarab ustuvorlik — "Yuqori/VIP"dan farqli,
+  // ahamiyat emas, balki necha kun ichida bajarilishi kerakligini bildiradi.
+  URGENT_1D
+  URGENT_3D
+  URGENT_7D
 }
 
 enum OrderChannel {

@@ -7,7 +7,9 @@ import { sendGroupMessage, escape } from "@/lib/telegram";
 const CreateOrder = z.object({
   clientId: z.string().min(1),
   type: z.enum(["RETAIL", "WHOLESALE", "MANUFACTURING", "POS"]),
-  priority: z.enum(["NORMAL", "HIGH", "VIP"]).default("NORMAL"),
+  priority: z
+    .enum(["NORMAL", "HIGH", "VIP", "URGENT_1D", "URGENT_3D", "URGENT_7D"])
+    .default("NORMAL"),
   orderCurrency: z.enum(["UZS", "USD", "EUR", "RUB"]),
   exchangeRate: z.number().positive().nullable().optional(),
   taxRate: z.number().min(0).max(100).default(0),

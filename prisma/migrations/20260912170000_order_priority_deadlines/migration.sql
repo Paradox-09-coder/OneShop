@@ -1,0 +1,4 @@
+-- AlterEnum
+ALTER TYPE "OrderPriority" ADD VALUE 'URGENT_1D';
+ALTER TYPE "OrderPriority" ADD VALUE 'URGENT_3D';
+ALTER TYPE "OrderPriority" ADD VALUE 'URGENT_7D';
