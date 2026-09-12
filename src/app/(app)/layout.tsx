@@ -36,7 +36,12 @@ export default async function AppShellLayout({
       />
       <main className="flex-1 md:ml-[260px] max-w-full overflow-x-hidden min-h-screen">
         <Topbar />
-        <div className="p-4 md:p-8">
+        {/* pt-[…] — header endi fixed, oqimdan chiqarilgan, shuning uchun
+            kontent uning tagida qolib ketmasligi uchun joy qoldiramiz.
+            (px/pb alohida yozilgan — p-4/md:p-8 bilan aralashtirilsa,
+            Tailwind'da shorthand va pt-* orasidagi tartib buzilib,
+            md'da noto'g'ri qiymat qo'llanishi mumkin edi.) */}
+        <div className="px-4 pb-4 pt-[72px] md:px-8 md:pb-8 md:pt-[88px]">
           {allowed ? (
             children
           ) : (

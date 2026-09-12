@@ -17,7 +17,7 @@ export default async function Topbar() {
   });
 
   return (
-    <header className="sticky top-0 z-20 h-14 flex items-center justify-end gap-3 bg-white border-b border-border px-4 md:px-8">
+    <header className="fixed top-0 left-0 right-0 md:left-[260px] z-20 h-14 flex items-center justify-end gap-3 bg-white border-b border-border px-4 md:px-8">
       <Link
         href="/xabarnomalar"
         className="relative p-2 rounded-xl hover:bg-gray-100 transition"
