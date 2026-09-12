@@ -3,11 +3,43 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  ClipboardList,
+  MessageCircle,
+  Tag,
+  ShoppingCart,
+  Truck,
+  CheckCircle2,
+  FileText,
+  Sparkles,
+  Loader,
+  PackageCheck,
+  CheckCheck,
+  XCircle,
+} from "lucide-react";
 import type { OrderStatus, OrderType, Currency } from "@prisma/client";
-import { orderStatusLabel, orderStatusColor } from "@/lib/labels";
-import { ALL_STAGES_ORDERED, canTransition } from "@/lib/state-machine";
+import { orderStatusLabel } from "@/lib/labels";
+import { canTransition } from "@/lib/state-machine";
 import { formatMoney } from "@/lib/utils";
 import { useDialog } from "@/components/use-dialog";
+
+// Referens dizayn (isell)dagi kabi — har bir bosqich to'liq rangli sarlavha
+// panelida, o'ziga xos ikonka bilan.
+const STAGE_STYLE: Record<OrderStatus, { bg: string; icon: LucideIcon }> = {
+  YANGI_SOROV: { bg: "bg-slate-500", icon: ClipboardList },
+  MASLAHAT_BERILDI: { bg: "bg-sky-500", icon: MessageCircle },
+  NARX_KELISHILDI: { bg: "bg-indigo-500", icon: Tag },
+  BUYURTMA_OLINDI: { bg: "bg-amber-500", icon: ShoppingCart },
+  YETKAZILMOQDA: { bg: "bg-blue-500", icon: Truck },
+  YAKUNLANDI: { bg: "bg-emerald-500", icon: CheckCircle2 },
+  PROPOSAL: { bg: "bg-slate-500", icon: FileText },
+  NEW: { bg: "bg-sky-500", icon: Sparkles },
+  PROCESSING: { bg: "bg-amber-500", icon: Loader },
+  READY: { bg: "bg-indigo-500", icon: PackageCheck },
+  DELIVERED: { bg: "bg-emerald-500", icon: CheckCheck },
+  CANCELLED: { bg: "bg-rose-500", icon: XCircle },
+};
 
 export interface KanbanOrder {
   id: string;
@@ -27,7 +59,16 @@ export interface KanbanOrder {
 // ushlab boshqa ustunga tashlash orqali holatini o'zgartiradigan kanban.
 // Ruxsat etilmagan o'tish (state-machine.ts) bo'lsa — serverga so'rov
 // yuborilmasdan, darhol xato ko'rsatiladi.
-export default function OrdersKanban({ orders }: { orders: KanbanOrder[] }) {
+export default function OrdersKanban({
+  orders,
+  stages,
+}: {
+  orders: KanbanOrder[];
+  // Aralash pipeline (chakana/ulgurji vs ishlab chiqarish)larni bitta
+  // kanban'da 12 ta ustunga cho'zib yubormaslik uchun — server "Turi"
+  // filteriga qarab tegishli bosqichlar ro'yxatini hisoblab beradi.
+  stages: OrderStatus[];
+}) {
   const router = useRouter();
   const [items, setItems] = useState(orders);
   // Qidiruv/filtr o'zgarib, server yangi `orders` prop yuborsa — mahalliy
@@ -38,7 +79,7 @@ export default function OrdersKanban({ orders }: { orders: KanbanOrder[] }) {
   const [, startTransition] = useTransition();
   const { alert, Dialog } = useDialog();
 
-  const columns = ALL_STAGES_ORDERED.map((status) => ({
+  const columns = stages.map((status) => ({
     status,
     orders: items.filter((o) => o.status === status),
   }));
@@ -87,6 +128,8 @@ export default function OrdersKanban({ orders }: { orders: KanbanOrder[] }) {
       <div className="flex gap-4 min-w-max">
         {columns.map((col) => {
           const columnTotal = col.orders.reduce((s, o) => s + o.total, 0);
+          const style = STAGE_STYLE[col.status];
+          const StageIcon = style.icon;
           return (
             <div
               key={col.status}
@@ -99,29 +142,34 @@ export default function OrdersKanban({ orders }: { orders: KanbanOrder[] }) {
                 e.preventDefault();
                 handleDrop(col.status);
               }}
-              className={`w-80 flex-shrink-0 panel p-3 transition-colors ${
+              className={`w-80 flex-shrink-0 rounded-2xl bg-white border border-border overflow-hidden transition-shadow ${
                 dragOverStatus === col.status ? "ring-2 ring-primary" : ""
               }`}
             >
-              <div className="flex items-center justify-between mb-1 px-1">
-                <span className={`chip ${orderStatusColor[col.status]}`}>
-                  {orderStatusLabel[col.status]}
-                </span>
-                <span className="text-xs font-bold text-ink-soft bg-gray-100 rounded-full px-2 py-0.5">
-                  {col.orders.length}
-                </span>
+              <div className={`${style.bg} px-4 py-3 text-white`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <StageIcon size={15} />
+                    <span className="font-bold text-xs uppercase tracking-wide truncate">
+                      {orderStatusLabel[col.status]}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold bg-white/25 rounded-full px-2 py-0.5 shrink-0">
+                    {col.orders.length}
+                  </span>
+                </div>
+                <p className="text-sm font-semibold mt-1 text-white/90">
+                  {formatMoney(columnTotal, "UZS")}
+                </p>
               </div>
-              <p className="text-xs text-ink-soft px-1 mb-3 font-semibold">
-                {formatMoney(columnTotal, "UZS")}
-              </p>
-              <div className="space-y-2 max-h-[65vh] overflow-y-auto">
+              <div className="space-y-2 p-3 max-h-[65vh] overflow-y-auto">
                 {col.orders.map((o) => (
                   <div
                     key={o.id}
                     draggable
                     onDragStart={() => setDraggingId(o.id)}
                     onDragEnd={() => setDraggingId(null)}
-                    className={`p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-sm border border-transparent hover:border-border cursor-grab active:cursor-grabbing transition ${
+                    className={`p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-md border border-transparent hover:border-border cursor-grab active:cursor-grabbing transition ${
                       draggingId === o.id ? "opacity-40" : ""
                     }`}
                   >

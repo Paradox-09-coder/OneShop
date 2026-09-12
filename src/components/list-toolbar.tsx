@@ -114,6 +114,7 @@ export default function ListToolbar({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onFocus={openPanel}
             placeholder={searchPlaceholder}
             className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-white text-sm"
           />

@@ -6,6 +6,7 @@ import { formatDate, formatDateTime } from "@/lib/utils";
 import { orderTypeLabel, orderStatusLabel } from "@/lib/labels";
 import { Plus, LayoutGrid, Table2 } from "lucide-react";
 import type { OrderStatus, OrderType, Prisma } from "@prisma/client";
+import { RETAIL_FLOW, MANUFACTURING_FLOW } from "@/lib/state-machine";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
 import OrdersTable from "./orders-table";
@@ -237,6 +238,13 @@ export default async function OrdersPage({
 
       {view === "kanban" ? (
         <OrdersKanban
+          stages={
+            sp.type === "MANUFACTURING"
+              ? [...MANUFACTURING_FLOW, "CANCELLED"]
+              : sp.type === "POS"
+                ? (["YANGI_SOROV", "YAKUNLANDI", "CANCELLED"] as OrderStatus[])
+                : [...RETAIL_FLOW, "CANCELLED"]
+          }
           orders={list.map((o) => ({
             id: o.id,
             orderNumber: o.orderNumber,
