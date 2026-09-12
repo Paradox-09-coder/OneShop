@@ -34,22 +34,24 @@ export default async function AppShellLayout({
         }}
         allowedHrefs={hrefs}
       />
-      <Topbar />
-      <main className="flex-1 md:ml-[260px] p-4 md:p-8 pt-16 md:pt-16 max-w-full overflow-x-hidden">
-        {allowed ? (
-          children
-        ) : (
-          <div className="max-w-md mx-auto mt-20 panel p-8 text-center">
-            <div className="w-14 h-14 rounded-full bg-danger-light/40 text-danger grid place-items-center mx-auto mb-4">
-              <Ban size={22} />
+      <main className="flex-1 md:ml-[260px] max-w-full overflow-x-hidden min-h-screen">
+        <Topbar />
+        <div className="p-4 md:p-8">
+          {allowed ? (
+            children
+          ) : (
+            <div className="max-w-md mx-auto mt-20 panel p-8 text-center">
+              <div className="w-14 h-14 rounded-full bg-danger-light/40 text-danger grid place-items-center mx-auto mb-4">
+                <Ban size={22} />
+              </div>
+              <h2 className="text-xl font-bold mb-2">Ruxsat yo'q</h2>
+              <p className="text-sm text-ink-soft">
+                Bu bo'limga sizning rolingizda kirishga ruxsat yo'q. Kerak
+                bo'lsa rahbariyat bilan bog'laning.
+              </p>
             </div>
-            <h2 className="text-xl font-bold mb-2">Ruxsat yo'q</h2>
-            <p className="text-sm text-ink-soft">
-              Bu bo'limga sizning rolingizda kirishga ruxsat yo'q. Kerak bo'lsa
-              rahbariyat bilan bog'laning.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </main>
     </div>
   );
