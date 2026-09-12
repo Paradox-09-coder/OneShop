@@ -20,12 +20,15 @@ export default function PageHeader({ title, subtitle, actions, back = true }: Pr
   const router = useRouter();
 
   function onBackClick() {
-    if (typeof back === "string") {
-      router.push(back);
-    } else {
-      // Standart: bir bir orqaga emas, to'g'ridan-to'g'ri bosh sahifaga
-      router.push("/");
+    // Brauzer tarixi orqali qaytamiz — shunda ro'yxat sahifasidagi
+    // filtr/sahifalash (?take=...) va scroll pozitsiyasi saqlanib qoladi.
+    // To'g'ridan-to'g'ri havola orqali (masalan Telegramdan) ochilgan
+    // bo'lsa, tarix bo'lmaydi — o'shanda belgilangan manzilga o'tamiz.
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
     }
+    router.push(typeof back === "string" ? back : "/");
   }
 
   return (

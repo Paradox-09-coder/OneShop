@@ -21,7 +21,9 @@ export default function LoadMore({ step = 30, takeKey = "take", hasMore }: Props
     const params = new URLSearchParams(sp.toString());
     const current = Number(params.get(takeKey)) || step;
     params.set(takeKey, String(current + step));
-    router.push(`${pathname}?${params.toString()}`);
+    // scroll: false — "Yana" bosilganda sahifa tepasiga otib ketmasin,
+    // foydalanuvchi turgan joyida qolsin.
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   return (
