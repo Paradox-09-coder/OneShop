@@ -119,14 +119,15 @@ export function defaultPermissionsForRole(role: Role): string[] {
       return [
         "dashboard.read",
         "orders.*", "clients.*", "counterparties.read",
+        "crm.*",
         "reports.read",
       ];
 
-    // ── Sotuvchi ── buyurtmalar + mijoz + kassa
-    // Eslatma: CRM (voronka) meeting stenogrammasida umuman tilga
-    // olinmagan — "crm.*" ataylab olib tashlandi, aks holda sidebar'dan
-    // yashirilgan bo'lsa ham to'g'ridan-to'g'ri /crm manziliga kirish
-    // qolib ketardi.
+    // ── Sotuvchi ── buyurtmalar + mijoz + CRM (kanban) + kassa
+    // Eslatma: CRM meeting stenogrammasida tilga olinmagan edi, shuning
+    // uchun avval "crm.*" olib tashlangan edi — lekin keyinchalik lead
+    // voronkasi (kanban) alohida biznes ehtiyoj sifatida talab qilindi,
+    // shuning uchun qaytarildi.
     case "SOTUVCHI":
     case "SELLER":
       return [
@@ -136,6 +137,7 @@ export function defaultPermissionsForRole(role: Role): string[] {
         "clients.read", "clients.write",
         "counterparties.read",
         "catalog.read",
+        "crm.*",
       ];
 
     // ── Sex mudiri (Alisher aka) ── ishlab chiqarish + ombor + retseptlar
