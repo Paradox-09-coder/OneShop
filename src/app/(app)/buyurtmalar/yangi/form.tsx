@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
+import MoneyInput from "@/components/money-input";
 
 interface ClientOpt {
   id: string;
@@ -1055,13 +1056,10 @@ export default function NewOrderForm({
                         <label className="block text-xs font-semibold text-primary uppercase mb-1">
                           Boshlang'ich to'lov
                         </label>
-                        <input
-                          type="number" onFocus={(e) => e.currentTarget.select()}
-                          min={0}
-                          max={grand}
+                        <MoneyInput
                           placeholder="Mijoz to'lagan summa"
                           value={depositText}
-                          onChange={(e) => setDepositText(e.target.value)}
+                          onChange={setDepositText}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-white mb-2"
                         />
                       </>

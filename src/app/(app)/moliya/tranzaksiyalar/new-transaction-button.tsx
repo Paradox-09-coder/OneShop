@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MoneyInput from "@/components/money-input";
 
 interface AccountOption {
   id: string;
@@ -178,10 +179,9 @@ export default function NewTransactionButton({
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Summa {account ? `(${account.currency})` : ""}
                 </label>
-                <input
-                  type="number"
+                <MoneyInput
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={setAmount}
                   placeholder="0"
                   className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
                 />
