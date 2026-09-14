@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type UIEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Plus, UserPlus, Minus, Search, User, X } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
@@ -64,8 +64,7 @@ export default function NewOrderForm({
   const [clientId, setClientId] = useState("");
   const [clientPanelOpen, setClientPanelOpen] = useState(false);
   const [clientQuery, setClientQuery] = useState("");
-  const [clientVisibleCount, setClientVisibleCount] = useState(5);
-  const [clientLoadingMore, setClientLoadingMore] = useState(false);
+  const [clientVisibleCount, setClientVisibleCount] = useState(10);
 
   const [productQuery, setProductQuery] = useState("");
   const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORY);
@@ -117,22 +116,6 @@ export default function NewOrderForm({
     );
   }, [clients, clientQuery]);
   const visibleClientMatches = clientMatches.slice(0, clientVisibleCount);
-
-  function onClientListScroll(e: UIEvent<HTMLDivElement>) {
-    const el = e.currentTarget;
-    if (clientLoadingMore) return;
-    if (clientVisibleCount >= clientMatches.length) return;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) {
-      setClientLoadingMore(true);
-      // Ma'lumot allaqachon mijozimizda (server bir marta 500 tagacha
-      // yuklab bergan) — sun'iy kechikish faqat "yuklanmoqda" animatsiyasi
-      // uchun, haqiqiy so'rov emas.
-      setTimeout(() => {
-        setClientVisibleCount((c) => Math.min(clientMatches.length, c + 20));
-        setClientLoadingMore(false);
-      }, 350);
-    }
-  }
 
   const categoryCounts = useMemo(() => {
     const map = new Map<string, number>();
@@ -314,16 +297,13 @@ export default function NewOrderForm({
                           value={clientQuery}
                           onChange={(e) => {
                             setClientQuery(e.target.value);
-                            setClientVisibleCount(5);
+                            setClientVisibleCount(10);
                           }}
                           placeholder="Ism yoki telefon bo'yicha qidirish..."
                           className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-white text-sm"
                         />
                       </div>
-                      <div
-                        onScroll={onClientListScroll}
-                        className="max-h-60 overflow-y-auto"
-                      >
+                      <div className="max-h-60 overflow-y-auto overscroll-contain">
                         {visibleClientMatches.map((c) => (
                           <button
                             key={c.id}
@@ -332,7 +312,7 @@ export default function NewOrderForm({
                               setClientId(c.id);
                               setClientPanelOpen(false);
                               setClientQuery("");
-                              setClientVisibleCount(5);
+                              setClientVisibleCount(10);
                             }}
                             className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm"
                           >
@@ -347,10 +327,14 @@ export default function NewOrderForm({
                             Mijoz topilmadi
                           </p>
                         )}
-                        {clientLoadingMore && (
-                          <div className="flex items-center justify-center py-3">
-                            <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                          </div>
+                        {clientVisibleCount < clientMatches.length && (
+                          <button
+                            type="button"
+                            onClick={() => setClientVisibleCount((c) => c + 10)}
+                            className="w-full text-center px-3 py-2 rounded-lg hover:bg-gray-50 text-sm font-semibold text-primary"
+                          >
+                            Yana ko'rsatish ({clientMatches.length - clientVisibleCount} ta qoldi)
+                          </button>
                         )}
                       </div>
                       <button

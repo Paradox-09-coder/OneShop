@@ -181,6 +181,24 @@ export default async function OrderDetailPage({
               </div>
             )}
           </div>
+
+          <LogisticsPanel
+            orderId={order.id}
+            drivers={drivers}
+            initial={{
+              driverName: order.driverName ?? "",
+              driverPhone: order.driverPhone ?? "",
+              driverCarNumber: order.driverCarNumber ?? "",
+              deliveryCost: order.deliveryCost ?? 0,
+              deliveryAddress: order.deliveryAddress ?? "",
+              receiverName: order.receiverName ?? "",
+              receiverPhone: order.receiverPhone ?? "",
+              expectedDeliveryDate: order.expectedDeliveryDate
+                ? order.expectedDeliveryDate.toISOString().slice(0, 10)
+                : "",
+              deliveryPaid: !!order.deliveryPaidAt,
+            }}
+          />
         </div>
 
         <div className="order-1 lg:order-2 lg:col-span-2 space-y-4">
@@ -335,24 +353,6 @@ export default async function OrderDetailPage({
               </div>
             )}
           </div>
-
-          <LogisticsPanel
-            orderId={order.id}
-            drivers={drivers}
-            initial={{
-              driverName: order.driverName ?? "",
-              driverPhone: order.driverPhone ?? "",
-              driverCarNumber: order.driverCarNumber ?? "",
-              deliveryCost: order.deliveryCost ?? 0,
-              deliveryAddress: order.deliveryAddress ?? "",
-              receiverName: order.receiverName ?? "",
-              receiverPhone: order.receiverPhone ?? "",
-              expectedDeliveryDate: order.expectedDeliveryDate
-                ? order.expectedDeliveryDate.toISOString().slice(0, 10)
-                : "",
-              deliveryPaid: !!order.deliveryPaidAt,
-            }}
-          />
 
           <div className="panel p-5">
             <h3 className="font-bold mb-3">Moliyaviy xulosa</h3>
