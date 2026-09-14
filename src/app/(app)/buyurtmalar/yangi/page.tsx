@@ -11,7 +11,7 @@ async function loadExchangeRate(): Promise<number> {
 }
 
 export default async function NewOrderPage() {
-  const [clients, catalog, categories, recipes, rate, accounts] = await Promise.all([
+  const [clients, catalog, categories, recipes, rate, accounts, driverEmployees] = await Promise.all([
     prisma.counterparty.findMany({
       where: { type: "CLIENT", deletedAt: null },
       orderBy: { name: "asc" },
@@ -54,7 +54,19 @@ export default async function NewOrderPage() {
       orderBy: { name: "asc" },
       select: { id: true, name: true, currency: true },
     }),
+    prisma.employee.findMany({
+      where: { position: "Haydovchi" },
+      include: { counterparty: { select: { name: true, phone: true } } },
+      orderBy: { counterparty: { name: "asc" } },
+    }),
   ]);
+
+  const drivers = driverEmployees.map((e) => ({
+    id: e.counterpartyId,
+    name: e.counterparty.name,
+    phone: e.counterparty.phone,
+    carNumber: e.carNumber,
+  }));
 
   const recipesByProduct: Record<string, { id: string; variantName: string }[]> = {};
   for (const r of recipes) {
@@ -74,6 +86,7 @@ export default async function NewOrderPage() {
         recipesByProduct={recipesByProduct}
         defaultExchangeRate={rate}
         accounts={accounts}
+        drivers={drivers}
       />
     </div>
   );

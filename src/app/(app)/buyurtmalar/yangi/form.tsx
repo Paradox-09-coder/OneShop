@@ -2,8 +2,9 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, UserPlus, Minus, Search, User, X } from "lucide-react";
+import { Trash2, Plus, UserPlus, Minus, Search, User, X, Truck, Phone, Car } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
+import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 
 interface ClientOpt {
   id: string;
@@ -20,6 +21,13 @@ interface AccountOpt {
   id: string;
   name: string;
   currency: string;
+}
+
+interface DriverOpt {
+  id: string;
+  name: string;
+  phone: string | null;
+  carNumber: string | null;
 }
 
 interface CatalogOpt {
@@ -55,6 +63,7 @@ interface Props {
   recipesByProduct: Record<string, RecipeOpt[]>;
   defaultExchangeRate: number;
   accounts: AccountOpt[];
+  drivers: DriverOpt[];
 }
 
 type Mode = "PERCENT" | "AMOUNT";
@@ -66,6 +75,7 @@ export default function NewOrderForm({
   recipesByProduct,
   defaultExchangeRate,
   accounts,
+  drivers: initialDrivers,
 }: Props) {
   const router = useRouter();
   const [clients, setClients] = useState(initialClients);
@@ -102,6 +112,19 @@ export default function NewOrderForm({
   const [lines, setLines] = useState<Line[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Yetkazish (logistika) — buyurtma yaratilayotgan paytdayoq
+  // haydovchi/manzil tanlash mumkin, keyin alohida kirib qo'shish shart
+  // emas.
+  const [needsDelivery, setNeedsDelivery] = useState(false);
+  const [driversList, setDriversList] = useState(initialDrivers);
+  const [driverId, setDriverId] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryCostText, setDeliveryCostText] = useState("");
+  const [receiverName, setReceiverName] = useState("");
+  const [receiverPhone, setReceiverPhone] = useState("");
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
+  const selectedDriver = driversList.find((d) => d.id === driverId);
 
   // Inline "add new client" drawer
   const [addingClient, setAddingClient] = useState(false);
@@ -268,6 +291,18 @@ export default function NewOrderForm({
           paymentAccountId: paymentType !== "DEFERRED" ? paymentAccountId : undefined,
           note,
           items: lines,
+          ...(needsDelivery
+            ? {
+                driverName: selectedDriver?.name,
+                driverPhone: selectedDriver?.phone ?? undefined,
+                driverCarNumber: selectedDriver?.carNumber ?? undefined,
+                deliveryAddress: deliveryAddress || undefined,
+                deliveryCost: Number(deliveryCostText) || undefined,
+                receiverName: receiverName || undefined,
+                receiverPhone: receiverPhone || undefined,
+                expectedDeliveryDate: expectedDeliveryDate || undefined,
+              }
+            : {}),
         }),
       });
       const data = await res.json();
@@ -621,6 +656,128 @@ export default function NewOrderForm({
                 </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+
+        <div className="panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-ink flex items-center gap-2">
+              <Truck size={16} className="text-primary" /> Yetkazish (logistika)
+            </h3>
+            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={needsDelivery}
+                onChange={(e) => setNeedsDelivery(e.target.checked)}
+                className="w-4 h-4"
+              />
+              Kerak
+            </label>
+          </div>
+          {needsDelivery && (
+            <div className="space-y-2 text-sm">
+              <div>
+                <label className="block text-xs text-ink-soft mb-1">Manzil</label>
+                <input
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Google Maps havolasi yoki taxminiy manzil (tuman, mahalla...)"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-ink-soft mb-1">Haydovchi</label>
+                <select
+                  value={driverId}
+                  onChange={(e) => setDriverId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                >
+                  <option value="">— tanlang —</option>
+                  {driversList.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                      {d.phone ? ` (${d.phone})` : ""}
+                    </option>
+                  ))}
+                </select>
+                {selectedDriver && (selectedDriver.phone || selectedDriver.carNumber) && (
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    {selectedDriver.phone && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/15 text-xs font-medium text-ink">
+                        <Phone size={12} className="text-primary" /> {selectedDriver.phone}
+                      </span>
+                    )}
+                    {selectedDriver.carNumber && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-border text-xs font-medium text-ink">
+                        <Car size={12} className="text-ink-soft" /> {selectedDriver.carNumber}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="mt-1.5">
+                  <AddCounterpartyButton
+                    defaultType="EMPLOYEE"
+                    lockType
+                    variant="link"
+                    label="Yangi haydovchi"
+                    title="Yangi haydovchi"
+                    defaultPosition="Haydovchi"
+                    onCreated={(party) => {
+                      const nd: DriverOpt = {
+                        id: party.id,
+                        name: party.name,
+                        phone: party.phone,
+                        carNumber: party.carNumber,
+                      };
+                      setDriversList((prev) => [nd, ...prev]);
+                      setDriverId(nd.id);
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-ink-soft mb-1">Yo'l kira (so'm)</label>
+                <input
+                  type="number" onFocus={(e) => e.currentTarget.select()}
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={deliveryCostText}
+                  onChange={(e) => setDeliveryCostText(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-ink-soft mb-1">
+                  Rejalashtirilgan sana
+                </label>
+                <input
+                  type="date"
+                  value={expectedDeliveryDate}
+                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-ink-soft mb-1">
+                    Qabul qiluvchi
+                  </label>
+                  <input
+                    value={receiverName}
+                    onChange={(e) => setReceiverName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-ink-soft mb-1">Telefon</label>
+                  <input
+                    value={receiverPhone}
+                    onChange={(e) => setReceiverPhone(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>

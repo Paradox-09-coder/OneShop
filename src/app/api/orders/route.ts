@@ -23,6 +23,19 @@ const CreateOrder = z.object({
   depositAmount: z.number().min(0).optional(),
   paymentAccountId: z.string().optional(),
   note: z.string().optional(),
+  // Yetkazish (logistika) — endi buyurtma yaratilayotgan paytdayoq
+  // kiritilishi mumkin, keyin alohida qo'shish shart emas.
+  driverName: z.string().optional(),
+  driverPhone: z.string().optional(),
+  driverCarNumber: z.string().optional(),
+  deliveryAddress: z.string().optional(),
+  deliveryCost: z.number().min(0).optional(),
+  receiverName: z.string().optional(),
+  receiverPhone: z.string().optional(),
+  expectedDeliveryDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   items: z
     .array(
       z.object({
@@ -182,6 +195,16 @@ export async function POST(req: Request) {
           paidAmount: paidNow,
           paymentType: body.paymentType,
           note: body.note,
+          driverName: body.driverName,
+          driverPhone: body.driverPhone,
+          driverCarNumber: body.driverCarNumber,
+          deliveryAddress: body.deliveryAddress,
+          deliveryCost: body.deliveryCost,
+          receiverName: body.receiverName,
+          receiverPhone: body.receiverPhone,
+          expectedDeliveryDate: body.expectedDeliveryDate
+            ? new Date(body.expectedDeliveryDate)
+            : undefined,
           items: {
             create: body.items.map((it) => ({
               catalogProductId: it.catalogProductId,
