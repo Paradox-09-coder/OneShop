@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { counterpartyTypeLabel } from "@/lib/labels";
-import CounterpartyForm from "./form";
+import AddCounterpartyButton from "./add-counterparty-button";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
 import SectionTabs from "@/components/section-tabs";
@@ -67,6 +67,7 @@ export default async function CounterpartiesPage({
       <PageHeader
         title="Kontragentlar"
         subtitle="Mijozlar, ta'minotchilar, xodimlar va ta'sischilar"
+        actions={<AddCounterpartyButton />}
       />
 
       <SectionTabs
@@ -76,76 +77,68 @@ export default async function CounterpartiesPage({
         ]}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="panel p-5">
-          <h3 className="font-bold mb-3">Yangi kontragent</h3>
-          <CounterpartyForm />
-        </div>
+      <ListToolbar
+        popover
+        searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
+        selects={[
+          {
+            key: "type",
+            label: "Turi",
+            options: Object.entries(counterpartyTypeLabel).map(
+              ([value, label]) => ({ value, label })
+            ),
+          },
+        ]}
+        dateRange={{ label: "Sana" }}
+      />
 
-        <div className="lg:col-span-2 panel overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <h3 className="font-bold mb-3">Ro'yxat</h3>
-            <ListToolbar
-              searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
-              selects={[
-                {
-                  key: "type",
-                  label: "Turi",
-                  options: Object.entries(counterpartyTypeLabel).map(
-                    ([value, label]) => ({ value, label })
-                  ),
-                },
-              ]}
-              dateRange={{ label: "Sana" }}
-            />
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-ink-soft uppercase border-b border-border bg-gray-50/50">
-                  <th className="text-left px-4 py-2">Nomi</th>
-                  <th className="text-left px-4 py-2">Turi</th>
-                  <th className="text-left px-4 py-2">Telefon</th>
-                  <th className="text-right px-4 py-2">Balans</th>
-                  <th className="text-left px-4 py-2">Sana</th>
+      <div className="panel overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-ink-soft uppercase border-b border-border bg-gray-50/50">
+                <th className="text-left px-5 py-3">Nomi</th>
+                <th className="text-left px-5 py-3">Turi</th>
+                <th className="text-left px-5 py-3">Telefon</th>
+                <th className="text-right px-5 py-3">Balans</th>
+                <th className="text-left px-5 py-3">Sana</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((p) => (
+                <tr key={p.id} className="border-b border-border/50 hover:bg-gray-50/50">
+                  <td className="px-5 py-3 font-semibold">{p.name}</td>
+                  <td className="px-5 py-3">
+                    <span className="chip bg-slate-100 text-slate-700">
+                      {counterpartyTypeLabel[p.type]}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-ink-soft">{p.phone ?? "—"}</td>
+                  <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">
+                    {formatMoney(p.balanceValue, p.balanceCurrency)}
+                  </td>
+                  <td className="px-5 py-3 text-ink-soft">
+                    {formatDate(p.createdAt)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {visible.map((p) => (
-                  <tr key={p.id} className="border-b border-border/50">
-                    <td className="px-4 py-2 font-semibold">{p.name}</td>
-                    <td className="px-4 py-2">
-                      <span className="chip bg-slate-100 text-slate-700">
-                        {counterpartyTypeLabel[p.type]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-ink-soft">{p.phone ?? "—"}</td>
-                    <td className="px-4 py-2 text-right font-semibold whitespace-nowrap">
-                      {formatMoney(p.balanceValue, p.balanceCurrency)}
-                    </td>
-                    <td className="px-4 py-2 text-ink-soft">
-                      {formatDate(p.createdAt)}
-                    </td>
-                  </tr>
-                ))}
-                {visible.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-ink-soft">
-                      Kontragentlar yo'q
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <Pagination
-            page={pageNum}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            pageSize={pageSize}
-            buildHref={(p) => hrefWith({ page: String(p) })}
-          />
+              ))}
+              {visible.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-ink-soft">
+                    Kontragentlar yo'q
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+        <Pagination
+          page={pageNum}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          buildHref={(p) => hrefWith({ page: String(p) })}
+        />
       </div>
     </div>
   );
