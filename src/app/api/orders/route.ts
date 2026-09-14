@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { handleError, jsonOk, requireApiPermission } from "@/lib/api";
+import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
 import { generateOrderNumber } from "@/lib/utils";
 import { sendGroupMessage, escape } from "@/lib/telegram";
 
@@ -16,6 +16,12 @@ const CreateOrder = z.object({
   taxAmount: z.number().min(0).default(0),
   discountPercent: z.number().min(0).max(100).default(0),
   discountAmount: z.number().min(0).default(0),
+  // To'lov usuli — To'liq to'lov/Zaklad hozirning o'zida pul qabul qilingan
+  // hisobga (kassa/bank) tushadi; Qarz bo'lsa hech narsa olinmaydi, butun
+  // summa qarz sifatida qoladi (agreedAmount - paidAmount orqali hisoblanadi).
+  paymentType: z.enum(["FULL", "PARTIAL", "DEFERRED"]).default("DEFERRED"),
+  depositAmount: z.number().min(0).optional(),
+  paymentAccountId: z.string().optional(),
   note: z.string().optional(),
   items: z
     .array(
@@ -64,6 +70,19 @@ export async function POST(req: Request) {
         : body.taxAmount;
     const total = afterDiscount + tax;
 
+    const paidNow =
+      body.paymentType === "FULL"
+        ? total
+        : body.paymentType === "PARTIAL"
+          ? Math.min(body.depositAmount ?? 0, total)
+          : 0;
+    if (body.paymentType !== "DEFERRED" && !body.paymentAccountId) {
+      return jsonErr("To'lov qabul qilinadigan hisobni tanlang", 422);
+    }
+    if (body.paymentType === "PARTIAL" && paidNow <= 0) {
+      return jsonErr("Avans summasini kiriting", 422);
+    }
+
     // Snapshot the exchange rate for non-UZS orders.
     // If the client supplied one, trust that; otherwise fall back to settings.
     let exchangeRate: number | null = null;
@@ -86,6 +105,19 @@ export async function POST(req: Request) {
       body.type === "MANUFACTURING" ? "PROPOSAL" : "YANGI_SOROV";
 
     const order = await prisma.$transaction(async (tx) => {
+      let paymentAccount = null as Awaited<ReturnType<typeof tx.account.findUnique>>;
+      if (paidNow > 0) {
+        paymentAccount = await tx.account.findUnique({
+          where: { id: body.paymentAccountId },
+        });
+        if (!paymentAccount) throw new Error("Hisob topilmadi");
+        if (paymentAccount.currency !== body.orderCurrency) {
+          throw new Error(
+            `Hisob valyutasi mos emas (${paymentAccount.currency} — buyurtma ${body.orderCurrency}da)`
+          );
+        }
+      }
+
       const client = await tx.counterparty.findUnique({
         where: { id: body.clientId },
         include: { clientProfile: true },
@@ -139,6 +171,8 @@ export async function POST(req: Request) {
           clientPhoneSnapshot: client?.phone,
           agreedAmount: total,
           estimatedAmount: total,
+          paidAmount: paidNow,
+          paymentType: body.paymentType,
           note: body.note,
           items: {
             create: body.items.map((it) => ({
@@ -159,6 +193,32 @@ export async function POST(req: Request) {
           },
         },
       });
+      if (paidNow > 0 && paymentAccount) {
+        await tx.payment.create({
+          data: {
+            type: paymentAccount.type === "CASH" ? "CASH_IN" : "BANK_IN",
+            accountId: paymentAccount.id,
+            amount: paidNow,
+            currency: body.orderCurrency,
+            sourceType: "ORDER",
+            sourceId: created.id,
+            sourceLabel: created.orderNumber,
+            orderId: created.id,
+            counterpartyId: client?.id,
+            counterpartyNameSnapshot: client?.name,
+            description:
+              body.paymentType === "FULL"
+                ? `To'liq to'lov — ${created.orderNumber}`
+                : `Zaklad (boshlang'ich to'lov) — ${created.orderNumber}`,
+            createdById: session.id,
+          },
+        });
+        await tx.account.update({
+          where: { id: paymentAccount.id },
+          data: { balanceCache: { increment: paidNow } },
+        });
+      }
+
       await tx.log.create({
         data: {
           userId: session.id,

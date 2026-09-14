@@ -20,12 +20,18 @@ export function formatMoney(
   return `${sym}${val}${suffix}`;
 }
 
+// Server UTC'da ishlaydi (Railway), lekin biznes O'zbekistonda —
+// timeZone ko'rsatilmasa server vaqti (UTC) chiqib, soat 5 soatga
+// noto'g'ri ko'rinadi (masalan 13:26 o'rniga 08:26).
+const TASHKENT_TZ = "Asia/Tashkent";
+
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return "—";
   return new Intl.DateTimeFormat("uz-UZ", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: TASHKENT_TZ,
   }).format(new Date(date));
 }
 
@@ -37,6 +43,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: TASHKENT_TZ,
   }).format(new Date(date));
 }
 

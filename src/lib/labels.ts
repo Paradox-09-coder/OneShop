@@ -35,7 +35,7 @@ export const orderStatusLabel: Record<OrderStatus, string> = {
   PROCESSING: "Ishlanmoqda",
   READY: "Tayyor",
   DELIVERED: "Yetkazildi",
-  CANCELLED: "Bekor qilindi",
+  CANCELLED: "Bekor bo'ldi",
 };
 
 export const orderStatusColor: Record<OrderStatus, string> = {
