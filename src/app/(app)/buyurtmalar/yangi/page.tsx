@@ -11,7 +11,7 @@ async function loadExchangeRate(): Promise<number> {
 }
 
 export default async function NewOrderPage() {
-  const [clients, catalog, recipes, rate] = await Promise.all([
+  const [clients, catalog, categories, recipes, rate] = await Promise.all([
     prisma.counterparty.findMany({
       where: { type: "CLIENT", deletedAt: null },
       orderBy: { name: "asc" },
@@ -31,8 +31,13 @@ export default async function NewOrderPage() {
         basePrice: true,
         basePriceCurrency: true,
         unitType: true,
+        categoryId: true,
       },
       take: 1000,
+    }),
+    prisma.productCategory.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
     }),
     // Bir mahsulotda bir nechta faol retsept (masalan arzonroq/qimmatroq
     // formula) bo'lsa — buyurtma qatorida foydalanuvchi tanlaydi
@@ -60,6 +65,7 @@ export default async function NewOrderPage() {
       <NewOrderForm
         clients={clients}
         catalog={catalog}
+        categories={categories}
         recipesByProduct={recipesByProduct}
         defaultExchangeRate={rate}
       />
