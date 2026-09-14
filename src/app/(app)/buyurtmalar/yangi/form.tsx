@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, UserPlus, Minus, Search, User, X, Truck, Phone, Car } from "lucide-react";
+import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 
@@ -42,6 +42,23 @@ interface CatalogOpt {
 
 const ALL_CATEGORY = "__all__";
 const UNCATEGORIZED = "__uncategorized__";
+
+// Qo'shimcha xarajat turlari — hozircha faqat "Logistika" tanlansa
+// haydovchi/manzil maydonlari ochiladi, qolganlari keyinroq funksional
+// bo'ladi (hozircha shunchaki nom sifatida saqlanadi).
+const EXPENSE_TYPES = [
+  "Bojxona xarajati",
+  "Logistika",
+  "Montaj",
+  "Qadoqlash",
+  "Yetkazish",
+];
+
+interface ExtraExpense {
+  id: string;
+  expenseType: string;
+  amountText: string;
+}
 
 interface Line {
   catalogProductId: string;
@@ -113,18 +130,31 @@ export default function NewOrderForm({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Yetkazish (logistika) — buyurtma yaratilayotgan paytdayoq
-  // haydovchi/manzil tanlash mumkin, keyin alohida kirib qo'shish shart
-  // emas.
-  const [needsDelivery, setNeedsDelivery] = useState(false);
+  // Qo'shimcha xarajatlar — "Logistika" turi tanlansa, shu qatorning
+  // o'zida haydovchi/manzil tanlash ochiladi (buyurtma yaratilayotgan
+  // paytdayoq, keyin alohida qo'shish shart emas).
+  const [extraExpenses, setExtraExpenses] = useState<ExtraExpense[]>([]);
   const [driversList, setDriversList] = useState(initialDrivers);
   const [driverId, setDriverId] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [deliveryCostText, setDeliveryCostText] = useState("");
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
   const selectedDriver = driversList.find((d) => d.id === driverId);
+  const logisticsExpense = extraExpenses.find((e) => e.expenseType === "Logistika");
+
+  function addExpenseRow() {
+    setExtraExpenses((prev) => [
+      ...prev,
+      { id: `${Date.now()}-${Math.random()}`, expenseType: "", amountText: "" },
+    ]);
+  }
+  function updateExpenseRow(id: string, patch: Partial<ExtraExpense>) {
+    setExtraExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  }
+  function removeExpenseRow(id: string) {
+    setExtraExpenses((prev) => prev.filter((e) => e.id !== id));
+  }
 
   // Inline "add new client" drawer
   const [addingClient, setAddingClient] = useState(false);
@@ -291,13 +321,16 @@ export default function NewOrderForm({
           paymentAccountId: paymentType !== "DEFERRED" ? paymentAccountId : undefined,
           note,
           items: lines,
-          ...(needsDelivery
+          additionalItems: extraExpenses
+            .filter((e) => e.expenseType && Number(e.amountText) > 0)
+            .map((e) => ({ name: e.expenseType, amount: Number(e.amountText) })),
+          ...(logisticsExpense
             ? {
                 driverName: selectedDriver?.name,
                 driverPhone: selectedDriver?.phone ?? undefined,
                 driverCarNumber: selectedDriver?.carNumber ?? undefined,
                 deliveryAddress: deliveryAddress || undefined,
-                deliveryCost: Number(deliveryCostText) || undefined,
+                deliveryCost: Number(logisticsExpense.amountText) || undefined,
                 receiverName: receiverName || undefined,
                 receiverPhone: receiverPhone || undefined,
                 expectedDeliveryDate: expectedDeliveryDate || undefined,
@@ -661,130 +694,8 @@ export default function NewOrderForm({
         </div>
 
         <div className="panel p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-ink flex items-center gap-2">
-              <Truck size={16} className="text-primary" /> Yetkazish (logistika)
-            </h3>
-            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-              <input
-                type="checkbox"
-                checked={needsDelivery}
-                onChange={(e) => setNeedsDelivery(e.target.checked)}
-                className="w-4 h-4"
-              />
-              Kerak
-            </label>
-          </div>
-          {needsDelivery && (
-            <div className="space-y-2 text-sm">
-              <div>
-                <label className="block text-xs text-ink-soft mb-1">Manzil</label>
-                <input
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder="Google Maps havolasi yoki taxminiy manzil (tuman, mahalla...)"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-ink-soft mb-1">Haydovchi</label>
-                <select
-                  value={driverId}
-                  onChange={(e) => setDriverId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                >
-                  <option value="">— tanlang —</option>
-                  {driversList.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                      {d.phone ? ` (${d.phone})` : ""}
-                    </option>
-                  ))}
-                </select>
-                {selectedDriver && (selectedDriver.phone || selectedDriver.carNumber) && (
-                  <div className="mt-2 flex items-center gap-2 flex-wrap">
-                    {selectedDriver.phone && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/15 text-xs font-medium text-ink">
-                        <Phone size={12} className="text-primary" /> {selectedDriver.phone}
-                      </span>
-                    )}
-                    {selectedDriver.carNumber && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-border text-xs font-medium text-ink">
-                        <Car size={12} className="text-ink-soft" /> {selectedDriver.carNumber}
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="mt-1.5">
-                  <AddCounterpartyButton
-                    defaultType="EMPLOYEE"
-                    lockType
-                    variant="link"
-                    label="Yangi haydovchi"
-                    title="Yangi haydovchi"
-                    defaultPosition="Haydovchi"
-                    onCreated={(party) => {
-                      const nd: DriverOpt = {
-                        id: party.id,
-                        name: party.name,
-                        phone: party.phone,
-                        carNumber: party.carNumber,
-                      };
-                      setDriversList((prev) => [nd, ...prev]);
-                      setDriverId(nd.id);
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-ink-soft mb-1">Yo'l kira (so'm)</label>
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={deliveryCostText}
-                  onChange={(e) => setDeliveryCostText(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-ink-soft mb-1">
-                  Rejalashtirilgan sana
-                </label>
-                <input
-                  type="date"
-                  value={expectedDeliveryDate}
-                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs text-ink-soft mb-1">
-                    Qabul qiluvchi
-                  </label>
-                  <input
-                    value={receiverName}
-                    onChange={(e) => setReceiverName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-ink-soft mb-1">Telefon</label>
-                  <input
-                    value={receiverPhone}
-                    onChange={(e) => setReceiverPhone(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="panel p-5">
-          <h3 className="font-bold text-ink mb-3">To'lovlar</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <h3 className="font-bold text-ink mb-4">Narx va to'lov</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">Valyuta</label>
               <select
@@ -799,47 +710,6 @@ export default function NewOrderForm({
                 <option value="USD">dollar (USD)</option>
               </select>
             </div>
-            {currency !== "UZS" && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1.5">
-                  Valyuta kursi (saqlanadi) — 1 {currency} = ? UZS
-                </label>
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  min={1}
-                  value={exchangeRate}
-                  onChange={(e) => setExchangeRate(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                />
-                <p className="text-xs text-ink-soft mt-1">
-                  Sozlamalardagi kurs: {defaultExchangeRate.toLocaleString("ru-RU")} so'm.
-                  Bu buyurtmada saqlab qolinadi.
-                </p>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Chegirma</label>
-              <div className="flex gap-1">
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  min={0}
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(Number(e.target.value))}
-                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDiscountMode(discountMode === "PERCENT" ? "AMOUNT" : "PERCENT")
-                  }
-                  className="px-4 py-2 rounded-r-xl border border-l-0 border-border bg-gray-50 hover:bg-gray-100 font-bold text-sm"
-                >
-                  {discountMode === "PERCENT" ? "%" : currency}
-                </button>
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium mb-1.5">QQS</label>
               <div className="flex gap-1">
@@ -859,7 +729,245 @@ export default function NewOrderForm({
                 </button>
               </div>
             </div>
+            {currency !== "UZS" && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5">
+                  Valyuta kursi (saqlanadi) — 1 {currency} = ? UZS
+                </label>
+                <input
+                  type="number" onFocus={(e) => e.currentTarget.select()}
+                  min={1}
+                  value={exchangeRate}
+                  onChange={(e) => setExchangeRate(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                />
+                <p className="text-xs text-ink-soft mt-1">
+                  Sozlamalardagi kurs: {defaultExchangeRate.toLocaleString("ru-RU")} so'm.
+                  Bu buyurtmada saqlab qolinadi.
+                </p>
+              </div>
+            )}
+          </div>
 
+          <div className="rounded-xl border border-border bg-gray-50/60 p-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Tag size={14} className="text-ink-soft" />
+              <span className="text-xs font-bold text-ink-soft uppercase tracking-wide">
+                Chegirma
+              </span>
+            </div>
+            <div className="flex gap-2 mb-3">
+              <div className="flex rounded-xl border border-border overflow-hidden shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setDiscountMode("PERCENT")}
+                  className={`px-4 py-2 text-sm font-bold ${
+                    discountMode === "PERCENT"
+                      ? "bg-primary text-white"
+                      : "bg-white text-ink-soft hover:bg-gray-50"
+                  }`}
+                >
+                  %
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiscountMode("AMOUNT")}
+                  className={`px-4 py-2 text-sm font-bold border-l border-border ${
+                    discountMode === "AMOUNT"
+                      ? "bg-primary text-white"
+                      : "bg-white text-ink-soft hover:bg-gray-50"
+                  }`}
+                >
+                  {currency}
+                </button>
+              </div>
+              <input
+                type="number" onFocus={(e) => e.currentTarget.select()}
+                min={0}
+                value={discountValue}
+                onChange={(e) => setDiscountValue(Number(e.target.value))}
+                className="flex-1 px-3 py-2 rounded-xl border border-border bg-white"
+              />
+            </div>
+            {discountMode === "PERCENT" && (
+              <div className="grid grid-cols-4 gap-2">
+                {[15, 30, 50, 75].map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setDiscountValue(p)}
+                    className={`py-2 rounded-xl border text-sm font-bold transition ${
+                      discountValue === p
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:bg-gray-50"
+                    }`}
+                  >
+                    {p}%
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border bg-gray-50/60 p-4 mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold text-ink-soft uppercase tracking-wide">
+                Qo'shimcha xarajatlar
+              </span>
+              <button
+                type="button"
+                onClick={addExpenseRow}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              >
+                <Plus size={14} /> Qo'shish
+              </button>
+            </div>
+            <p className="text-xs text-ink-soft italic mb-3">
+              Qo'shimcha xarajatlar narxga qo'shilmaydi — Moliyaga alohida xarajat
+              sifatida yoziladi.
+            </p>
+            {extraExpenses.length > 0 && (
+              <div className="space-y-3">
+                {extraExpenses.map((exp) => (
+                  <div key={exp.id}>
+                    <div className="flex gap-2">
+                      <select
+                        value={exp.expenseType}
+                        onChange={(e) =>
+                          updateExpenseRow(exp.id, { expenseType: e.target.value })
+                        }
+                        className="flex-1 px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                      >
+                        <option value="">Tur tanlang...</option>
+                        {EXPENSE_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number" onFocus={(e) => e.currentTarget.select()}
+                        min={0}
+                        placeholder="0"
+                        value={exp.amountText}
+                        onChange={(e) =>
+                          updateExpenseRow(exp.id, { amountText: e.target.value })
+                        }
+                        className="w-32 px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                      />
+                      <span className="px-2 py-2 text-sm font-semibold text-ink-soft shrink-0">
+                        {currency}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeExpenseRow(exp.id)}
+                        className="text-ink-soft hover:text-danger shrink-0"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    {exp.expenseType === "Logistika" && (
+                      <div className="mt-2 p-3 rounded-xl bg-white border border-border space-y-2 text-sm">
+                        <div>
+                          <label className="block text-xs text-ink-soft mb-1">Manzil</label>
+                          <input
+                            value={deliveryAddress}
+                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                            placeholder="Google Maps havolasi yoki taxminiy manzil (tuman, mahalla...)"
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-ink-soft mb-1">Haydovchi</label>
+                          <select
+                            value={driverId}
+                            onChange={(e) => setDriverId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                          >
+                            <option value="">— tanlang —</option>
+                            {driversList.map((d) => (
+                              <option key={d.id} value={d.id}>
+                                {d.name}
+                                {d.phone ? ` (${d.phone})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedDriver && (selectedDriver.phone || selectedDriver.carNumber) && (
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
+                              {selectedDriver.phone && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/15 text-xs font-medium text-ink">
+                                  <Phone size={12} className="text-primary" /> {selectedDriver.phone}
+                                </span>
+                              )}
+                              {selectedDriver.carNumber && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-border text-xs font-medium text-ink">
+                                  <Car size={12} className="text-ink-soft" /> {selectedDriver.carNumber}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className="mt-1.5">
+                            <AddCounterpartyButton
+                              defaultType="EMPLOYEE"
+                              lockType
+                              variant="link"
+                              label="Yangi haydovchi"
+                              title="Yangi haydovchi"
+                              defaultPosition="Haydovchi"
+                              onCreated={(party) => {
+                                const nd: DriverOpt = {
+                                  id: party.id,
+                                  name: party.name,
+                                  phone: party.phone,
+                                  carNumber: party.carNumber,
+                                };
+                                setDriversList((prev) => [nd, ...prev]);
+                                setDriverId(nd.id);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-ink-soft mb-1">
+                            Rejalashtirilgan sana
+                          </label>
+                          <input
+                            type="date"
+                            value={expectedDeliveryDate}
+                            onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs text-ink-soft mb-1">
+                              Qabul qiluvchi
+                            </label>
+                            <input
+                              value={receiverName}
+                              onChange={(e) => setReceiverName(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-ink-soft mb-1">Telefon</label>
+                            <input
+                              value={receiverPhone}
+                              onChange={(e) => setReceiverPhone(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-1.5">To'lov usuli</label>
               <div className="grid grid-cols-3 gap-2">

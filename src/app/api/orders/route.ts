@@ -36,6 +36,11 @@ const CreateOrder = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
+  // Qo'shimcha xarajatlar (Bojxona, Logistika, Montaj...) — narxga
+  // qo'shilmaydi, Moliyada alohida xarajat sifatida yoziladi.
+  additionalItems: z
+    .array(z.object({ name: z.string().min(1), amount: z.number().min(0) }))
+    .optional(),
   items: z
     .array(
       z.object({
@@ -213,6 +218,15 @@ export async function POST(req: Request) {
               unitPrice: it.unitPrice,
               currency: body.orderCurrency,
               recipeId: it.recipeId,
+            })),
+          },
+          additionalItems: {
+            create: (body.additionalItems ?? []).map((it) => ({
+              name: it.name,
+              quantity: 1,
+              unitPrice: it.amount,
+              totalPrice: it.amount,
+              currency: body.orderCurrency,
             })),
           },
           statusHistory: {
