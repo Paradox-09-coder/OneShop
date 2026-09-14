@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
+import SectionTabs from "@/components/section-tabs";
 import { formatMoney } from "@/lib/utils";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
@@ -24,6 +25,14 @@ export default async function DebtsPage() {
       <PageHeader
         title="Qarzdorliklar"
         subtitle="Kim qancha qarzdor, kimga qancha qarzimiz bor"
+      />
+
+      <SectionTabs
+        tabs={[
+          { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar" },
+          { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar" },
+          { label: "Kalendar", href: "/moliya/kalendar" },
+        ]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

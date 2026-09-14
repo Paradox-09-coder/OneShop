@@ -17,11 +17,7 @@ import {
   ChevronRight,
   ClipboardList,
   Receipt,
-  CreditCard,
-  Calendar,
-  Landmark,
   UserSquare,
-  FileBarChart,
   LogOut,
   Menu,
   X,
@@ -73,15 +69,9 @@ const navigation: NavItem[] = [
   },
   {
     label: "Moliya",
-    href: "/moliya",
+    href: "/moliya/tranzaksiyalar",
     icon: Wallet,
-    children: [
-      { label: "Umumiy", href: "/moliya", icon: Wallet },
-      { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar", icon: CreditCard },
-      { label: "Hisoblar", href: "/moliya/hisoblar", icon: Landmark },
-      { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar", icon: FileBarChart },
-      { label: "Kalendar", href: "/moliya/kalendar", icon: Calendar },
-    ],
+    matchHrefs: ["/moliya", "/moliya/hisoblar", "/moliya/qarzdorliklar", "/moliya/kalendar"],
   },
   {
     label: "Xodimlar",
@@ -123,7 +113,6 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     "/buyurtmalar": true,
     "/omborxona": true,
-    "/moliya": true,
     "/xodimlar": false,
   });
 

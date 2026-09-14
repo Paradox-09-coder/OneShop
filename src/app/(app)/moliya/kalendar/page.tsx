@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
+import SectionTabs from "@/components/section-tabs";
 import { formatMoney, formatDate } from "@/lib/utils";
 import { scheduleItemStatusLabel } from "@/lib/labels";
 
@@ -24,6 +25,13 @@ export default async function FinanceCalendarPage() {
       <PageHeader
         title="Moliyaviy kalendar"
         subtitle="Kelayotgan to'lovlar (bo'lib to'lash jadvali)"
+      />
+      <SectionTabs
+        tabs={[
+          { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar" },
+          { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar" },
+          { label: "Kalendar", href: "/moliya/kalendar" },
+        ]}
       />
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">

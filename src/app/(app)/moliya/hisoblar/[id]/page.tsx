@@ -47,7 +47,7 @@ export default async function AccountDetailPage({
   return (
     <div>
       <PageHeader
-        back="/moliya/hisoblar"
+        back="/moliya/tranzaksiyalar"
         title={account.name}
         subtitle={`${accountTypeLabel[account.type]} • ${account.currency}`}
         actions={
