@@ -222,6 +222,22 @@ export default function NewOrderForm({
     return lines.find((l) => l.catalogProductId === productId)?.quantity ?? 0;
   }
 
+  // Katalogdagi narxlar hozircha faqat UZS'da — buyurtma valyutasi USD
+  // bo'lsa, narxni xom raqam sifatida emas, joriy kursga qarab UZS<->USD
+  // o'girib qo'yamiz (aks holda 155 000 so'mlik mahsulot $155 000 bo'lib
+  // qolardi).
+  function convertAmount(
+    amount: number,
+    from: string,
+    to: string,
+    rate: number
+  ): number {
+    if (from === to) return amount;
+    if (from === "UZS" && to === "USD") return rate > 0 ? amount / rate : amount;
+    if (from === "USD" && to === "UZS") return amount * rate;
+    return amount;
+  }
+
   function setProductQty(product: CatalogOpt, qty: number) {
     setLines((prev) => {
       const idx = prev.findIndex((l) => l.catalogProductId === product.id);
@@ -239,7 +255,12 @@ export default function NewOrderForm({
           catalogProductId: product.id,
           productName: product.name,
           quantity: qty,
-          unitPrice: product.basePrice ?? 0,
+          unitPrice: convertAmount(
+            product.basePrice ?? 0,
+            product.basePriceCurrency,
+            currency,
+            exchangeRate
+          ),
           // Faqat bitta variant bo'lsa — aniq, avtomatik tanlanadi. Bir
           // nechtasi bo'lsa — foydalanuvchi o'zi tanlashi kerak (pastda).
           recipeId: recipes.length === 1 ? recipes[0].id : undefined,
@@ -706,7 +727,19 @@ export default function NewOrderForm({
               <select
                 value={currency}
                 onChange={(e) => {
-                  setCurrency(e.target.value as never);
+                  const nextCurrency = e.target.value as "UZS" | "USD";
+                  if (nextCurrency !== currency) {
+                    // Valyuta almashtirilganda tanlangan mahsulotlarning
+                    // narxi ham joriy kursga qarab qayta hisoblanadi —
+                    // aks holda summalar bir zumda noto'g'ri bo'lib qoladi.
+                    setLines((prev) =>
+                      prev.map((l) => ({
+                        ...l,
+                        unitPrice: convertAmount(l.unitPrice, currency, nextCurrency, exchangeRate),
+                      }))
+                    );
+                  }
+                  setCurrency(nextCurrency);
                   setPaymentAccountId("");
                 }}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-white"

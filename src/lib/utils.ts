@@ -16,7 +16,18 @@ export function formatMoney(
   if (amount === null || amount === undefined || isNaN(amount)) return "—";
   const sym = currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "RUB" ? "₽" : "";
   const suffix = currency === "UZS" ? " so'm" : "";
-  const val = new Intl.NumberFormat("ru-RU").format(amount);
+  // UZS — butun son, ru-RU (ming ajratuvchi bo'shliq). Boshqa valyutalar
+  // ($/€/₽) — kasr qismi bo'lishi mumkin, shuning uchun en-US (vergul —
+  // ming ajratuvchi, nuqta — kasr) ishlatiladi. Ikkalasiga ham ru-RU
+  // ishlatilsa, $12.70 "$12,705" bo'lib ko'rinib, 1000 barobar katta
+  // summadek noto'g'ri o'qilardi (ru-RU'da vergul kasr belgisi).
+  const val =
+    currency === "UZS"
+      ? new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(amount)
+      : new Intl.NumberFormat("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
   return `${sym}${val}${suffix}`;
 }
 
