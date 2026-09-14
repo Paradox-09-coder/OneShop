@@ -11,7 +11,7 @@ async function loadExchangeRate(): Promise<number> {
 }
 
 export default async function NewOrderPage() {
-  const [clients, catalog, categories, recipes, rate] = await Promise.all([
+  const [clients, catalog, categories, recipes, rate, accounts] = await Promise.all([
     prisma.counterparty.findMany({
       where: { type: "CLIENT", deletedAt: null },
       orderBy: { name: "asc" },
@@ -49,6 +49,11 @@ export default async function NewOrderPage() {
       select: { id: true, catalogProductId: true, variantName: true },
     }),
     loadExchangeRate(),
+    prisma.account.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, currency: true },
+    }),
   ]);
 
   const recipesByProduct: Record<string, { id: string; variantName: string }[]> = {};
@@ -68,6 +73,7 @@ export default async function NewOrderPage() {
         categories={categories}
         recipesByProduct={recipesByProduct}
         defaultExchangeRate={rate}
+        accounts={accounts}
       />
     </div>
   );

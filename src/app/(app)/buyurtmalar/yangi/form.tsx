@@ -16,6 +16,12 @@ interface CategoryOpt {
   name: string;
 }
 
+interface AccountOpt {
+  id: string;
+  name: string;
+  currency: string;
+}
+
 interface CatalogOpt {
   id: string;
   name: string;
@@ -48,6 +54,7 @@ interface Props {
   categories: CategoryOpt[];
   recipesByProduct: Record<string, RecipeOpt[]>;
   defaultExchangeRate: number;
+  accounts: AccountOpt[];
 }
 
 type Mode = "PERCENT" | "AMOUNT";
@@ -58,6 +65,7 @@ export default function NewOrderForm({
   categories,
   recipesByProduct,
   defaultExchangeRate,
+  accounts,
 }: Props) {
   const router = useRouter();
   const [clients, setClients] = useState(initialClients);
@@ -81,6 +89,15 @@ export default function NewOrderForm({
   const [discountMode, setDiscountMode] = useState<Mode>("PERCENT");
   const [discountValue, setDiscountValue] = useState(0);
 
+  // To'lov usuli — To'liq to'lov/Zaklad hozirning o'zida hisobga pul
+  // tushiradi (backendda Payment yaratiladi); Qarz bo'lsa hech narsa
+  // olinmaydi, butun summa qarz sifatida qoladi.
+  const [paymentType, setPaymentType] = useState<"FULL" | "PARTIAL" | "DEFERRED">(
+    "DEFERRED"
+  );
+  const [depositText, setDepositText] = useState("");
+  const [paymentAccountId, setPaymentAccountId] = useState("");
+
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +115,11 @@ export default function NewOrderForm({
   const afterDiscount = subtotal - discountAmount;
   const taxAmount = taxMode === "PERCENT" ? (afterDiscount * taxValue) / 100 : taxValue;
   const grand = afterDiscount + taxAmount;
+
+  const availableAccounts = accounts.filter((a) => a.currency === currency);
+  const depositValue = Math.min(Number(depositText) || 0, grand);
+  const paidNow = paymentType === "FULL" ? grand : paymentType === "PARTIAL" ? depositValue : 0;
+  const remainingDebt = Math.max(0, grand - paidNow);
 
   function updateLine(i: number, patch: Partial<Line>) {
     setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -218,6 +240,14 @@ export default function NewOrderForm({
       setError(`"${missingRecipe.productName}" uchun retsept variantini tanlang`);
       return;
     }
+    if (paymentType !== "DEFERRED" && !paymentAccountId) {
+      setError("To'lov qabul qilinadigan hisobni tanlang");
+      return;
+    }
+    if (paymentType === "PARTIAL" && depositValue <= 0) {
+      setError("Boshlang'ich to'lov summasini kiriting");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -233,6 +263,9 @@ export default function NewOrderForm({
           taxAmount: taxMode === "AMOUNT" ? taxValue : 0,
           discountPercent: discountMode === "PERCENT" ? discountValue : 0,
           discountAmount: discountMode === "AMOUNT" ? discountValue : 0,
+          paymentType,
+          depositAmount: paymentType === "PARTIAL" ? depositValue : undefined,
+          paymentAccountId: paymentType !== "DEFERRED" ? paymentAccountId : undefined,
           note,
           items: lines,
         }),
@@ -599,7 +632,10 @@ export default function NewOrderForm({
               <label className="block text-sm font-medium mb-1.5">Valyuta</label>
               <select
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value as never)}
+                onChange={(e) => {
+                  setCurrency(e.target.value as never);
+                  setPaymentAccountId("");
+                }}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-white"
               >
                 <option value="UZS">so'm (UZS)</option>
@@ -665,6 +701,99 @@ export default function NewOrderForm({
                   {taxMode === "PERCENT" ? "%" : currency}
                 </button>
               </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1.5">To'lov usuli</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentType("FULL")}
+                  className={`p-3 rounded-xl border text-left transition ${
+                    paymentType === "FULL"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-gray-50"
+                  }`}
+                >
+                  <p className="font-semibold text-sm">To'liq to'lov</p>
+                  <p className="text-xs text-ink-soft">Bir martalik to'lov</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType("PARTIAL")}
+                  className={`p-3 rounded-xl border text-left transition ${
+                    paymentType === "PARTIAL"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-gray-50"
+                  }`}
+                >
+                  <p className="font-semibold text-sm">Zaklad</p>
+                  <p className="text-xs text-ink-soft">Boshlang'ich to'lov</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType("DEFERRED")}
+                  className={`p-3 rounded-xl border text-left transition ${
+                    paymentType === "DEFERRED"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-gray-50"
+                  }`}
+                >
+                  <p className="font-semibold text-sm">Qarz</p>
+                  <p className="text-xs text-ink-soft">Kelishilgan muddatda</p>
+                </button>
+              </div>
+
+              {paymentType !== "DEFERRED" && (
+                <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/15 space-y-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-primary uppercase mb-1">
+                      {paymentType === "FULL" ? "To'lov qabul qilingan hisob" : "Boshlang'ich to'lov"}
+                    </label>
+                    {paymentType === "PARTIAL" && (
+                      <input
+                        type="number" onFocus={(e) => e.currentTarget.select()}
+                        min={0}
+                        max={grand}
+                        placeholder="Mijoz to'lagan summa"
+                        value={depositText}
+                        onChange={(e) => setDepositText(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-white mb-2"
+                      />
+                    )}
+                    <select
+                      value={paymentAccountId}
+                      onChange={(e) => setPaymentAccountId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    >
+                      <option value="">— hisobni tanlang —</option>
+                      {availableAccounts.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name} ({a.currency})
+                        </option>
+                      ))}
+                    </select>
+                    {availableAccounts.length === 0 && (
+                      <p className="text-xs text-danger mt-1">
+                        {currency} valyutasida faol hisob yo'q — avval Sozlamalardan qo'shing.
+                      </p>
+                    )}
+                  </div>
+                  {paymentType === "PARTIAL" && (
+                    <div className="flex justify-between text-sm pt-1 border-t border-primary/15">
+                      <span className="text-ink-soft">Qolgan qarz</span>
+                      <span className="font-bold text-danger">
+                        {formatMoney(remainingDebt, currency)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {paymentType === "DEFERRED" && (
+                <p className="text-xs text-ink-soft mt-1.5">
+                  Hech qanday to'lov olinmaydi — butun summa mijoz qarzi sifatida yoziladi.
+                </p>
+              )}
             </div>
 
             <div className="md:col-span-2">
@@ -769,6 +898,22 @@ export default function NewOrderForm({
                 = {formatMoney(grand * exchangeRate, "UZS")} (kurs {exchangeRate})
               </p>
             )}
+            {paymentType !== "DEFERRED" && (
+              <div className="flex justify-between pt-1">
+                <span className="text-ink-soft">
+                  {paymentType === "FULL" ? "To'langan" : "Zaklad"}
+                </span>
+                <span className="font-semibold text-success">
+                  {formatMoney(paidNow, currency)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-ink-soft">Qarz qoladi</span>
+              <span className={`font-semibold ${remainingDebt > 0 ? "text-danger" : "text-success"}`}>
+                {formatMoney(remainingDebt, currency)}
+              </span>
+            </div>
           </div>
 
           {error && (
