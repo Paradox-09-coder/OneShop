@@ -52,6 +52,9 @@ export interface KanbanOrder {
   // formatlash Intl/ICU farqidan hydration xatosiga olib kelishi mumkin
   // (server va brauzerning "uz-UZ" locale ma'lumotlari mos kelmasligi).
   createdAtLabel: string;
+  // Bosqich bo'yicha saralash uchun — eng oxirgi o'zgargan (ko'chirilgan)
+  // buyurtma ustunning tepasida chiqishi kerak.
+  updatedAt: string;
 }
 
 // Buyurtmalarni bosqich (status) bo'yicha ustunlarga ajratib, qo'lda
@@ -80,7 +83,11 @@ export default function OrdersKanban({
 
   const columns = stages.map((status) => ({
     status,
-    orders: items.filter((o) => o.status === status),
+    // Eng oxirgi o'zgargan (masalan hozir shu bosqichga ko'chirilgan)
+    // buyurtma birinchi bo'lib chiqadi.
+    orders: items
+      .filter((o) => o.status === status)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
   }));
 
   async function handleDrop(targetStatus: OrderStatus) {
@@ -105,8 +112,10 @@ export default function OrdersKanban({
     if (!ok) return;
 
     const prevStatus = order.status;
+    const prevUpdatedAt = order.updatedAt;
+    const now = new Date().toISOString();
     setItems((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: targetStatus } : o))
+      prev.map((o) => (o.id === id ? { ...o, status: targetStatus, updatedAt: now } : o))
     );
 
     try {
@@ -121,7 +130,9 @@ export default function OrdersKanban({
     } catch (e) {
       // Rad etilsa — orqaga qaytaramiz
       setItems((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, status: prevStatus } : o))
+        prev.map((o) =>
+          o.id === id ? { ...o, status: prevStatus, updatedAt: prevUpdatedAt } : o
+        )
       );
       alert(e instanceof Error ? e.message : "Holatni o'zgartirib bo'lmadi");
     }

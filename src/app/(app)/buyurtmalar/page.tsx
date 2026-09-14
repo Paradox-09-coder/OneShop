@@ -254,6 +254,7 @@ export default async function OrdersPage({
             total: o.agreedAmount ?? 0,
             currency: o.orderCurrency,
             createdAtLabel: formatDateTime(o.createdAt),
+            updatedAt: o.updatedAt.toISOString(),
           }))}
         />
       ) : (
