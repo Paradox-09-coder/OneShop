@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import type { DragEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ClipboardList,
@@ -81,6 +82,61 @@ export default function OrdersKanban({
   const [, startTransition] = useTransition();
   const { alert, confirm, Dialog } = useDialog();
 
+  // Kartani chetga olib borganda ustunlar qatori o'zi surilib turishi —
+  // Bitrix24'dagi kabi, ko'rinmayotgan ustunga (masalan "Bekor qilindi")
+  // qo'lda scroll qilmasdan yetib borish uchun.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollDirRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const AUTO_SCROLL_EDGE = 90;
+  const AUTO_SCROLL_SPEED = 14;
+
+  function stopAutoScroll() {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    scrollDirRef.current = 0;
+  }
+
+  function startAutoScroll() {
+    if (rafRef.current != null) return;
+    const step = () => {
+      const el = scrollRef.current;
+      if (el && scrollDirRef.current !== 0) {
+        el.scrollLeft += scrollDirRef.current;
+      }
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+  }
+
+  function handleContainerDragOver(e: DragEvent<HTMLDivElement>) {
+    const el = scrollRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX;
+    if (x - rect.left < AUTO_SCROLL_EDGE) {
+      scrollDirRef.current = -AUTO_SCROLL_SPEED;
+      startAutoScroll();
+    } else if (rect.right - x < AUTO_SCROLL_EDGE) {
+      scrollDirRef.current = AUTO_SCROLL_SPEED;
+      startAutoScroll();
+    } else {
+      scrollDirRef.current = 0;
+    }
+  }
+
+  // Qayerda tugashidan qat'i nazar (bekor qilinsa, ruxsatsiz joyga
+  // tashlansa ham) — surilish albatta to'xtasin.
+  useEffect(() => {
+    window.addEventListener("dragend", stopAutoScroll);
+    return () => {
+      window.removeEventListener("dragend", stopAutoScroll);
+      stopAutoScroll();
+    };
+  }, []);
+
   const columns = stages.map((status) => ({
     status,
     // Eng oxirgi o'zgargan (masalan hozir shu bosqichga ko'chirilgan)
@@ -91,6 +147,7 @@ export default function OrdersKanban({
   }));
 
   async function handleDrop(targetStatus: OrderStatus) {
+    stopAutoScroll();
     setDragOverStatus(null);
     const id = draggingId;
     setDraggingId(null);
@@ -139,7 +196,11 @@ export default function OrdersKanban({
   }
 
   return (
-    <div className="overflow-x-auto pb-4">
+    <div
+      ref={scrollRef}
+      onDragOver={handleContainerDragOver}
+      className="overflow-x-auto pb-4"
+    >
       {Dialog}
       <div className="flex gap-4 min-w-max">
         {columns.map((col) => {
