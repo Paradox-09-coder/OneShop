@@ -17,6 +17,8 @@ import {
   PackageCheck,
   CheckCheck,
   XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { OrderStatus, OrderType, Currency } from "@prisma/client";
 import { orderStatusLabel } from "@/lib/labels";
@@ -137,6 +139,36 @@ export default function OrdersKanban({
     };
   }, []);
 
+  // Bitrix24'dagi kabi — chap/o'ng chetda strelka tugmalari, sichqonchani
+  // ustiga olib borib turilsa qator o'zi suriladi (sudrab yurmasa ham).
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  function updateScrollEdges() {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }
+
+  useEffect(() => {
+    updateScrollEdges();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateScrollEdges);
+    window.addEventListener("resize", updateScrollEdges);
+    return () => {
+      el.removeEventListener("scroll", updateScrollEdges);
+      window.removeEventListener("resize", updateScrollEdges);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stages.length, items.length]);
+
+  function hoverScroll(dir: -1 | 1) {
+    scrollDirRef.current = dir * AUTO_SCROLL_SPEED;
+    startAutoScroll();
+  }
+
   const columns = stages.map((status) => ({
     status,
     // Eng oxirgi o'zgargan (masalan hozir shu bosqichga ko'chirilgan)
@@ -196,12 +228,37 @@ export default function OrdersKanban({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      onDragOver={handleContainerDragOver}
-      className="overflow-x-auto pb-4"
-    >
+    <div className="relative">
       {Dialog}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onMouseEnter={() => hoverScroll(-1)}
+          onMouseLeave={stopAutoScroll}
+          onClick={() => scrollRef.current?.scrollBy({ left: -240, behavior: "smooth" })}
+          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-border shadow-md grid place-items-center text-ink-soft hover:text-primary hover:bg-white transition"
+          aria-label="Chapga surish"
+        >
+          <ChevronLeft size={18} />
+        </button>
+      )}
+      {canScrollRight && (
+        <button
+          type="button"
+          onMouseEnter={() => hoverScroll(1)}
+          onMouseLeave={stopAutoScroll}
+          onClick={() => scrollRef.current?.scrollBy({ left: 240, behavior: "smooth" })}
+          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-border shadow-md grid place-items-center text-ink-soft hover:text-primary hover:bg-white transition"
+          aria-label="O'ngga surish"
+        >
+          <ChevronRight size={18} />
+        </button>
+      )}
+      <div
+        ref={scrollRef}
+        onDragOver={handleContainerDragOver}
+        className="overflow-x-auto pb-4"
+      >
       <div className="flex gap-4 min-w-max">
         {columns.map((col) => {
           const columnTotal = col.orders.reduce((s, o) => s + o.total, 0);
@@ -274,6 +331,7 @@ export default function OrdersKanban({
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Truck, Save } from "lucide-react";
+import { Truck, Save, Phone, Car } from "lucide-react";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 
 interface Driver {
@@ -130,10 +130,21 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
             ))}
           </select>
           {driverId && (f.driverPhone || f.driverCarNumber) && (
-            <p className="text-xs text-ink-soft mt-1">
-              {f.driverPhone || "—"}
-              {f.driverCarNumber ? ` · Mashina: ${f.driverCarNumber}` : ""}
-            </p>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              {f.driverPhone && (
+                <a
+                  href={`tel:${f.driverPhone}`}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/15 text-xs font-medium text-ink hover:bg-primary/10"
+                >
+                  <Phone size={12} className="text-primary" /> {f.driverPhone}
+                </a>
+              )}
+              {f.driverCarNumber && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-border text-xs font-medium text-ink">
+                  <Car size={12} className="text-ink-soft" /> {f.driverCarNumber}
+                </span>
+              )}
+            </div>
           )}
           <div className="mt-1.5">
             <AddCounterpartyButton
