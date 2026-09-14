@@ -76,7 +76,7 @@ export default function OrdersKanban({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<OrderStatus | null>(null);
   const [, startTransition] = useTransition();
-  const { alert, Dialog } = useDialog();
+  const { alert, confirm, Dialog } = useDialog();
 
   const columns = stages.map((status) => ({
     status,
@@ -97,6 +97,12 @@ export default function OrdersKanban({
       );
       return;
     }
+
+    const ok = await confirm(
+      `"${order.orderNumber}" buyurtmasini "${orderStatusLabel[targetStatus]}" bosqichiga o'tkazmoqchimisiz?`,
+      { danger: targetStatus === "CANCELLED" }
+    );
+    if (!ok) return;
 
     const prevStatus = order.status;
     setItems((prev) =>

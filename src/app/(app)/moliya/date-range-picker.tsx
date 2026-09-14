@@ -26,7 +26,14 @@ export default function DateRangePicker({ current, from, to }: Props) {
   const [customTo, setCustomTo] = useState(to ?? "");
 
   function setRange(range: Range) {
-    if (range === "custom") return;
+    if (range === "custom") {
+      // Faqat sana maydonlarini ko'rsatamiz — "Qo'llash" bosilgandagina
+      // haqiqiy filtr qo'llanadi (pastdagi applyCustom).
+      const url = new URL(window.location.href);
+      url.searchParams.set("range", "custom");
+      router.push(url.pathname + url.search);
+      return;
+    }
     const url = new URL(window.location.href);
     url.searchParams.set("range", range);
     url.searchParams.delete("from");
