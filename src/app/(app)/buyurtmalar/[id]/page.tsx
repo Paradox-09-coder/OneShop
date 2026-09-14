@@ -38,6 +38,7 @@ export default async function OrderDetailPage({
       },
     }),
     prisma.employee.findMany({
+      where: { position: "Haydovchi" },
       include: { counterparty: { select: { name: true, phone: true } } },
       orderBy: { counterparty: { name: "asc" } },
     }),

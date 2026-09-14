@@ -11,6 +11,16 @@ interface CreatedParty {
   carNumber: string | null;
 }
 
+const POSITION_OPTIONS = [
+  "Haydovchi",
+  "Sotuvchi",
+  "Menejer",
+  "Buxgalter",
+  "Omborchi",
+  "Ishchi",
+  "Boshqa",
+];
+
 interface Props {
   // Boshlang'ich kontragent turi — masalan Xodimlar sahifasidan yoki
   // haydovchi tanlagichdan ochilganda to'g'ridan-to'g'ri "Xodim".
@@ -43,6 +53,7 @@ export default function AddCounterpartyButton({
   const [phone, setPhone] = useState("");
   const [customerKind, setCustomerKind] = useState("RETAIL");
   const [position, setPosition] = useState(defaultPosition);
+  const [customPosition, setCustomPosition] = useState("");
   const [carNumber, setCarNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +64,7 @@ export default function AddCounterpartyButton({
     setPhone("");
     setCustomerKind("RETAIL");
     setPosition(defaultPosition);
+    setCustomPosition("");
     setCarNumber("");
     setError(null);
   }
@@ -62,10 +74,18 @@ export default function AddCounterpartyButton({
     setError(null);
     setLoading(true);
     try {
+      const finalPosition = position === "Boshqa" ? customPosition : position;
       const res = await fetch("/api/counterparties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, phone, customerKind, position, carNumber }),
+        body: JSON.stringify({
+          name,
+          type,
+          phone,
+          customerKind,
+          position: finalPosition,
+          carNumber,
+        }),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -180,13 +200,32 @@ export default function AddCounterpartyButton({
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-1.5">Lavozimi</label>
-                    <input
+                    <select
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                      placeholder="Masalan: Haydovchi"
-                    />
+                    >
+                      <option value="">— tanlang —</option>
+                      {POSITION_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                  {position === "Boshqa" && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">
+                        Lavozim nomi
+                      </label>
+                      <input
+                        value={customPosition}
+                        onChange={(e) => setCustomPosition(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                        placeholder="Lavozimni yozing"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium mb-1.5">
                       Mashina raqami (ixtiyoriy)
