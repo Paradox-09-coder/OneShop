@@ -9,6 +9,7 @@ import AddClientButton from "./add-client-button";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
 import ClickableRow from "@/components/clickable-row";
+import SectionTabs from "@/components/section-tabs";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +79,13 @@ export default async function ClientsPage({
         title="Mijozlar"
         subtitle={`${totalCount} ta mijoz`}
         actions={<AddClientButton />}
+      />
+
+      <SectionTabs
+        tabs={[
+          { label: "Oddiy mijozlar", href: "/mijozlar" },
+          { label: "Kontragentlar", href: "/kontragentlar" },
+        ]}
       />
 
       <ListToolbar

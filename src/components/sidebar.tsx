@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   Package,
   Users,
-  Building2,
   UserCog,
   Wallet,
   BarChart3,
@@ -70,10 +69,7 @@ const navigation: NavItem[] = [
     label: "Mijozlar",
     href: "/mijozlar",
     icon: Users,
-    children: [
-      { label: "Mijozlar ro'yxati", href: "/mijozlar", icon: Users },
-      { label: "Kontragentlar", href: "/kontragentlar", icon: Building2 },
-    ],
+    matchHrefs: ["/kontragentlar"],
   },
   {
     label: "Moliya",
@@ -127,7 +123,6 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     "/buyurtmalar": true,
     "/omborxona": true,
-    "/mijozlar": true,
     "/moliya": true,
     "/xodimlar": false,
   });

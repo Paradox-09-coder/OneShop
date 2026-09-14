@@ -5,6 +5,7 @@ import { counterpartyTypeLabel } from "@/lib/labels";
 import CounterpartyForm from "./form";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
+import SectionTabs from "@/components/section-tabs";
 import type { CounterpartyType, Prisma } from "@prisma/client";
 
 export default async function CounterpartiesPage({
@@ -66,6 +67,13 @@ export default async function CounterpartiesPage({
       <PageHeader
         title="Kontragentlar"
         subtitle="Mijozlar, ta'minotchilar, xodimlar va ta'sischilar"
+      />
+
+      <SectionTabs
+        tabs={[
+          { label: "Oddiy mijozlar", href: "/mijozlar" },
+          { label: "Kontragentlar", href: "/kontragentlar" },
+        ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
