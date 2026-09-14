@@ -156,6 +156,7 @@ export default async function TransactionsPage({
 
       <SectionTabs
         tabs={[
+          { label: "Oyliklar", href: "/xodimlar/oylik" },
           { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar" },
           { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar" },
           { label: "Kalendar", href: "/moliya/kalendar" },

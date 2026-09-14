@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
+import SectionTabs from "@/components/section-tabs";
 import { formatMoney } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
@@ -50,6 +51,14 @@ export default async function PayrollPage({
   return (
     <div>
       <PageHeader title="Oyliklar" subtitle="Xodimlar oylik hisoblari" />
+      <SectionTabs
+        tabs={[
+          { label: "Oyliklar", href: "/xodimlar/oylik" },
+          { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar" },
+          { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar" },
+          { label: "Kalendar", href: "/moliya/kalendar" },
+        ]}
+      />
       <ListToolbar searchPlaceholder="Xodim ismi bo'yicha qidirish..." />
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">
