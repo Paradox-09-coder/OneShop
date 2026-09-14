@@ -101,8 +101,16 @@ export async function POST(req: Request) {
       }
     }
 
+    // Chakana/ulgurji pipeline endi "Buyurtma olindi"dan boshlanadi —
+    // so'rov/maslahat/narx bosqichlari CRM-lead darajasida hisoblanadi,
+    // tizimga kiritilgan buyurtma allaqachon qabul qilingan hisoblanadi.
+    // POS o'zining eski 2-bosqichli oqimini saqlab qoladi.
     const initialStatus =
-      body.type === "MANUFACTURING" ? "PROPOSAL" : "YANGI_SOROV";
+      body.type === "MANUFACTURING"
+        ? "PROPOSAL"
+        : body.type === "POS"
+          ? "YANGI_SOROV"
+          : "BUYURTMA_OLINDI";
 
     const order = await prisma.$transaction(async (tx) => {
       let paymentAccount = null as Awaited<ReturnType<typeof tx.account.findUnique>>;

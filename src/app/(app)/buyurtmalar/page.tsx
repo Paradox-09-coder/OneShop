@@ -15,8 +15,6 @@ import OrdersKanban from "./orders-kanban";
 export const dynamic = "force-dynamic";
 
 const ACTIVE_STATUSES: OrderStatus[] = [
-  "MASLAHAT_BERILDI",
-  "NARX_KELISHILDI",
   "BUYURTMA_OLINDI",
   "YETKAZILMOQDA",
   "PROCESSING",

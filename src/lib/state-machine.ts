@@ -1,10 +1,9 @@
 import type { OrderStatus, OrderType } from "@prisma/client";
 
-// Retail / Wholesale pipeline (iSell-derived)
+// Retail / Wholesale pipeline (Isell'ning haqiqiy bosqichlariga moslashtirildi
+// — so'rov/maslahat/narx bosqichlari CRM-lead darajasida, buyurtma tizimga
+// "Buyurtma olindi"dan boshlab kiritiladi).
 export const RETAIL_FLOW: OrderStatus[] = [
-  "YANGI_SOROV",
-  "MASLAHAT_BERILDI",
-  "NARX_KELISHILDI",
   "BUYURTMA_OLINDI",
   "YETKAZILMOQDA",
   "YAKUNLANDI",
