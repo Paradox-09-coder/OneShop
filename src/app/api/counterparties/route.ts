@@ -12,6 +12,8 @@ const Create = z.object({
   address: z.string().optional(),
   inn: z.string().optional(),
   customerKind: z.enum(["RETAIL", "RESELLER"]).optional(),
+  position: z.string().optional(),
+  carNumber: z.string().optional(),
 });
 
 export async function GET(req: Request) {
@@ -57,6 +59,16 @@ export async function POST(req: Request) {
           : {}),
         ...(body.type === "SUPPLIER"
           ? { supplierProfile: { create: {} } }
+          : {}),
+        ...(body.type === "EMPLOYEE"
+          ? {
+              employee: {
+                create: {
+                  position: body.position || null,
+                  carNumber: body.carNumber || null,
+                },
+              },
+            }
           : {}),
       },
     });

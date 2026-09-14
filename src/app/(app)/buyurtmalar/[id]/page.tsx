@@ -24,19 +24,32 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      client: true,
-      seller: true,
-      assignedEmployee: true,
-      items: { include: { catalogProduct: true } },
-      additionalItems: true,
-      payments: { orderBy: { date: "desc" } },
-      statusHistory: { orderBy: { changedAt: "desc" } },
-    },
-  });
+  const [order, driverEmployees] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        seller: true,
+        assignedEmployee: true,
+        items: { include: { catalogProduct: true } },
+        additionalItems: true,
+        payments: { orderBy: { date: "desc" } },
+        statusHistory: { orderBy: { changedAt: "desc" } },
+      },
+    }),
+    prisma.employee.findMany({
+      include: { counterparty: { select: { name: true, phone: true } } },
+      orderBy: { counterparty: { name: "asc" } },
+    }),
+  ]);
   if (!order) notFound();
+
+  const drivers = driverEmployees.map((e) => ({
+    id: e.counterpartyId,
+    name: e.counterparty.name,
+    phone: e.counterparty.phone,
+    carNumber: e.carNumber,
+  }));
 
   const debt = (order.agreedAmount ?? 0) - order.paidAmount;
   const itemsSubtotal = order.items.reduce(
@@ -168,23 +181,6 @@ export default async function OrderDetailPage({
               </div>
             )}
           </div>
-
-          <LogisticsPanel
-            orderId={order.id}
-            initial={{
-              driverName: order.driverName ?? "",
-              driverPhone: order.driverPhone ?? "",
-              driverCarNumber: order.driverCarNumber ?? "",
-              deliveryCost: order.deliveryCost ?? 0,
-              deliveryAddress: order.deliveryAddress ?? "",
-              receiverName: order.receiverName ?? "",
-              receiverPhone: order.receiverPhone ?? "",
-              expectedDeliveryDate: order.expectedDeliveryDate
-                ? order.expectedDeliveryDate.toISOString().slice(0, 10)
-                : "",
-              deliveryPaid: !!order.deliveryPaidAt,
-            }}
-          />
         </div>
 
         <div className="order-1 lg:order-2 lg:col-span-2 space-y-4">
@@ -308,59 +304,6 @@ export default async function OrderDetailPage({
             </dl>
           </div>
 
-          {materialReqs.length > 0 && (
-            <div className="panel p-5">
-              <h3 className="font-bold mb-3 flex items-center gap-2">
-                <FlaskConical size={16} className="text-primary" />
-                Xomashyo holati (retsept bo'yicha)
-              </h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-ink-soft uppercase border-b border-border">
-                    <th className="text-left py-2">Xomashyo</th>
-                    <th className="text-right py-2">Kerak</th>
-                    <th className="text-right py-2">Omborda</th>
-                    <th className="text-right py-2">Holat</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {materialReqs.map((r) => (
-                    <tr key={r.materialProductId} className="border-b border-border/50">
-                      <td className="py-2.5 font-medium">{r.materialName}</td>
-                      <td className="py-2.5 text-right">
-                        {formatNumber(r.requiredQty)}{" "}
-                        {unitTypeLabel[r.unit as keyof typeof unitTypeLabel] ?? r.unit}
-                      </td>
-                      <td className="py-2.5 text-right text-ink-soft">
-                        {formatNumber(r.availableQty)}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        {r.shortage > 0 ? (
-                          <span className="chip bg-rose-100 text-rose-700">
-                            −{formatNumber(r.shortage)} yetmaydi
-                          </span>
-                        ) : (
-                          <span className="chip bg-emerald-100 text-emerald-700">
-                            Yetarli
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {order.status === "READY" || order.status === "DELIVERED" ? (
-                <p className="text-xs text-ink-soft mt-2">
-                  Bu buyurtma uchun xomashyo allaqachon ombordan ayirilgan.
-                </p>
-              ) : (
-                <p className="text-xs text-ink-soft mt-2">
-                  Xomashyo "Tayyor" bosqichiga o'tganda ombordan avtomatik ayiriladi.
-                </p>
-              )}
-            </div>
-          )}
-
           <div className="panel p-5">
             <h3 className="font-bold mb-3">Qo'shimcha xarajatlar</h3>
             {order.additionalItems.length === 0 ? (
@@ -392,6 +335,24 @@ export default async function OrderDetailPage({
               </div>
             )}
           </div>
+
+          <LogisticsPanel
+            orderId={order.id}
+            drivers={drivers}
+            initial={{
+              driverName: order.driverName ?? "",
+              driverPhone: order.driverPhone ?? "",
+              driverCarNumber: order.driverCarNumber ?? "",
+              deliveryCost: order.deliveryCost ?? 0,
+              deliveryAddress: order.deliveryAddress ?? "",
+              receiverName: order.receiverName ?? "",
+              receiverPhone: order.receiverPhone ?? "",
+              expectedDeliveryDate: order.expectedDeliveryDate
+                ? order.expectedDeliveryDate.toISOString().slice(0, 10)
+                : "",
+              deliveryPaid: !!order.deliveryPaidAt,
+            }}
+          />
 
           <div className="panel p-5">
             <h3 className="font-bold mb-3">Moliyaviy xulosa</h3>

@@ -16,7 +16,11 @@ const Patch = z.object({
 
   // Umumiy
   note: z.string().optional(),
-  expectedDeliveryDate: z.string().nullable().optional(),
+  expectedDeliveryDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Sana YYYY-MM-DD ko'rinishida bo'lishi kerak")
+    .nullable()
+    .optional(),
   deliveryAddress: z.string().nullable().optional(),
   priority: z
     .enum(["NORMAL", "HIGH", "VIP", "URGENT_1D", "URGENT_3D", "URGENT_7D"])

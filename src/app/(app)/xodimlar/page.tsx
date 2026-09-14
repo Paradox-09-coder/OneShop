@@ -3,6 +3,7 @@ import PageHeader from "@/components/page-header";
 import { formatMoney, formatDate } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
+import AddCounterpartyButton from "../kontragentlar/add-counterparty-button";
 import type { Prisma } from "@prisma/client";
 
 export default async function EmployeesPage({
@@ -61,6 +62,14 @@ export default async function EmployeesPage({
       <PageHeader
         title="Xodimlar"
         subtitle={`${totalCount} ta xodim`}
+        actions={
+          <AddCounterpartyButton
+            defaultType="EMPLOYEE"
+            lockType
+            label="Xodim qo'shish"
+            title="Yangi xodim"
+          />
+        }
       />
       <ListToolbar searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..." />
 
@@ -106,7 +115,7 @@ export default async function EmployeesPage({
             {visible.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-5 py-8 text-center text-ink-soft">
-                  Xodimlar yo'q. Kontragentlar sahifasidan xodim qo'shing.
+                  Xodimlar yo'q. Yuqoridagi "Xodim qo'shish" tugmasini bosing.
                 </td>
               </tr>
             )}

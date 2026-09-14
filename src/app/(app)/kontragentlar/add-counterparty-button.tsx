@@ -4,21 +4,56 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 
-export default function AddCounterpartyButton() {
+interface CreatedParty {
+  id: string;
+  name: string;
+  phone: string | null;
+  carNumber: string | null;
+}
+
+interface Props {
+  // Boshlang'ich kontragent turi — masalan Xodimlar sahifasidan yoki
+  // haydovchi tanlagichdan ochilganda to'g'ridan-to'g'ri "Xodim".
+  defaultType?: "CLIENT" | "SUPPLIER" | "EMPLOYEE" | "FOUNDER" | "LENDER" | "OTHER";
+  // true bo'lsa — turi tanlagichi ko'rsatilmaydi (kontekst allaqachon aniq).
+  lockType?: boolean;
+  defaultPosition?: string;
+  label?: string;
+  title?: string;
+  // "button" — katta ko'k tugma (ro'yxat sahifalari uchun). "link" — kichik
+  // matnli havola (forma ichida, masalan Yetkazish panelidagi haydovchi
+  // tanlagich ostida "+ Yangi haydovchi").
+  variant?: "button" | "link";
+  onCreated?: (party: CreatedParty) => void;
+}
+
+export default function AddCounterpartyButton({
+  defaultType = "CLIENT",
+  lockType = false,
+  defaultPosition = "",
+  label,
+  title,
+  variant = "button",
+  onCreated,
+}: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [type, setType] = useState("CLIENT");
+  const [type, setType] = useState(defaultType);
   const [phone, setPhone] = useState("");
   const [customerKind, setCustomerKind] = useState("RETAIL");
+  const [position, setPosition] = useState(defaultPosition);
+  const [carNumber, setCarNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function reset() {
     setName("");
-    setType("CLIENT");
+    setType(defaultType);
     setPhone("");
     setCustomerKind("RETAIL");
+    setPosition(defaultPosition);
+    setCarNumber("");
     setError(null);
   }
 
@@ -30,7 +65,7 @@ export default function AddCounterpartyButton() {
       const res = await fetch("/api/counterparties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, phone, customerKind }),
+        body: JSON.stringify({ name, type, phone, customerKind, position, carNumber }),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -38,21 +73,46 @@ export default function AddCounterpartyButton() {
         return;
       }
       setOpen(false);
+      const created = data.data?.party;
+      const savedName = name;
+      const savedPhone = phone;
+      const savedCarNumber = carNumber;
       reset();
       router.refresh();
+      if (created) {
+        onCreated?.({
+          id: created.id,
+          name: savedName,
+          phone: savedPhone || null,
+          carNumber: savedCarNumber || null,
+        });
+      }
     } finally {
       setLoading(false);
     }
   }
 
+  const modalTitle = title ?? label ?? "Yangi kontragent";
+
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
-      >
-        <Plus size={16} /> Yangi kontragent
-      </button>
+      {variant === "link" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+        >
+          <Plus size={14} /> {label ?? "Yangi qo'shish"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+        >
+          <Plus size={16} /> {label ?? "Yangi kontragent"}
+        </button>
+      )}
 
       {open && (
         <div
@@ -65,7 +125,7 @@ export default function AddCounterpartyButton() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Yangi kontragent</h2>
+              <h2 className="text-xl font-bold">{modalTitle}</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -86,21 +146,23 @@ export default function AddCounterpartyButton() {
                   className="w-full px-3 py-2 rounded-xl border border-border bg-white"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Kontragent turi</label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                >
-                  <option value="CLIENT">Mijoz</option>
-                  <option value="SUPPLIER">Ta'minotchi</option>
-                  <option value="EMPLOYEE">Xodim</option>
-                  <option value="FOUNDER">Ta'sischi</option>
-                  <option value="LENDER">Kreditor</option>
-                  <option value="OTHER">Boshqa</option>
-                </select>
-              </div>
+              {!lockType && (
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Kontragent turi</label>
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value as typeof type)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  >
+                    <option value="CLIENT">Mijoz</option>
+                    <option value="SUPPLIER">Ta'minotchi</option>
+                    <option value="EMPLOYEE">Xodim</option>
+                    <option value="FOUNDER">Ta'sischi</option>
+                    <option value="LENDER">Kreditor</option>
+                    <option value="OTHER">Boshqa</option>
+                  </select>
+                </div>
+              )}
               {type === "CLIENT" && (
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Mijoz turi</label>
@@ -113,6 +175,30 @@ export default function AddCounterpartyButton() {
                     <option value="RESELLER">Qayta sotuvchi</option>
                   </select>
                 </div>
+              )}
+              {type === "EMPLOYEE" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Lavozimi</label>
+                    <input
+                      value={position}
+                      onChange={(e) => setPosition(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                      placeholder="Masalan: Haydovchi"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Mashina raqami (ixtiyoriy)
+                    </label>
+                    <input
+                      value={carNumber}
+                      onChange={(e) => setCarNumber(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                      placeholder="01A123BB"
+                    />
+                  </div>
+                </>
               )}
               <div>
                 <label className="block text-sm font-medium mb-1.5">Telefon</label>

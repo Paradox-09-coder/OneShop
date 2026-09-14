@@ -188,6 +188,9 @@ model Employee {
   userId               String?      @unique
   user                 User?        @relation(fields: [userId], references: [id])
   position             String?
+  // Haydovchi bo'lsa — buyurtma logistika bo'limida tanlaganda avtomatik
+  // to'ldirish uchun (Yetkazish (logistika) paneli).
+  carNumber            String?
   baseSalary           Float        @default(0)
   salaryCurrency       Currency     @default(UZS)
   salaryType           SalaryType   @default(FIXED)
