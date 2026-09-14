@@ -169,6 +169,11 @@ export default function NewOrderForm({
   const taxAmount = taxMode === "PERCENT" ? (afterDiscount * taxValue) / 100 : taxValue;
   const grand = afterDiscount + taxAmount;
 
+  const extraExpensesTotal = extraExpenses.reduce(
+    (s, e) => s + (Number(e.amountText) || 0),
+    0
+  );
+
   const availableAccounts = accounts.filter((a) => a.currency === currency);
   const depositValue = Math.min(Number(depositText) || 0, grand);
   const paidNow = paymentType === "FULL" ? grand : paymentType === "PARTIAL" ? depositValue : 0;
@@ -1012,20 +1017,28 @@ export default function NewOrderForm({
               {paymentType !== "DEFERRED" && (
                 <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/15 space-y-2">
                   <div>
-                    <label className="block text-xs font-semibold text-primary uppercase mb-1">
-                      {paymentType === "FULL" ? "To'lov qabul qilingan hisob" : "Boshlang'ich to'lov"}
-                    </label>
                     {paymentType === "PARTIAL" && (
-                      <input
-                        type="number" onFocus={(e) => e.currentTarget.select()}
-                        min={0}
-                        max={grand}
-                        placeholder="Mijoz to'lagan summa"
-                        value={depositText}
-                        onChange={(e) => setDepositText(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-border bg-white mb-2"
-                      />
+                      <>
+                        <label className="block text-xs font-semibold text-primary uppercase mb-1">
+                          Boshlang'ich to'lov
+                        </label>
+                        <input
+                          type="number" onFocus={(e) => e.currentTarget.select()}
+                          min={0}
+                          max={grand}
+                          placeholder="Mijoz to'lagan summa"
+                          value={depositText}
+                          onChange={(e) => setDepositText(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-white mb-2"
+                        />
+                      </>
                     )}
+                    <label className="block text-xs font-semibold text-primary uppercase mb-1">
+                      To'lov qabul qilingan hisob
+                    </label>
+                    <p className="text-xs text-ink-soft normal-case font-normal mb-1.5">
+                      Pul shu kassa/bank hisobiga tushadi — Moliyada balans shuncha oshadi.
+                    </p>
                     <select
                       value={paymentAccountId}
                       onChange={(e) => setPaymentAccountId(e.target.value)}
@@ -1162,6 +1175,17 @@ export default function NewOrderForm({
               <p className="text-xs text-ink-soft pt-1">
                 = {formatMoney(grand * exchangeRate, "UZS")} (kurs {exchangeRate})
               </p>
+            )}
+            {extraExpensesTotal > 0 && (
+              <div className="flex justify-between pt-1">
+                <span className="text-ink-soft">
+                  Qo'shimcha xarajat
+                  <span className="text-xs"> (jamiga kirmaydi)</span>
+                </span>
+                <span className="font-semibold text-ink-soft">
+                  {formatMoney(extraExpensesTotal, currency)}
+                </span>
+              </div>
             )}
             {paymentType !== "DEFERRED" && (
               <div className="flex justify-between pt-1">

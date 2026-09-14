@@ -34,7 +34,7 @@ export default async function AppShellLayout({
         }}
         allowedHrefs={hrefs}
       />
-      <main className="flex-1 md:ml-[260px] max-w-full overflow-x-hidden min-h-screen">
+      <main className="flex-1 md:ml-[260px] max-w-full min-h-screen">
         <Topbar />
         {/* pt-[…] — header endi fixed, oqimdan chiqarilgan, shuning uchun
             kontent uning tagida qolib ketmasligi uchun joy qoldiramiz.
