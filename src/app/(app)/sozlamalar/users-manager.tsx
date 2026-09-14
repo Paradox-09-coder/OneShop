@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { roleLabel } from "@/lib/labels";
 import type { Role } from "@prisma/client";
-import { Plus, Pencil, X, ShieldCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ShieldCheck } from "lucide-react";
+import { useDialog } from "@/components/use-dialog";
 
 interface UserRow {
   id: string;
@@ -48,6 +49,28 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { confirm, alert, Dialog } = useDialog();
+
+  async function handleDelete(u: UserRow) {
+    const ok = await confirm(
+      `"${u.name}" (${u.username}) foydalanuvchisini butunlay o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi.`,
+      { danger: true }
+    );
+    if (!ok) return;
+    setDeletingId(u.id);
+    try {
+      const res = await fetch(`/api/users/${u.id}`, { method: "DELETE" });
+      const d = await res.json();
+      if (!d.ok) {
+        alert(d.error?.message ?? "Xatolik yuz berdi");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function save() {
     if (!draft) return;
@@ -79,6 +102,7 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
 
   return (
     <div>
+      {Dialog}
       <div className="flex justify-end mb-3">
         <button
           onClick={() => setDraft({ ...EMPTY })}
@@ -131,8 +155,17 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
                     })
                   }
                   className="p-1.5 rounded-lg hover:bg-gray-100 text-primary"
+                  title="Tahrirlash"
                 >
                   <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => handleDelete(u)}
+                  disabled={deletingId === u.id}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-danger disabled:opacity-50"
+                  title="O'chirish"
+                >
+                  <Trash2 size={14} />
                 </button>
               </td>
             </tr>
