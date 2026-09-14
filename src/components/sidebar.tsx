@@ -71,7 +71,7 @@ const navigation: NavItem[] = [
     label: "Moliya",
     href: "/moliya/tranzaksiyalar",
     icon: Wallet,
-    matchHrefs: ["/moliya", "/moliya/hisoblar", "/moliya/qarzdorliklar", "/moliya/kalendar"],
+    matchHrefs: ["/moliya", "/moliya/hisoblar", "/moliya/qarzdorliklar"],
   },
   {
     label: "Xodimlar",

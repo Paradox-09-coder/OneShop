@@ -20,7 +20,6 @@ import type {
   NotificationType,
   CustomerKind,
   CrmFunnel,
-  PaymentScheduleItemStatus,
 } from "@prisma/client";
 
 export const orderStatusLabel: Record<OrderStatus, string> = {
@@ -205,11 +204,4 @@ export const customerKindLabel: Record<CustomerKind, string> = {
 export const crmFunnelLabel: Record<CrmFunnel, string> = {
   LEAD: "Lead",
   BUYER: "Xaridor",
-};
-
-export const scheduleItemStatusLabel: Record<PaymentScheduleItemStatus, string> = {
-  PENDING: "Kutilmoqda",
-  PARTIAL: "Qisman",
-  PAID: "To'landi",
-  OVERDUE: "Muddati o'tdi",
 };

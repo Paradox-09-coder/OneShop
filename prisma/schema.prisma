@@ -622,7 +622,6 @@ model Order {
   additionalItems       OrderAdditionalItem[]
   payments              Payment[]
   statusHistory         OrderStatusHistory[]
-  paymentSchedule       PaymentSchedule?
   remnantsCreated       Remnant[]     @relation("SourceOrder")
   remnantsUsed          Remnant[]     @relation("UsedInOrder")
   stockMovements        StockMovement[]
@@ -839,9 +838,6 @@ model Payment {
   createdBy                User?                    @relation("PaymentCreatedBy", fields: [createdById], references: [id])
   createdAt                DateTime                 @default(now())
 
-  scheduleItemId           String?
-  scheduleItem             PaymentScheduleItem?     @relation(fields: [scheduleItemId], references: [id])
-
   @@index([date])
   @@index([type])
   @@index([sourceType, sourceId])
@@ -870,43 +866,6 @@ enum PaymentSource {
   MANUAL
 }
 
-model PaymentSchedule {
-  id             String                @id @default(cuid())
-  orderId        String                @unique
-  order          Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  totalAmount    Float
-  currency       Currency              @default(UZS)
-  months         Int
-  monthlyAmount  Float
-  startDate      DateTime
-  dueDay         Int
-  createdAt      DateTime              @default(now())
-
-  items          PaymentScheduleItem[]
-}
-
-model PaymentScheduleItem {
-  id           String                    @id @default(cuid())
-  scheduleId   String
-  schedule     PaymentSchedule           @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  dueDate      DateTime
-  amount       Float
-  paidAmount   Float                     @default(0)
-  status       PaymentScheduleItemStatus @default(PENDING)
-  createdAt    DateTime                  @default(now())
-
-  payments     Payment[]
-
-  @@index([scheduleId])
-  @@index([status, dueDate])
-}
-
-enum PaymentScheduleItemStatus {
-  PENDING
-  PARTIAL
-  PAID
-  OVERDUE
-}
 
 // ─────────────────────────────────────────────────────────────
 //  HR / Payroll / Attendance

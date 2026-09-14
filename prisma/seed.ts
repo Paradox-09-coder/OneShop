@@ -556,49 +556,6 @@ async function main() {
     console.log("✅ Moliya tarixi (60 kun)");
   }
 
-  // ── Installment schedule for one order ─────────────────────
-  const schedCount = await prisma.paymentSchedule.count();
-  if (schedCount === 0) {
-    const firstOrder = await prisma.order.findFirst({
-      where: { agreedAmount: { gt: 3_000_000 } },
-    });
-    if (firstOrder) {
-      const months = 6;
-      const monthly = Math.floor((firstOrder.agreedAmount ?? 0) / months);
-      const startDate = new Date(firstOrder.createdAt);
-      const sched = await prisma.paymentSchedule.create({
-        data: {
-          orderId: firstOrder.id,
-          totalAmount: firstOrder.agreedAmount ?? 0,
-          currency: firstOrder.orderCurrency,
-          months,
-          monthlyAmount: monthly,
-          startDate,
-          dueDay: 15,
-        },
-      });
-      for (let i = 0; i < months; i++) {
-        const dueDate = new Date(
-          startDate.getFullYear(),
-          startDate.getMonth() + i,
-          15
-        );
-        const isPast = dueDate.getTime() < Date.now();
-        const isPaid = i < 2;
-        await prisma.paymentScheduleItem.create({
-          data: {
-            scheduleId: sched.id,
-            dueDate,
-            amount: monthly,
-            paidAmount: isPaid ? monthly : 0,
-            status: isPaid ? "PAID" : isPast ? "OVERDUE" : "PENDING",
-          },
-        });
-      }
-      console.log("✅ Bo'lib to'lash jadvali (6 oy)");
-    }
-  }
-
   // ── Payroll accrual (last month) ───────────────────────────
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);

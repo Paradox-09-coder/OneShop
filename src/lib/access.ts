@@ -28,7 +28,6 @@ export const NAV_GATES: NavGate[] = [
   { href: "/moliya/tranzaksiyalar", requires: "finance.read" },
   { href: "/moliya/hisoblar", requires: "finance.read" },
   { href: "/moliya/qarzdorliklar", requires: "finance.read" },
-  { href: "/moliya/kalendar", requires: "finance.read" },
   { href: "/xodimlar", requires: "employees.read" },
   { href: "/xodimlar/davomad", requires: "employees.read" },
   { href: "/xodimlar/oylik", requires: "payroll.read" },

@@ -56,7 +56,6 @@ export default async function PayrollPage({
           { label: "Oyliklar", href: "/xodimlar/oylik" },
           { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar" },
           { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar" },
-          { label: "Kalendar", href: "/moliya/kalendar" },
         ]}
       />
       <ListToolbar searchPlaceholder="Xodim ismi bo'yicha qidirish..." />
