@@ -87,7 +87,7 @@ export default function AddCounterpartyButton() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5">Turi</label>
+                <label className="block text-sm font-medium mb-1.5">Kontragent turi</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
