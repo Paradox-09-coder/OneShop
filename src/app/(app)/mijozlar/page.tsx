@@ -81,6 +81,7 @@ export default async function ClientsPage({
       />
 
       <ListToolbar
+        popover
         searchPlaceholder="Ism yoki telefon bo'yicha qidirish..."
         selects={[
           {

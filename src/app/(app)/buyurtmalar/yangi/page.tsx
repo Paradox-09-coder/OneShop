@@ -11,7 +11,7 @@ async function loadExchangeRate(): Promise<number> {
 }
 
 export default async function NewOrderPage() {
-  const [clients, catalog, rate] = await Promise.all([
+  const [clients, catalog, recipes, rate] = await Promise.all([
     prisma.counterparty.findMany({
       where: { type: "CLIENT", deletedAt: null },
       orderBy: { name: "asc" },
@@ -34,13 +34,35 @@ export default async function NewOrderPage() {
       },
       take: 1000,
     }),
+    // Bir mahsulotda bir nechta faol retsept (masalan arzonroq/qimmatroq
+    // formula) bo'lsa — buyurtma qatorida foydalanuvchi tanlaydi
+    // (meeting 20:53-21:36: "zakazga qarab... mijoz qimmatroq olaman
+    // desa, o'shanga qarab qilib beramiz").
+    prisma.recipe.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, catalogProductId: true, variantName: true },
+    }),
     loadExchangeRate(),
   ]);
+
+  const recipesByProduct: Record<string, { id: string; variantName: string }[]> = {};
+  for (const r of recipes) {
+    (recipesByProduct[r.catalogProductId] ??= []).push({
+      id: r.id,
+      variantName: r.variantName,
+    });
+  }
 
   return (
     <div>
       <PageHeader title="Yangi buyurtma" subtitle="Buyurtmani yaratish" />
-      <NewOrderForm clients={clients} catalog={catalog} defaultExchangeRate={rate} />
+      <NewOrderForm
+        clients={clients}
+        catalog={catalog}
+        recipesByProduct={recipesByProduct}
+        defaultExchangeRate={rate}
+      />
     </div>
   );
 }

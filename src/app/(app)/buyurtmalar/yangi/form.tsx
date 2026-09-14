@@ -25,17 +25,29 @@ interface Line {
   productName: string;
   quantity: number;
   unitPrice: number;
+  recipeId?: string;
+}
+
+interface RecipeOpt {
+  id: string;
+  variantName: string;
 }
 
 interface Props {
   clients: ClientOpt[];
   catalog: CatalogOpt[];
+  recipesByProduct: Record<string, RecipeOpt[]>;
   defaultExchangeRate: number;
 }
 
 type Mode = "PERCENT" | "AMOUNT";
 
-export default function NewOrderForm({ clients: initialClients, catalog, defaultExchangeRate }: Props) {
+export default function NewOrderForm({
+  clients: initialClients,
+  catalog,
+  recipesByProduct,
+  defaultExchangeRate,
+}: Props) {
   const router = useRouter();
   const [clients, setClients] = useState(initialClients);
   const [clientId, setClientId] = useState("");
@@ -71,6 +83,7 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
   const grand = afterDiscount + taxAmount;
 
   function addLine(product: CatalogOpt) {
+    const recipes = recipesByProduct[product.id] ?? [];
     setLines((prev) => [
       ...prev,
       {
@@ -78,6 +91,9 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
         productName: product.name,
         quantity: 1,
         unitPrice: product.basePrice ?? 0,
+        // Faqat bitta variant bo'lsa — aniq, avtomatik tanlanadi. Bir
+        // nechtasi bo'lsa — foydalanuvchi o'zi tanlashi kerak (pastda).
+        recipeId: recipes.length === 1 ? recipes[0].id : undefined,
       },
     ]);
   }
@@ -129,6 +145,13 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
     setError(null);
     if (!clientId) { setError("Mijozni tanlang"); return; }
     if (lines.length === 0) { setError("Kamida bitta mahsulot qo'shing"); return; }
+    const missingRecipe = lines.find(
+      (l) => (recipesByProduct[l.catalogProductId]?.length ?? 0) > 1 && !l.recipeId
+    );
+    if (missingRecipe) {
+      setError(`"${missingRecipe.productName}" uchun retsept variantini tanlang`);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -331,10 +354,13 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
             </p>
           ) : (
             <div className="space-y-2">
-              {lines.map((l, i) => (
+              {lines.map((l, i) => {
+                const recipeOptions = recipesByProduct[l.catalogProductId] ?? [];
+                const needsRecipeChoice = recipeOptions.length > 1;
+                return (
+                <div key={i} className="rounded-xl bg-gray-50 p-3 space-y-2">
                 <div
-                  key={i}
-                  className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl bg-gray-50"
+                  className="grid grid-cols-12 gap-2 items-center"
                 >
                   <div className="col-span-4 text-sm font-semibold">
                     {l.productName}
@@ -394,7 +420,39 @@ export default function NewOrderForm({ clients: initialClients, catalog, default
                     <Trash2 size={15} />
                   </button>
                 </div>
-              ))}
+                {needsRecipeChoice && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-ink-soft shrink-0">
+                      Retsept varianti *
+                    </label>
+                    <select
+                      value={l.recipeId ?? ""}
+                      onChange={(e) =>
+                        updateLine(i, { recipeId: e.target.value || undefined })
+                      }
+                      className={`flex-1 px-2 py-1.5 rounded-lg border bg-white text-sm ${
+                        l.recipeId ? "border-border" : "border-danger"
+                      }`}
+                    >
+                      <option value="" disabled>
+                        — tanlang —
+                      </option>
+                      {recipeOptions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.variantName}
+                        </option>
+                      ))}
+                    </select>
+                    {!l.recipeId && (
+                      <span className="text-xs text-danger shrink-0">
+                        Tanlanmagan
+                      </span>
+                    )}
+                  </div>
+                )}
+                </div>
+                );
+              })}
             </div>
           )}
         </div>

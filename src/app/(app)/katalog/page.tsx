@@ -189,6 +189,7 @@ export default async function CatalogPage({
             }))}
             categories={categories.map((c) => ({ id: c.id, name: c.name }))}
             defaultCategoryId={categoryId && categoryId !== "all" ? categoryId : undefined}
+            activeCategoryName={activeCategory?.name}
           />
           <Pagination
             page={pageNum}

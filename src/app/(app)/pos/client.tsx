@@ -3,7 +3,17 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
-import { Plus, Minus, Trash2, Receipt, Search, ChevronDown, ChevronRight, Clock } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  Trash2,
+  Receipt,
+  Search,
+  Clock,
+  User,
+  X,
+  Layers,
+} from "lucide-react";
 import { useDialog } from "@/components/use-dialog";
 
 interface Product {
@@ -14,11 +24,18 @@ interface Product {
   basePriceCurrency: string;
   unitType: string;
   categoryId: string | null;
+  stockQty: number;
 }
 
 interface Category {
   id: string;
   name: string;
+}
+
+interface ClientOption {
+  id: string;
+  name: string;
+  phone: string | null;
 }
 
 interface Line {
@@ -48,57 +65,75 @@ interface Props {
   products: Product[];
   categories: Category[];
   walkInId: string | null;
+  clients: ClientOption[];
   accounts: { id: string; name: string; currency: string }[];
   recentOrders: RecentOrder[];
 }
 
+const ALL = "__all__";
 const UNCATEGORIZED = "__uncategorized__";
+
+function initials(name: string) {
+  return name.trim().slice(0, 1).toUpperCase() || "?";
+}
 
 export default function PosClient({
   products,
   categories,
   walkInId,
+  clients,
   accounts,
   recentOrders,
 }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState(ALL);
   const [lines, setLines] = useState<Line[]>([]);
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const { alert, Dialog } = useDialog();
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
-    () => {
-      // First category open by default
-      const first = categories[0]?.id;
-      return first ? { [first]: true } : {};
-    }
-  );
 
-  const grouped = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filtered = q
-      ? products.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.sku.toLowerCase().includes(q)
-        )
-      : products;
+  // Mijoz — standart "Mehmon mijoz" (walk-in), qidirib boshqasini tanlash mumkin
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [clientQuery, setClientQuery] = useState("");
+  const [clientPanelOpen, setClientPanelOpen] = useState(false);
 
-    const map = new Map<string, Product[]>();
-    for (const p of filtered) {
+  const selectedClient = clients.find((c) => c.id === clientId);
+  const clientMatches = useMemo(() => {
+    const q = clientQuery.trim().toLowerCase();
+    if (!q) return clients.slice(0, 8);
+    return clients
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q)
+      )
+      .slice(0, 8);
+  }, [clients, clientQuery]);
+
+  const counts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
       const key = p.categoryId ?? UNCATEGORIZED;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(p);
+      map.set(key, (map.get(key) ?? 0) + 1);
     }
     return map;
-  }, [products, query]);
+  }, [products]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return products.filter((p) => {
+      if (activeCategory !== ALL) {
+        const key = p.categoryId ?? UNCATEGORIZED;
+        if (key !== activeCategory) return false;
+      }
+      if (!q) return true;
+      return (
+        p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+      );
+    });
+  }, [products, query, activeCategory]);
 
   const total = lines.reduce((s, l) => s + l.price * l.quantity, 0);
-
-  function toggleCat(id: string) {
-    setOpenCategories((prev) => ({ ...prev, [id]: !prev[id] }));
-  }
 
   function add(p: Product) {
     setLines((prev) => {
@@ -142,7 +177,8 @@ export default function PosClient({
 
   async function checkout() {
     if (lines.length === 0) return;
-    if (!walkInId) {
+    const finalClientId = clientId ?? walkInId;
+    if (!finalClientId) {
       alert("Walk-in mijoz topilmadi — seed skriptini ishga tushiring");
       return;
     }
@@ -152,7 +188,7 @@ export default function PosClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientId: walkInId,
+          clientId: finalClientId,
           accountId,
           items: lines.map((l) => ({
             catalogProductId: l.id,
@@ -174,14 +210,43 @@ export default function PosClient({
     }
   }
 
-  const categoryNameMap = Object.fromEntries(
-    categories.map((c) => [c.id, c.name])
-  );
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Mahsulotlar (kategoriya bo'yicha collapsed) */}
-      <div className="lg:col-span-2 panel p-5">
+    <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_360px] gap-4 items-start">
+      {/* Kategoriyalar — chapda */}
+      <div className="panel p-2 space-y-1">
+        <button
+          onClick={() => setActiveCategory(ALL)}
+          className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+            activeCategory === ALL
+              ? "bg-primary/10 text-primary"
+              : "text-ink-soft hover:bg-gray-50"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <Layers size={15} /> Barchasi
+          </span>
+          <span className="text-xs font-bold">{products.length}</span>
+        </button>
+        {categories.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setActiveCategory(c.id)}
+            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              activeCategory === c.id
+                ? "bg-primary/10 text-primary"
+                : "text-ink-soft hover:bg-gray-50"
+            }`}
+          >
+            <span className="truncate">{c.name}</span>
+            <span className="text-xs font-bold shrink-0">
+              {counts.get(c.id) ?? 0}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Mahsulotlar ro'yxati — o'rtada */}
+      <div className="panel p-5">
         <div className="relative mb-4">
           <Search
             size={16}
@@ -190,15 +255,14 @@ export default function PosClient({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Mahsulot qidirish yoki SKU..."
+            placeholder="Mahsulot, SKU yoki barcode..."
             className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-white"
             autoFocus
           />
         </div>
 
-        {/* Oxirgi 3 sotuv — qidiruv va kategoriyalar orasida */}
         {recentOrders.length > 0 && !query && (
-          <div className="mb-3">
+          <div className="mb-4">
             <div className="flex items-center gap-2 mb-2 text-xs text-ink-soft font-semibold uppercase">
               <Clock size={12} /> Oxirgi sotuvlar (bosing → nusxa)
             </div>
@@ -226,65 +290,46 @@ export default function PosClient({
           </div>
         )}
 
-        <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-          {Array.from(grouped.entries()).map(([catId, catProducts]) => {
-            const isOpen = query ? true : openCategories[catId] ?? false;
-            const name =
-              categoryNameMap[catId] ??
-              (catId === UNCATEGORIZED ? "Kategoriyasiz" : "Boshqa");
+        <div className="space-y-1.5 max-h-[65vh] overflow-y-auto pr-1">
+          {visible.slice(0, 100).map((p) => {
+            const outOfStock = p.stockQty <= 0;
             return (
-              <div
-                key={catId}
-                className="rounded-xl border border-border overflow-hidden"
+              <button
+                key={p.id}
+                onClick={() => !outOfStock && add(p)}
+                disabled={outOfStock}
+                className="w-full flex items-center gap-3 p-2.5 rounded-xl border border-transparent hover:border-border hover:bg-gray-50 transition text-left disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleCat(catId)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition"
-                >
-                  <div className="flex items-center gap-2">
-                    {isOpen ? (
-                      <ChevronDown size={16} className="text-ink-soft" />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold text-sm shrink-0">
+                  {initials(p.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{p.name}</p>
+                  <p className="text-xs text-ink-soft">
+                    SKU {p.sku} ·{" "}
+                    {outOfStock ? (
+                      <span className="text-danger font-semibold">Tugagan</span>
                     ) : (
-                      <ChevronRight size={16} className="text-ink-soft" />
+                      `${p.stockQty} ${p.unitType.toLowerCase()}`
                     )}
-                    <span className="font-semibold text-sm">{name}</span>
-                  </div>
-                  <span className="chip bg-white text-ink-soft">
-                    {catProducts.length}
-                  </span>
-                </button>
-                {isOpen && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
-                    {catProducts.slice(0, query ? 60 : 30).map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => add(p)}
-                        className="text-left p-3 rounded-xl border border-border bg-white hover:bg-primary/5 hover:border-primary transition"
-                      >
-                        <p className="font-semibold text-sm line-clamp-2">
-                          {p.name}
-                        </p>
-                        <p className="text-xs text-ink-soft mt-1 font-mono">
-                          {p.sku}
-                        </p>
-                        <p className="font-bold text-primary mt-1">
-                          {formatMoney(p.basePrice ?? 0, p.basePriceCurrency)}
-                        </p>
-                      </button>
-                    ))}
-                    {catProducts.length > (query ? 60 : 30) && (
-                      <p className="col-span-full text-xs text-ink-soft text-center py-2">
-                        Yana {catProducts.length - (query ? 60 : 30)} ta —
-                        qidiruvni ishlating
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+                  </p>
+                </div>
+                <p className="font-bold whitespace-nowrap">
+                  {formatMoney(p.basePrice ?? 0, p.basePriceCurrency)}
+                </p>
+                <span
+                  className={`w-8 h-8 rounded-lg grid place-items-center shrink-0 ${
+                    outOfStock
+                      ? "bg-gray-100 text-ink-soft"
+                      : "bg-primary text-white"
+                  }`}
+                >
+                  <Plus size={16} />
+                </span>
+              </button>
             );
           })}
-          {grouped.size === 0 && (
+          {visible.length === 0 && (
             <p className="text-sm text-ink-soft text-center py-10">
               Mahsulot topilmadi
             </p>
@@ -292,87 +337,159 @@ export default function PosClient({
         </div>
       </div>
 
-      {/* Chek + Oxirgi 5 buyurtma */}
-      <div className="space-y-4">
-        <div className="panel p-5">
-          <h3 className="font-bold mb-3 flex items-center gap-2">
-            <Receipt size={18} /> Chek ({lines.length})
-          </h3>
-          <div className="space-y-2 max-h-[35vh] overflow-y-auto mb-4">
-            {lines.map((l) => (
-              <div
-                key={l.id}
-                className="flex items-center gap-2 p-2 rounded-xl bg-gray-50"
+      {/* Tranzaksiya — o'ngda */}
+      <div className="panel p-5">
+        <h3 className="font-bold mb-3 flex items-center gap-2">
+          <Receipt size={18} /> Tranzaksiya
+        </h3>
+
+        <div className="relative mb-4">
+          <div
+            onClick={() => setClientPanelOpen((v) => !v)}
+            className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-white cursor-pointer hover:border-primary/50"
+          >
+            <User size={15} className="text-ink-soft shrink-0" />
+            <span className="text-sm font-medium truncate flex-1">
+              {selectedClient ? selectedClient.name : "Mehmon mijoz"}
+            </span>
+            {selectedClient && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setClientId(null);
+                }}
+                className="text-ink-soft hover:text-danger"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">{l.name}</p>
-                  <p className="text-xs text-ink-soft">
-                    {formatMoney(l.price, "UZS")}
-                  </p>
-                </div>
-                <button
-                  onClick={() => dec(l.id)}
-                  className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
-                >
-                  <Minus size={12} />
-                </button>
-                <span className="w-8 text-center font-bold">{l.quantity}</span>
-                <button
-                  onClick={() => inc(l.id)}
-                  className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
-                >
-                  <Plus size={12} />
-                </button>
-                <button
-                  onClick={() => remove(l.id)}
-                  className="w-7 h-7 rounded-lg text-danger grid place-items-center"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-            {lines.length === 0 && (
-              <p className="text-sm text-ink-soft text-center py-6">
-                Chek bo'sh
-              </p>
+                <X size={14} />
+              </button>
             )}
           </div>
 
-          <div className="mb-3">
-            <label className="block text-xs text-ink-soft mb-1">
-              Kassaga tushadi:
-            </label>
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-            >
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name} ({a.currency})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 mb-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-ink-soft">Jami</span>
-              <span className="text-xl font-bold text-primary">
-                {formatMoney(total, "UZS")}
-              </span>
-            </div>
-          </div>
-
-          <button
-            onClick={checkout}
-            disabled={loading || lines.length === 0}
-            className="w-full py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark disabled:opacity-50"
-          >
-            {loading ? "Amalga oshirilmoqda..." : "Sotuvni yakunlash"}
-          </button>
+          {clientPanelOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-20"
+                onClick={() => setClientPanelOpen(false)}
+              />
+              <div className="absolute left-0 right-0 top-12 z-30 panel p-2 max-h-72 overflow-y-auto">
+                <input
+                  autoFocus
+                  value={clientQuery}
+                  onChange={(e) => setClientQuery(e.target.value)}
+                  placeholder="Ism yoki telefon..."
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm mb-1"
+                />
+                <button
+                  onClick={() => {
+                    setClientId(null);
+                    setClientPanelOpen(false);
+                    setClientQuery("");
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm font-semibold text-ink-soft"
+                >
+                  Mehmon mijoz (standart)
+                </button>
+                {clientMatches.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setClientId(c.id);
+                      setClientPanelOpen(false);
+                      setClientQuery("");
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm"
+                  >
+                    <span className="font-medium">{c.name}</span>
+                    {c.phone && (
+                      <span className="text-ink-soft"> — {c.phone}</span>
+                    )}
+                  </button>
+                ))}
+                {clientMatches.length === 0 && (
+                  <p className="text-xs text-ink-soft text-center py-3">
+                    Mijoz topilmadi
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
+        <div className="space-y-2 max-h-[30vh] overflow-y-auto mb-4">
+          {lines.map((l) => (
+            <div
+              key={l.id}
+              className="flex items-center gap-2 p-2 rounded-xl bg-gray-50"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{l.name}</p>
+                <p className="text-xs text-ink-soft">
+                  {formatMoney(l.price, "UZS")}
+                </p>
+              </div>
+              <button
+                onClick={() => dec(l.id)}
+                className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="w-8 text-center font-bold">{l.quantity}</span>
+              <button
+                onClick={() => inc(l.id)}
+                className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+              >
+                <Plus size={12} />
+              </button>
+              <button
+                onClick={() => remove(l.id)}
+                className="w-7 h-7 rounded-lg text-danger grid place-items-center"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))}
+          {lines.length === 0 && (
+            <p className="text-sm text-ink-soft text-center py-6">
+              Mahsulot tanlang yoki SKU skanlang
+              <br />
+              <span className="text-xs">Bugungi birinchi sotuv</span>
+            </p>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label className="block text-xs text-ink-soft mb-1">
+            Kassaga tushadi:
+          </label>
+          <select
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+          >
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} ({a.currency})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 mb-3">
+          <div className="flex justify-between">
+            <span className="text-sm text-ink-soft">Jami</span>
+            <span className="text-xl font-bold text-primary">
+              {formatMoney(total, "UZS")}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={checkout}
+          disabled={loading || lines.length === 0}
+          className="w-full py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark disabled:opacity-50"
+        >
+          {loading ? "Amalga oshirilmoqda..." : "Sotuvni yakunlash"}
+        </button>
       </div>
       {Dialog}
     </div>

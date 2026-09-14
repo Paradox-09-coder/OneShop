@@ -61,9 +61,15 @@ interface Props {
   products: Product[];
   categories: Category[];
   defaultCategoryId?: string;
+  activeCategoryName?: string;
 }
 
-export default function ProductManager({ products, categories, defaultCategoryId }: Props) {
+export default function ProductManager({
+  products,
+  categories,
+  defaultCategoryId,
+  activeCategoryName,
+}: Props) {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -142,7 +148,10 @@ export default function ProductManager({ products, categories, defaultCategoryId
   return (
     <div className="panel overflow-hidden">
       <div className="p-3 border-b border-border flex justify-between items-center gap-2">
-        <h3 className="font-bold px-2">Mahsulotlar ({products.length})</h3>
+        <h3 className="font-bold px-2">
+          {activeCategoryName ? `${activeCategoryName} mahsulotlar` : "Mahsulotlar"} (
+          {products.length})
+        </h3>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark"

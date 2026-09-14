@@ -24,6 +24,7 @@ const CreateOrder = z.object({
         productName: z.string().min(1),
         quantity: z.number().positive(),
         unitPrice: z.number().min(0),
+        recipeId: z.string().optional(),
       })
     )
     .min(1),
@@ -146,6 +147,7 @@ export async function POST(req: Request) {
               quantity: it.quantity,
               unitPrice: it.unitPrice,
               currency: body.orderCurrency,
+              recipeId: it.recipeId,
             })),
           },
           statusHistory: {

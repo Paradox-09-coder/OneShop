@@ -5,7 +5,7 @@ import PosClient from "./client";
 export const dynamic = "force-dynamic";
 
 export default async function PosPage() {
-  const [products, walkIn, accounts, categories, recentOrders] = await Promise.all([
+  const [products, stockByProduct, walkIn, clients, accounts, categories, recentOrders] = await Promise.all([
     prisma.catalogProduct.findMany({
       // Faqat sotiladigan mahsulotlar — xomashyo kassada ko'rinmaydi
       where: { status: "active", isSellable: true },
@@ -21,8 +21,18 @@ export default async function PosPage() {
       },
       take: 5000,
     }),
+    prisma.inventoryLot.groupBy({
+      by: ["catalogProductId"],
+      _sum: { qty: true },
+    }),
     prisma.counterparty.findFirst({
       where: { name: "Walk-in mijoz", type: "CLIENT" },
+    }),
+    prisma.counterparty.findMany({
+      where: { type: "CLIENT", deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, name: true, phone: true },
+      take: 200,
     }),
     // Kassa (POS) narxlari faqat so'mda saqlanadi (hozircha), shuning uchun
     // faqat so'mlik naqd hisoblar tanlanadi — aks holda USD hisobga so'mlik
@@ -52,13 +62,18 @@ export default async function PosPage() {
     }),
   ]);
 
+  const stockMap = Object.fromEntries(
+    stockByProduct.map((s) => [s.catalogProductId, s._sum.qty ?? 0])
+  );
+
   return (
     <div>
       <PageHeader title="Kassa (POS)" subtitle="Do'kondan tez sotuv" />
       <PosClient
-        products={products}
+        products={products.map((p) => ({ ...p, stockQty: stockMap[p.id] ?? 0 }))}
         categories={categories}
         walkInId={walkIn?.id ?? null}
+        clients={clients}
         accounts={accounts.map((a) => ({ id: a.id, name: a.name, currency: a.currency }))}
         recentOrders={recentOrders.map((o) => ({
           id: o.id,

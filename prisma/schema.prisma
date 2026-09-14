@@ -703,6 +703,13 @@ model OrderItem {
   unitPrice           Float
   currency            Currency        @default(UZS)
 
+  // Zakazga qarab qaysi retsept varianti ishlatilishi (masalan
+  // "arzonroq"/"standart"/"qimmatroq") — meeting: "zakazga qarab...
+  // mijoz qimmatroq olaman desa, o'shanga qarab qilib beramiz."
+  // Bo'sh bo'lsa — eski xatti-harakat (birinchi faol retsept) ishlatiladi.
+  recipeId            String?
+  recipe              Recipe?         @relation(fields: [recipeId], references: [id])
+
   // Cut-specific (manufacturing)
   rollId              String?
   roll                InventoryRoll?  @relation(fields: [rollId], references: [id])
@@ -1080,6 +1087,7 @@ model Recipe {
   updatedAt         DateTime            @updatedAt
 
   ingredients       RecipeIngredient[]
+  orderItems        OrderItem[]
 
   @@unique([catalogProductId, variantName])
   @@index([catalogProductId])

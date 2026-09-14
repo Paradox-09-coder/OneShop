@@ -34,18 +34,26 @@ export async function computeRecipeRequirements(
 ): Promise<MaterialRequirement[]> {
   const items = await tx.orderItem.findMany({
     where: { orderId },
-    select: { catalogProductId: true, quantity: true },
+    select: { catalogProductId: true, quantity: true, recipeId: true },
   });
 
   // materialProductId -> required qty (jamlangan)
   const needed = new Map<string, number>();
 
   for (const item of items) {
-    const recipe = await tx.recipe.findFirst({
-      where: { catalogProductId: item.catalogProductId, isActive: true },
-      orderBy: { createdAt: "asc" },
-      include: { ingredients: true },
-    });
+    // Zakazda aynan qaysi variant tanlangan bo'lsa — o'shani ishlatamiz
+    // (masalan "arzonroq"/"qimmatroq" formulasi). Tanlanmagan bo'lsa —
+    // eski xatti-harakat: mahsulotning birinchi faol retsepti.
+    const recipe = item.recipeId
+      ? await tx.recipe.findUnique({
+          where: { id: item.recipeId },
+          include: { ingredients: true },
+        })
+      : await tx.recipe.findFirst({
+          where: { catalogProductId: item.catalogProductId, isActive: true },
+          orderBy: { createdAt: "asc" },
+          include: { ingredients: true },
+        });
     if (!recipe) continue; // retsept yo'q — xomashyo talab qilinmaydi (masalan, savdo tovarlari)
 
     const scale = item.quantity / (recipe.outputQty || 1);
