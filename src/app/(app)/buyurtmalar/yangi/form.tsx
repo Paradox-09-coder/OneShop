@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type FormEvent, type UIEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, UserPlus, Minus, Search, User, X, Package } from "lucide-react";
+import { Trash2, Plus, UserPlus, Minus, Search, User, X } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 
 interface ClientOpt {
@@ -65,11 +65,10 @@ export default function NewOrderForm({
   const [clientPanelOpen, setClientPanelOpen] = useState(false);
   const [clientQuery, setClientQuery] = useState("");
   const [clientVisibleCount, setClientVisibleCount] = useState(5);
+  const [clientLoadingMore, setClientLoadingMore] = useState(false);
 
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerQuery, setPickerQuery] = useState("");
-  const [pickerCategory, setPickerCategory] = useState<string>(ALL_CATEGORY);
-  const [pickerQty, setPickerQty] = useState<Record<string, number>>({});
+  const [productQuery, setProductQuery] = useState("");
+  const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORY);
   const [type, setType] = useState<"RETAIL" | "WHOLESALE" | "MANUFACTURING" | "POS">("RETAIL");
   const [priority, setPriority] = useState<
     "NORMAL" | "HIGH" | "VIP" | "URGENT_1D" | "URGENT_3D" | "URGENT_7D"
@@ -121,18 +120,18 @@ export default function NewOrderForm({
 
   function onClientListScroll(e: UIEvent<HTMLDivElement>) {
     const el = e.currentTarget;
+    if (clientLoadingMore) return;
+    if (clientVisibleCount >= clientMatches.length) return;
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) {
-      setClientVisibleCount((c) => Math.min(clientMatches.length, c + 5));
+      setClientLoadingMore(true);
+      // Ma'lumot allaqachon mijozimizda (server bir marta 500 tagacha
+      // yuklab bergan) — sun'iy kechikish faqat "yuklanmoqda" animatsiyasi
+      // uchun, haqiqiy so'rov emas.
+      setTimeout(() => {
+        setClientVisibleCount((c) => Math.min(clientMatches.length, c + 20));
+        setClientLoadingMore(false);
+      }, 350);
     }
-  }
-
-  function openPicker() {
-    const initial: Record<string, number> = {};
-    for (const l of lines) initial[l.catalogProductId] = l.quantity;
-    setPickerQty(initial);
-    setPickerQuery("");
-    setPickerCategory(ALL_CATEGORY);
-    setPickerOpen(true);
   }
 
   const categoryCounts = useMemo(() => {
@@ -144,48 +143,50 @@ export default function NewOrderForm({
     return map;
   }, [catalog]);
 
-  const pickerVisible = useMemo(() => {
-    const q = pickerQuery.trim().toLowerCase();
+  const productVisible = useMemo(() => {
+    const q = productQuery.trim().toLowerCase();
     return catalog.filter((p) => {
-      if (pickerCategory !== ALL_CATEGORY) {
+      if (productCategory !== ALL_CATEGORY) {
         const key = p.categoryId ?? UNCATEGORIZED;
-        if (key !== pickerCategory) return false;
+        if (key !== productCategory) return false;
       }
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
     });
-  }, [catalog, pickerQuery, pickerCategory]);
+  }, [catalog, productQuery, productCategory]);
 
-  const pickerSelectedCount = Object.values(pickerQty).filter((q) => q > 0).length;
-  const pickerTotalQty = Object.values(pickerQty).reduce(
-    (s, q) => s + (q > 0 ? q : 0),
-    0
-  );
+  function getQty(productId: string): number {
+    return lines.find((l) => l.catalogProductId === productId)?.quantity ?? 0;
+  }
 
-  function confirmPicker() {
+  function setProductQty(product: CatalogOpt, qty: number) {
     setLines((prev) => {
-      const next: Line[] = [];
-      for (const [productId, qty] of Object.entries(pickerQty)) {
-        if (!qty || qty <= 0) continue;
-        const existing = prev.find((l) => l.catalogProductId === productId);
-        if (existing) {
-          next.push({ ...existing, quantity: qty });
-          continue;
-        }
-        const product = catalog.find((p) => p.id === productId);
-        if (!product) continue;
-        const recipes = recipesByProduct[productId] ?? [];
-        next.push({
-          catalogProductId: productId,
+      const idx = prev.findIndex((l) => l.catalogProductId === product.id);
+      if (qty <= 0) {
+        if (idx === -1) return prev;
+        return prev.filter((_, i) => i !== idx);
+      }
+      if (idx !== -1) {
+        return prev.map((l, i) => (i === idx ? { ...l, quantity: qty } : l));
+      }
+      const recipes = recipesByProduct[product.id] ?? [];
+      return [
+        ...prev,
+        {
+          catalogProductId: product.id,
           productName: product.name,
           quantity: qty,
           unitPrice: product.basePrice ?? 0,
+          // Faqat bitta variant bo'lsa — aniq, avtomatik tanlanadi. Bir
+          // nechtasi bo'lsa — foydalanuvchi o'zi tanlashi kerak (pastda).
           recipeId: recipes.length === 1 ? recipes[0].id : undefined,
-        });
-      }
-      return next;
+        },
+      ];
     });
-    setPickerOpen(false);
+  }
+
+  function incrementProduct(product: CatalogOpt) {
+    setProductQty(product, getQty(product.id) + 1);
   }
 
   async function saveClient() {
@@ -346,6 +347,11 @@ export default function NewOrderForm({
                             Mijoz topilmadi
                           </p>
                         )}
+                        {clientLoadingMore && (
+                          <div className="flex items-center justify-center py-3">
+                            <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                          </div>
+                        )}
                       </div>
                       <button
                         type="button"
@@ -390,117 +396,115 @@ export default function NewOrderForm({
                 <option value="URGENT_7D">7 kun ichida</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Valyuta</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as never)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="UZS">so'm (UZS)</option>
-                <option value="USD">dollar (USD)</option>
-              </select>
-            </div>
-            {currency !== "UZS" && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1.5">
-                  Valyuta kursi (saqlanadi) — 1 {currency} = ? UZS
-                </label>
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  min={1}
-                  value={exchangeRate}
-                  onChange={(e) => setExchangeRate(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                />
-                <p className="text-xs text-ink-soft mt-1">
-                  Sozlamalardagi kurs: {defaultExchangeRate.toLocaleString("ru-RU")} so'm.
-                  Bu buyurtmada saqlab qolinadi.
-                </p>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Chegirma</label>
-              <div className="flex gap-1">
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  min={0}
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(Number(e.target.value))}
-                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDiscountMode(discountMode === "PERCENT" ? "AMOUNT" : "PERCENT")
-                  }
-                  className="px-4 py-2 rounded-r-xl border border-l-0 border-border bg-gray-50 hover:bg-gray-100 font-bold text-sm"
-                >
-                  {discountMode === "PERCENT" ? "%" : currency}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">QQS</label>
-              <div className="flex gap-1">
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  min={0}
-                  value={taxValue}
-                  onChange={(e) => setTaxValue(Number(e.target.value))}
-                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={() => setTaxMode(taxMode === "PERCENT" ? "AMOUNT" : "PERCENT")}
-                  className="px-4 py-2 rounded-r-xl border border-l-0 border-border bg-gray-50 hover:bg-gray-100 font-bold text-sm"
-                >
-                  {taxMode === "PERCENT" ? "%" : currency}
-                </button>
-              </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1.5">Izoh</label>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              />
-            </div>
           </div>
         </div>
 
         <div className="panel p-5">
-          <div className="flex flex-wrap items-center justify-between mb-3 gap-2">
+          <div className="flex items-center justify-between mb-3 gap-2">
             <h3 className="font-bold text-ink">Mahsulotlar</h3>
             {lines.length > 0 && (
-              <button
-                type="button"
-                onClick={openPicker}
-                className="px-3 py-1.5 rounded-xl border border-border bg-white hover:bg-gray-50 inline-flex items-center gap-1 font-semibold text-sm"
-              >
-                <Plus size={14} /> Mahsulot qo'shish
-              </button>
+              <span className="text-xs font-semibold text-ink-soft">
+                {lines.length} tur tanlandi
+              </span>
             )}
           </div>
 
-          {lines.length === 0 ? (
-            <button
-              type="button"
-              onClick={openPicker}
-              className="w-full py-10 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition flex flex-col items-center gap-2 text-ink-soft"
-            >
-              <Package size={28} />
-              <span className="text-sm font-medium">
-                Bu yerga bosing va mahsulot tanlang
-              </span>
-            </button>
-          ) : (
-            <div className="space-y-2">
+          <div className="grid grid-cols-[160px_1fr] border border-border rounded-xl overflow-hidden">
+            <div className="border-r border-border p-2 space-y-1 overflow-y-auto max-h-[420px] bg-gray-50/50">
+              <button
+                type="button"
+                onClick={() => setProductCategory(ALL_CATEGORY)}
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition ${
+                  productCategory === ALL_CATEGORY
+                    ? "bg-primary/10 text-primary"
+                    : "text-ink-soft hover:bg-gray-100"
+                }`}
+              >
+                <span>Barchasi</span>
+                <span className="text-xs font-bold">{catalog.length}</span>
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setProductCategory(c.id)}
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition ${
+                    productCategory === c.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-ink-soft hover:bg-gray-100"
+                  }`}
+                >
+                  <span className="truncate">{c.name}</span>
+                  <span className="text-xs font-bold shrink-0">
+                    {categoryCounts.get(c.id) ?? 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col min-h-0">
+              <div className="p-2 border-b border-border shrink-0">
+                <div className="relative">
+                  <Search
+                    size={15}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
+                  />
+                  <input
+                    value={productQuery}
+                    onChange={(e) => setProductQuery(e.target.value)}
+                    placeholder="Mahsulot yoki SKU bo'yicha qidirish..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  />
+                </div>
+              </div>
+              <div className="overflow-y-auto max-h-[360px] p-2 space-y-1">
+                {productVisible.map((p) => {
+                  const qty = getQty(p.id);
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => incrementProduct(p)}
+                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
+                        qty > 0 ? "bg-primary/5" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold text-sm shrink-0">
+                        {p.name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{p.name}</p>
+                        <p className="text-xs text-ink-soft">
+                          SKU {p.sku} · {p.unitType.toLowerCase()} ·{" "}
+                          {formatMoney(p.basePrice ?? 0, p.basePriceCurrency)}
+                        </p>
+                      </div>
+                      <input
+                        type="number"
+                        onClick={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.currentTarget.select()}
+                        min={0}
+                        step="0.01"
+                        value={qty || ""}
+                        onChange={(e) => setProductQty(p, Number(e.target.value) || 0)}
+                        placeholder="0"
+                        className="w-16 px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center shrink-0"
+                      />
+                    </div>
+                  );
+                })}
+                {productVisible.length === 0 && (
+                  <p className="text-sm text-ink-soft text-center py-10">
+                    Mahsulot topilmadi
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {lines.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <h4 className="text-xs font-bold text-ink-soft uppercase tracking-wide">
+                Tanlangan mahsulotlar
+              </h4>
               {lines.map((l, i) => {
                 const recipeOptions = recipesByProduct[l.catalogProductId] ?? [];
                 const needsRecipeChoice = recipeOptions.length > 1;
@@ -603,6 +607,93 @@ export default function NewOrderForm({
             </div>
           )}
         </div>
+
+        <div className="panel p-5">
+          <h3 className="font-bold text-ink mb-3">To'lovlar</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Valyuta</label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as never)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              >
+                <option value="UZS">so'm (UZS)</option>
+                <option value="USD">dollar (USD)</option>
+              </select>
+            </div>
+            {currency !== "UZS" && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1.5">
+                  Valyuta kursi (saqlanadi) — 1 {currency} = ? UZS
+                </label>
+                <input
+                  type="number" onFocus={(e) => e.currentTarget.select()}
+                  min={1}
+                  value={exchangeRate}
+                  onChange={(e) => setExchangeRate(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                />
+                <p className="text-xs text-ink-soft mt-1">
+                  Sozlamalardagi kurs: {defaultExchangeRate.toLocaleString("ru-RU")} so'm.
+                  Bu buyurtmada saqlab qolinadi.
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Chegirma</label>
+              <div className="flex gap-1">
+                <input
+                  type="number" onFocus={(e) => e.currentTarget.select()}
+                  min={0}
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDiscountMode(discountMode === "PERCENT" ? "AMOUNT" : "PERCENT")
+                  }
+                  className="px-4 py-2 rounded-r-xl border border-l-0 border-border bg-gray-50 hover:bg-gray-100 font-bold text-sm"
+                >
+                  {discountMode === "PERCENT" ? "%" : currency}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">QQS</label>
+              <div className="flex gap-1">
+                <input
+                  type="number" onFocus={(e) => e.currentTarget.select()}
+                  min={0}
+                  value={taxValue}
+                  onChange={(e) => setTaxValue(Number(e.target.value))}
+                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setTaxMode(taxMode === "PERCENT" ? "AMOUNT" : "PERCENT")}
+                  className="px-4 py-2 rounded-r-xl border border-l-0 border-border bg-gray-50 hover:bg-gray-100 font-bold text-sm"
+                >
+                  {taxMode === "PERCENT" ? "%" : currency}
+                </button>
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1.5">Izoh</label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Yangi mijoz modali — tugma bosilganda ochiladi */}
@@ -647,137 +738,6 @@ export default function NewOrderForm({
                   className="flex-1 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50"
                 >
                   {savingClient ? "..." : "Saqlash"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Mahsulot tanlash modali — kategoriya bo'yicha, Isell uslubida */}
-      {pickerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-              <h3 className="font-bold text-lg">Mahsulot tanlash</h3>
-              <button
-                type="button"
-                onClick={() => setPickerOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 grid grid-cols-[180px_1fr] overflow-hidden">
-              <div className="border-r border-border p-2 overflow-y-auto space-y-1">
-                <button
-                  type="button"
-                  onClick={() => setPickerCategory(ALL_CATEGORY)}
-                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition ${
-                    pickerCategory === ALL_CATEGORY
-                      ? "bg-primary/10 text-primary"
-                      : "text-ink-soft hover:bg-gray-50"
-                  }`}
-                >
-                  <span>Barchasi</span>
-                  <span className="text-xs font-bold">{catalog.length}</span>
-                </button>
-                {categories.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setPickerCategory(c.id)}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition ${
-                      pickerCategory === c.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-ink-soft hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="truncate">{c.name}</span>
-                    <span className="text-xs font-bold shrink-0">
-                      {categoryCounts.get(c.id) ?? 0}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-col min-h-0">
-                <div className="p-3 border-b border-border shrink-0">
-                  <div className="relative">
-                    <Search
-                      size={15}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
-                    />
-                    <input
-                      autoFocus
-                      value={pickerQuery}
-                      onChange={(e) => setPickerQuery(e.target.value)}
-                      placeholder="Mahsulot yoki SKU bo'yicha qidirish..."
-                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-white text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                  {pickerVisible.map((p) => {
-                    const qty = pickerQty[p.id] ?? 0;
-                    return (
-                      <div
-                        key={p.id}
-                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold text-sm shrink-0">
-                          {p.name.slice(0, 1).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">{p.name}</p>
-                          <p className="text-xs text-ink-soft">
-                            SKU {p.sku} · {p.unitType.toLowerCase()}
-                          </p>
-                        </div>
-                        <input
-                          type="number"
-                          onFocus={(e) => e.currentTarget.select()}
-                          min={0}
-                          step="0.01"
-                          value={qty || ""}
-                          onChange={(e) =>
-                            setPickerQty((prev) => ({
-                              ...prev,
-                              [p.id]: Number(e.target.value) || 0,
-                            }))
-                          }
-                          placeholder="0"
-                          className="w-20 px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center"
-                        />
-                      </div>
-                    );
-                  })}
-                  {pickerVisible.length === 0 && (
-                    <p className="text-sm text-ink-soft text-center py-10">
-                      Mahsulot topilmadi
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between px-5 py-3 border-t border-border shrink-0">
-              <span className="text-sm text-ink-soft">
-                {pickerSelectedCount} mahsulot tanlandi · Jami: {pickerTotalQty} dona
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border text-sm font-semibold"
-                >
-                  Bekor qilish
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmPicker}
-                  disabled={pickerSelectedCount === 0}
-                  className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50"
-                >
-                  Qo'shish ({pickerSelectedCount} ta)
                 </button>
               </div>
             </div>
