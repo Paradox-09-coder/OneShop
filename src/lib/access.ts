@@ -20,7 +20,6 @@ export const NAV_GATES: NavGate[] = [
   { href: "/omborxona", requires: "warehouse.read" },
   { href: "/katalog", requires: "catalog.read" },
   { href: "/filiallar", requires: "warehouse.read" },
-  { href: "/xaridlar", requires: "shipments.read" },
   { href: "/mijozlar", requires: "clients.read" },
   { href: "/crm", requires: "crm.read" },
   { href: "/kontragentlar", requires: "counterparties.read" },

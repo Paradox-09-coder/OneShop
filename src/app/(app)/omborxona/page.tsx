@@ -118,7 +118,6 @@ export default async function WarehousePage({
         tabs={[
           { label: "Mahsulotlar", href: "/omborxona" },
           { label: "Katalog", href: "/katalog" },
-          { label: "Konteynerlar", href: "/xaridlar" },
         ]}
       />
 

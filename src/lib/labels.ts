@@ -9,7 +9,6 @@ import type {
   PaymentType,
   PaymentTxType,
   PaymentSource,
-  ShipmentStatus,
   RollStatus,
   UnitType,
   MovementType,
@@ -118,13 +117,6 @@ export const paymentSourceLabel: Record<PaymentSource, string> = {
   LOAN: "Kredit",
   FOUNDER_TX: "Ta'sischi",
   MANUAL: "Qo'lda",
-};
-
-export const shipmentStatusLabel: Record<ShipmentStatus, string> = {
-  IN_TRANSIT: "Yo'lda",
-  ARRIVED: "Yetib keldi",
-  COMPLETED: "Yakunlandi",
-  CANCELLED: "Bekor qilindi",
 };
 
 export const rollStatusLabel: Record<RollStatus, string> = {

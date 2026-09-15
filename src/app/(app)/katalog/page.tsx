@@ -106,7 +106,6 @@ export default async function CatalogPage({
         tabs={[
           { label: "Mahsulotlar", href: "/omborxona" },
           { label: "Katalog", href: "/katalog" },
-          { label: "Konteynerlar", href: "/xaridlar" },
         ]}
       />
 

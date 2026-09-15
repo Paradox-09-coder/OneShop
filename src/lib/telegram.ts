@@ -114,8 +114,8 @@ export function getWebhookInfo() {
 // qancha?" degan nom ta'minotchi uchun teskari eshitiladi.
 export const supplierKeyboard = {
   keyboard: [
-    [{ text: "📊 Hisob-kitobimiz" }, { text: "📦 Oxirgi qabullar" }],
-    [{ text: "💰 To'lovlar tarixi" }, { text: "☎️ Rahbariyat" }],
+    [{ text: "📊 Hisob-kitobimiz" }, { text: "💰 To'lovlar tarixi" }],
+    [{ text: "☎️ Rahbariyat" }],
   ],
   resize_keyboard: true,
 };

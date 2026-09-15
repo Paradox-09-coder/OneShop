@@ -122,7 +122,6 @@ model Counterparty {
   ordersAssigned  Order[]             @relation("OrderAssigned")
   deliveriesPaid  Order[]             @relation("OrderDeliveryPaidTo")
   paymentsAsCounterparty Payment[]
-  shipments       Shipment[]
   callLogs        CallLog[]
   crmHistory      CrmStageHistory[]
   counterpartyNotes CounterpartyNote[]
@@ -314,7 +313,6 @@ model CatalogProduct {
   remnants        Remnant[]
   stockMovements  StockMovement[]
   orderItems      OrderItem[]
-  shipmentItems   ShipmentItem[]
   priceHistory    ProductPriceHistory[]
   recipes         Recipe[]
   usedInRecipes   RecipeIngredient[]  @relation("RecipeMaterial")
@@ -389,8 +387,6 @@ model InventoryRoll {
   batchNumber        String?
   rollNumber         String?
   supplierId         String?
-  shipmentItemId     String?
-  shipmentItem       ShipmentItem?  @relation(fields: [shipmentItemId], references: [id])
   receivedDate       DateTime?
   cost               Float?
   costCurrency       Currency       @default(UZS)
@@ -480,74 +476,6 @@ enum MovementType {
   OUT
   ADJUST
   WASTE
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Procurement (Shipments)
-// ─────────────────────────────────────────────────────────────
-
-model Shipment {
-  id                 String           @id @default(cuid())
-  supplierId         String
-  supplier           Counterparty     @relation(fields: [supplierId], references: [id])
-  containerNumber    String?
-  status             ShipmentStatus   @default(IN_TRANSIT)
-  shippingDate       DateTime?
-  arrivalDate        DateTime?
-  totalProductCost   Float            @default(0)
-  totalExpenses      Float            @default(0)
-  totalCost          Float            @default(0)
-  currency           Currency         @default(UZS)
-  note               String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-
-  items              ShipmentItem[]
-  expenses           ShipmentExpense[]
-
-  @@index([supplierId])
-  @@index([status])
-}
-
-enum ShipmentStatus {
-  IN_TRANSIT
-  ARRIVED
-  COMPLETED
-  CANCELLED
-}
-
-model ShipmentItem {
-  id                     String          @id @default(cuid())
-  shipmentId             String
-  shipment               Shipment        @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  catalogProductId       String?
-  catalogProduct         CatalogProduct? @relation(fields: [catalogProductId], references: [id])
-  productNameSnapshot    String
-  quantity               Float
-  unitPrice              Float
-  totalPrice             Float
-  currency               Currency        @default(UZS)
-  widthMm                Float?
-  lengthMm               Float?
-  transferredToInventory Boolean         @default(false)
-  createdAt              DateTime        @default(now())
-
-  rolls                  InventoryRoll[]
-
-  @@index([shipmentId])
-}
-
-model ShipmentExpense {
-  id          String      @id @default(cuid())
-  shipmentId  String
-  shipment    Shipment    @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  expenseType String      // customs | transport | unloading | labor | other
-  amount      Float
-  currency    Currency    @default(UZS)
-  note        String?
-  createdAt   DateTime    @default(now())
-
-  @@index([shipmentId])
 }
 
 // ─────────────────────────────────────────────────────────────

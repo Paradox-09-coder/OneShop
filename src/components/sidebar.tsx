@@ -38,7 +38,7 @@ interface NavItem {
   badge?: number;
   // Shu href'dan tashqari, boshqa qaysi yo'llarda ham bu band "faol"
   // ko'rinishi kerak — masalan Ombor bo'limi endi bitta tugma, lekin
-  // Katalog/Konteynerlar ham o'sha bo'limning ichki tab'lari.
+  // Katalog ham o'sha bo'limning ichki tab'i.
   matchHrefs?: string[];
 }
 
@@ -58,7 +58,7 @@ const navigation: NavItem[] = [
     label: "Omborxona",
     href: "/omborxona",
     icon: Package,
-    matchHrefs: ["/katalog", "/xaridlar"],
+    matchHrefs: ["/katalog"],
   },
   {
     label: "Mijozlar",

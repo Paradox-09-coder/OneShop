@@ -201,7 +201,6 @@ const MENU_BUTTON_HINTS = [
   "Yetkazdim",
   "Yo'l kira",
   "Yol kira",
-  "qabul",
 ];
 
 async function handleVoice(msg: TelegramMessage) {
@@ -345,25 +344,6 @@ async function handleText(msg: TelegramMessage, overrideText?: string) {
           (balance >= 0 ? " (biz qarzdormiz)" : " (siz qarzdorsiz)"),
         { reply_markup: kb }
       );
-      return;
-    }
-    if (text.includes("qabullar") || text.includes("qabul")) {
-      const shipments = await prisma.shipment.findMany({
-        where: { supplierId: user.id },
-        take: 5,
-        orderBy: { createdAt: "desc" },
-      });
-      if (shipments.length === 0)
-        return sendMessage(chatId, "Qabullar yo'q", { reply_markup: kb });
-      const lines = shipments
-        .map(
-          (s) =>
-            `📦 ${escape(s.containerNumber ?? "—")} — ${s.totalCost.toLocaleString("ru-RU")} ${s.currency}`
-        )
-        .join("\n");
-      await sendMessage(chatId, `<b>So'nggi qabullar:</b>\n${lines}`, {
-        reply_markup: kb,
-      });
       return;
     }
   }
