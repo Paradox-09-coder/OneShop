@@ -102,6 +102,9 @@ export default function NewOrderForm({
   const [clientQuery, setClientQuery] = useState("");
   const [clientVisibleCount, setClientVisibleCount] = useState(10);
 
+  // Mahsulot tanlagich — buyurtma ochilganda darhol ko'rinib turmasin,
+  // "+ Mahsulot qo'shish" bosilgandagina ochilsin.
+  const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productQuery, setProductQuery] = useState("");
   const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORY);
   const [type, setType] = useState<"RETAIL" | "WHOLESALE" | "MANUFACTURING" | "POS">("RETAIL");
@@ -521,6 +524,15 @@ export default function NewOrderForm({
             )}
           </div>
 
+          {!productPickerOpen ? (
+            <button
+              type="button"
+              onClick={() => setProductPickerOpen(true)}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+            >
+              <Plus size={14} /> Mahsulot qo'shish
+            </button>
+          ) : (
           <div className="grid grid-cols-[160px_1fr] border border-border rounded-xl overflow-hidden">
             <div className="border-r border-border p-2 space-y-1 overflow-y-auto max-h-[420px] bg-gray-50/50">
               <button
@@ -611,6 +623,7 @@ export default function NewOrderForm({
               </div>
             </div>
           </div>
+          )}
 
           {lines.length > 0 && (
             <div className="space-y-2 mt-4">
