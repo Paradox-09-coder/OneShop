@@ -4,6 +4,7 @@ import SectionTabs from "@/components/section-tabs";
 import { formatMoney } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
+import PaySalaryButton from "./pay-salary-button";
 import type { Prisma } from "@prisma/client";
 
 export default async function PayrollPage({
@@ -36,7 +37,7 @@ export default async function PayrollPage({
       : {}),
   };
 
-  const [visible, totalCount] = await Promise.all([
+  const [visible, totalCount, employees, accounts] = await Promise.all([
     prisma.payrollAccrual.findMany({
       where,
       orderBy: [{ period: "desc" }],
@@ -45,12 +46,33 @@ export default async function PayrollPage({
       include: { employee: { include: { counterparty: true } } },
     }),
     prisma.payrollAccrual.count({ where }),
+    prisma.employee.findMany({
+      include: { counterparty: { select: { name: true } } },
+      orderBy: { counterparty: { name: "asc" } },
+    }),
+    prisma.account.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, currency: true },
+    }),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
-      <PageHeader title="Oyliklar" subtitle="Xodimlar oylik hisoblari" />
+      <PageHeader
+        title="Oyliklar"
+        subtitle="Xodimlar oylik hisoblari"
+        actions={
+          <PaySalaryButton
+            employees={employees.map((e) => ({
+              id: e.counterpartyId,
+              name: e.counterparty.name,
+            }))}
+            accounts={accounts}
+          />
+        }
+      />
       <SectionTabs
         tabs={[
           { label: "Xodimlar", href: "/xodimlar" },
