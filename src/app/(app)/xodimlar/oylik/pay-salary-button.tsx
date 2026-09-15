@@ -2,18 +2,28 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, Pencil, X } from "lucide-react";
 import MoneyInput from "@/components/money-input";
 
 interface EmployeeOpt {
   id: string;
   name: string;
+  position: string | null;
 }
 
 interface AccountOpt {
   id: string;
   name: string;
   currency: string;
+}
+
+interface EditingEntry {
+  id: string;
+  employeeId: string;
+  accountId: string;
+  period: string;
+  amount: number;
+  note: string;
 }
 
 function currentPeriod(): string {
@@ -24,21 +34,28 @@ function currentPeriod(): string {
 export default function PaySalaryButton({
   employees,
   accounts,
+  editing,
 }: {
   employees: EmployeeOpt[];
   accounts: AccountOpt[];
+  // Berilsa — tugma kichik "tahrirlash" belgisi bo'lib chiqadi va mavjud
+  // yozuvni PUT bilan yangilaydi; berilmasa — odatdagi "Oylik to'lash".
+  editing?: EditingEntry;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [employeeId, setEmployeeId] = useState("");
-  const [accountId, setAccountId] = useState("");
-  const [period, setPeriod] = useState(currentPeriod());
-  const [amountText, setAmountText] = useState("");
-  const [note, setNote] = useState("");
+  const [employeeId, setEmployeeId] = useState(editing?.employeeId ?? "");
+  const [accountId, setAccountId] = useState(editing?.accountId ?? "");
+  const [period, setPeriod] = useState(editing?.period ?? currentPeriod());
+  const [amountText, setAmountText] = useState(
+    editing ? String(editing.amount) : ""
+  );
+  const [note, setNote] = useState(editing?.note ?? "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function reset() {
+    if (editing) return; // tahrirlash rejimida qiymatlar saqlanib qoladi
     setEmployeeId("");
     setAccountId("");
     setPeriod(currentPeriod());
@@ -55,17 +72,20 @@ export default function PaySalaryButton({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/xodimlar/oylik", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          employeeId,
-          accountId,
-          period,
-          amount,
-          note: note.trim() || undefined,
-        }),
-      });
+      const res = await fetch(
+        editing ? `/api/xodimlar/oylik/${editing.id}` : "/api/xodimlar/oylik",
+        {
+          method: editing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            employeeId,
+            accountId,
+            period,
+            amount,
+            note: note.trim() || undefined,
+          }),
+        }
+      );
       const data = await res.json();
       if (!data.ok) {
         setError(data.error?.message ?? "Xatolik yuz berdi");
@@ -81,12 +101,22 @@ export default function PaySalaryButton({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
-      >
-        <Plus size={16} /> Oylik to'lash
-      </button>
+      {editing ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft hover:text-primary"
+          title="Tahrirlash"
+        >
+          <Pencil size={14} />
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+        >
+          <Plus size={16} /> Oylik to'lash
+        </button>
+      )}
 
       {open && (
         <div
@@ -98,7 +128,9 @@ export default function PaySalaryButton({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">Oylik / avans to'lash</h3>
+              <h3 className="font-bold">
+                {editing ? "Oylikni tahrirlash" : "Oylik / avans to'lash"}
+              </h3>
               <button
                 onClick={() => setOpen(false)}
                 className="p-1 rounded-lg hover:bg-gray-100 text-ink-soft"
@@ -121,6 +153,7 @@ export default function PaySalaryButton({
                   {employees.map((e) => (
                     <option key={e.id} value={e.id}>
                       {e.name}
+                      {e.position ? ` — ${e.position}` : ""}
                     </option>
                   ))}
                 </select>
@@ -202,7 +235,13 @@ export default function PaySalaryButton({
               disabled={loading}
               className="w-full mt-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark disabled:opacity-50"
             >
-              {loading ? "To'lanmoqda..." : "To'lash"}
+              {loading
+                ? editing
+                  ? "Saqlanmoqda..."
+                  : "To'lanmoqda..."
+                : editing
+                  ? "Saqlash"
+                  : "To'lash"}
             </button>
           </div>
         </div>

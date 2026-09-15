@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
 import PaySalaryButton from "./pay-salary-button";
+import DeletePayrollButton from "./delete-payroll-button";
 import type { Prisma } from "@prisma/client";
 
 export default async function PayrollPage({
@@ -58,6 +59,17 @@ export default async function PayrollPage({
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  // Har bir yozuvni yaratgan tranzaksiyani (qaysi hisobdan to'langanini
+  // bilish uchun) sourceId orqali topamiz — tahrirlash formasida hisob
+  // avvaldan tanlangan holda ochiladi.
+  const payments = await prisma.payment.findMany({
+    where: { sourceType: "PAYROLL", sourceId: { in: visible.map((a) => a.id) } },
+    select: { sourceId: true, accountId: true },
+  });
+  const accountByAccrualId = new Map(
+    payments.map((p) => [p.sourceId, p.accountId ?? ""])
+  );
+
   return (
     <div>
       <PageHeader
@@ -68,6 +80,7 @@ export default async function PayrollPage({
             employees={employees.map((e) => ({
               id: e.counterpartyId,
               name: e.counterparty.name,
+              position: e.position,
             }))}
             accounts={accounts}
           />
@@ -86,8 +99,10 @@ export default async function PayrollPage({
             <tr className="text-xs text-ink-soft uppercase border-b border-border bg-gray-50/50">
               <th className="text-left px-5 py-3">Oy</th>
               <th className="text-left px-5 py-3">Xodim</th>
+              <th className="text-left px-5 py-3">Lavozimi</th>
               <th className="text-right px-5 py-3">Summa</th>
               <th className="text-left px-5 py-3">Izoh</th>
+              <th className="text-right px-5 py-3">Amal</th>
             </tr>
           </thead>
           <tbody>
@@ -95,15 +110,42 @@ export default async function PayrollPage({
               <tr key={a.id} className="border-b border-border/50">
                 <td className="px-5 py-3 font-semibold">{a.period}</td>
                 <td className="px-5 py-3">{a.employee.counterparty.name}</td>
+                <td className="px-5 py-3 text-ink-soft">
+                  {a.employee.position ?? "—"}
+                </td>
                 <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">
                   {formatMoney(a.amount, a.currency)}
                 </td>
                 <td className="px-5 py-3 text-ink-soft">{a.note ?? "—"}</td>
+                <td className="px-5 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <PaySalaryButton
+                      employees={employees.map((e) => ({
+                        id: e.counterpartyId,
+                        name: e.counterparty.name,
+                        position: e.position,
+                      }))}
+                      accounts={accounts}
+                      editing={{
+                        id: a.id,
+                        employeeId: a.employeeId,
+                        accountId: accountByAccrualId.get(a.id) ?? "",
+                        period: a.period,
+                        amount: a.amount,
+                        note: a.note ?? "",
+                      }}
+                    />
+                    <DeletePayrollButton
+                      id={a.id}
+                      label={`${a.employee.counterparty.name} — ${a.period}`}
+                    />
+                  </div>
+                </td>
               </tr>
             ))}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-8 text-center text-ink-soft">
+                <td colSpan={6} className="px-5 py-8 text-center text-ink-soft">
                   Oylik hisoblari yo'q
                 </td>
               </tr>

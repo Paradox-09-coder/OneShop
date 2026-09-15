@@ -560,16 +560,19 @@ async function main() {
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);
   const period = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, "0")}`;
-  await prisma.payrollAccrual.upsert({
-    where: { employeeId_period: { employeeId: empSanjar.id, period } },
-    update: {},
-    create: {
-      employeeId: empSanjar.id,
-      period,
-      amount: 4_000_000,
-      note: "Oylik + KPI",
-    },
+  const existingAccrual = await prisma.payrollAccrual.findFirst({
+    where: { employeeId: empSanjar.id, period },
   });
+  if (!existingAccrual) {
+    await prisma.payrollAccrual.create({
+      data: {
+        employeeId: empSanjar.id,
+        period,
+        amount: 4_000_000,
+        note: "Oylik + KPI",
+      },
+    });
+  }
 
   // ── Notifications ─────────────────────────────────────────
   const notifCount = await prisma.notification.count();

@@ -907,7 +907,11 @@ model PayrollAccrual {
   note        String?
   createdAt   DateTime @default(now())
 
-  @@unique([employeeId, period])
+  // Bitta oy ichida bir necha marta to'lanishi mumkin (avans + qolgan
+  // qism) — shuning uchun employeeId+period endi unique emas, har bir
+  // to'lov o'z qatoriga ega (Oyliklar jadvalida shu oy bo'yicha
+  // yig'indi ko'rsatiladi).
+  @@index([employeeId, period])
 }
 
 // ─────────────────────────────────────────────────────────────

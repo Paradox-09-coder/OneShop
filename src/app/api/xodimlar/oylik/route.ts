@@ -7,6 +7,12 @@ import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
 // xodimga bog'lab (Oyliklar sahifasida "qaysi oydan necha pul oldi"
 // ko'rinishi uchun). Hisobdan pul ayiriladi va tarixga (Tranzaksiyalar)
 // yoziladi — xuddi boshqa chiqimlar kabi.
+//
+// Har bir to'lov o'zining PayrollAccrual qatoriga ega (bitta oyda
+// avans + qolgan qism kabi bir necha marta to'lanishi mumkin) va shu
+// qatorni yaratgan Payment'ga `sourceId` orqali bog'lanadi — shu
+// bog'lanish tufayli tahrirlash/o'chirishda aynan qaysi tranzaksiyani
+// va qaysi hisobni tuzatish kerakligini aniq bilamiz.
 
 const Body = z.object({
   employeeId: z.string().min(1),
@@ -35,12 +41,12 @@ export async function POST(req: Request) {
     const type = account.type === "CASH" ? "CASH_OUT" : "BANK_OUT";
     const description = body.note?.trim() || `Oylik — ${body.period}`;
 
-    const [, payment] = await prisma.$transaction([
-      prisma.account.update({
+    const accrual = await prisma.$transaction(async (tx) => {
+      await tx.account.update({
         where: { id: account.id },
         data: { balanceCache: { decrement: body.amount } },
-      }),
-      prisma.payment.create({
+      });
+      const payment = await tx.payment.create({
         data: {
           type,
           accountId: account.id,
@@ -52,25 +58,22 @@ export async function POST(req: Request) {
           sourceType: "PAYROLL",
           createdById: session.id,
         },
-      }),
-      prisma.payrollAccrual.upsert({
-        where: {
-          employeeId_period: { employeeId: employee.counterpartyId, period: body.period },
-        },
-        update: {
-          amount: { increment: body.amount },
-          currency: account.currency,
-          note: body.note?.trim() || undefined,
-        },
-        create: {
+      });
+      const created = await tx.payrollAccrual.create({
+        data: {
           employeeId: employee.counterpartyId,
           period: body.period,
           amount: body.amount,
           currency: account.currency,
           note: body.note?.trim() || undefined,
         },
-      }),
-    ]);
+      });
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: { sourceId: created.id },
+      });
+      return created;
+    });
 
     await prisma.log.create({
       data: {
@@ -81,7 +84,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return jsonOk({ payment });
+    return jsonOk({ accrual });
   } catch (e) {
     return handleError(e);
   }
