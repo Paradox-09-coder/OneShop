@@ -606,9 +606,12 @@ export default function NewOrderForm({
                         onClick={(e) => e.stopPropagation()}
                         onFocus={(e) => e.currentTarget.select()}
                         min={0}
-                        step="0.01"
+                        step={p.unitType === "DONA" ? 1 : 0.01}
                         value={qty || ""}
-                        onChange={(e) => setProductQty(p, Number(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const raw = Number(e.target.value) || 0;
+                          setProductQty(p, p.unitType === "DONA" ? Math.round(raw) : raw);
+                        }}
                         placeholder="0"
                         className="w-16 px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center shrink-0"
                       />
@@ -633,6 +636,8 @@ export default function NewOrderForm({
               {lines.map((l, i) => {
                 const recipeOptions = recipesByProduct[l.catalogProductId] ?? [];
                 const needsRecipeChoice = recipeOptions.length > 1;
+                const isCountable =
+                  catalog.find((c) => c.id === l.catalogProductId)?.unitType === "DONA";
                 return (
                 <div key={i} className="rounded-xl bg-gray-50 p-3 space-y-2">
                 <div
@@ -655,12 +660,13 @@ export default function NewOrderForm({
                     </button>
                     <input
                       type="number" onFocus={(e) => e.currentTarget.select()}
-                      min={0.01}
-                      step="0.01"
+                      min={isCountable ? 1 : 0.01}
+                      step={isCountable ? 1 : 0.01}
                       value={l.quantity}
-                      onChange={(e) =>
-                        updateLine(i, { quantity: Number(e.target.value) })
-                      }
+                      onChange={(e) => {
+                        const raw = Number(e.target.value);
+                        updateLine(i, { quantity: isCountable ? Math.round(raw) : raw });
+                      }}
                       className="w-full px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center"
                     />
                     <button
