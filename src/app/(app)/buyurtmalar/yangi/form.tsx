@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag } from "lucide-react";
+import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag, Package } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 import MoneyInput from "@/components/money-input";
@@ -525,13 +525,27 @@ export default function NewOrderForm({
           </div>
 
           {!productPickerOpen ? (
-            <button
-              type="button"
-              onClick={() => setProductPickerOpen(true)}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-            >
-              <Plus size={14} /> Mahsulot qo'shish
-            </button>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setProductPickerOpen(true)}
+                className="w-full flex flex-col items-center gap-2 py-10 rounded-xl border border-border hover:border-primary/40 hover:bg-gray-50/50 transition"
+              >
+                <span className="w-12 h-12 rounded-xl bg-gray-100 text-ink-soft grid place-items-center">
+                  <Package size={22} />
+                </span>
+                <span className="text-sm text-ink-soft">
+                  Bu yerga bosing yoki quyidagi tugmani ishlating
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductPickerOpen(true)}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-border text-sm font-semibold text-primary hover:bg-primary/5"
+              >
+                <Plus size={14} /> Mahsulot qo'shish
+              </button>
+            </div>
           ) : (
           <div className="grid grid-cols-[160px_1fr] border border-border rounded-xl overflow-hidden">
             <div className="border-r border-border p-2 space-y-1 overflow-y-auto max-h-[420px] bg-gray-50/50">
