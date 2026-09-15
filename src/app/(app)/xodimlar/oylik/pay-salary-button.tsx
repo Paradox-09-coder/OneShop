@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, X } from "lucide-react";
 import MoneyInput from "@/components/money-input";
+import { useDialog } from "@/components/use-dialog";
 
 interface EmployeeOpt {
   id: string;
@@ -43,6 +44,7 @@ export default function PaySalaryButton({
   editing?: EditingEntry;
 }) {
   const router = useRouter();
+  const { alert, Dialog } = useDialog();
   const [open, setOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState(editing?.employeeId ?? "");
   const [accountId, setAccountId] = useState(editing?.accountId ?? "");
@@ -94,6 +96,7 @@ export default function PaySalaryButton({
       setOpen(false);
       reset();
       router.refresh();
+      if (data.data?.warning) alert(data.data.warning);
     } finally {
       setLoading(false);
     }
@@ -246,6 +249,7 @@ export default function PaySalaryButton({
           </div>
         </div>
       )}
+      {Dialog}
     </>
   );
 }

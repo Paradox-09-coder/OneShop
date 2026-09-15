@@ -1,6 +1,36 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import type { Payment, PayrollAccrual } from "@prisma/client";
 import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
+
+// Tahrirlash/o'chirish endi Payment.sourceId orqali bog'lanadi, lekin
+// bu funksiya chiqishidan OLDIN (avvalgi deploy versiyasida) to'langan
+// oyliklar bu bog'lanishsiz qolgan — Payment yaratilgan, hisobdan pul
+// ayirilgan, lekin sourceId hech qachon yozilmagan. Shunday "yetim"
+// tranzaksiyani xodim+summa bo'yicha moslab topamiz va orqaga qarab
+// bog'lab qo'yamiz — aks holda foydalanuvchi bu eski yozuvlarni
+// tahrirlay/o'chira olmay qoladi.
+async function findLinkedPayment(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  accrual: PayrollAccrual
+): Promise<Payment | null> {
+  const linked = await tx.payment.findFirst({
+    where: { sourceType: "PAYROLL", sourceId: accrual.id },
+  });
+  if (linked) return linked;
+  const orphan = await tx.payment.findFirst({
+    where: {
+      sourceType: "PAYROLL",
+      sourceId: null,
+      counterpartyId: accrual.employeeId,
+      amount: accrual.amount,
+    },
+  });
+  if (orphan) {
+    await tx.payment.update({ where: { id: orphan.id }, data: { sourceId: accrual.id } });
+  }
+  return orphan;
+}
 
 const Body = z.object({
   employeeId: z.string().min(1),
@@ -22,13 +52,6 @@ export async function PUT(
     const accrual = await prisma.payrollAccrual.findUnique({ where: { id } });
     if (!accrual) return jsonErr("Yozuv topilmadi", 404);
 
-    const payment = await prisma.payment.findFirst({
-      where: { sourceType: "PAYROLL", sourceId: id },
-    });
-    if (!payment || !payment.accountId) {
-      return jsonErr("Bog'liq tranzaksiya topilmadi", 404);
-    }
-
     const employee = await prisma.employee.findUnique({
       where: { counterpartyId: body.employeeId },
       include: { counterparty: { select: { name: true } } },
@@ -40,30 +63,33 @@ export async function PUT(
     });
     if (!newAccount) return jsonErr("Hisob topilmadi", 404);
 
-    await prisma.$transaction(async (tx) => {
-      // Eski hisobga summani qaytarib, yangi hisobdan yangi summani ayiramiz
-      // — hisob yoki summa o'zgarmagan bo'lsa ham, bu usul har doim to'g'ri
-      // natija beradi.
-      await tx.account.update({
-        where: { id: payment.accountId! },
-        data: { balanceCache: { increment: payment.amount } },
-      });
-      await tx.account.update({
-        where: { id: newAccount.id },
-        data: { balanceCache: { decrement: body.amount } },
-      });
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          accountId: newAccount.id,
-          amount: body.amount,
-          currency: newAccount.currency,
-          type: newAccount.type === "CASH" ? "CASH_OUT" : "BANK_OUT",
-          counterpartyId: employee.counterpartyId,
-          counterpartyNameSnapshot: employee.counterparty.name,
-          description: body.note?.trim() || `Oylik — ${body.period}`,
-        },
-      });
+    const adjusted = await prisma.$transaction(async (tx) => {
+      const payment = await findLinkedPayment(tx, accrual);
+      // Bog'liq tranzaksiya topilsa — eski hisobga summani qaytarib, yangi
+      // hisobdan yangi summani ayiramiz. Topilmasa (masalan qo'lda/demo
+      // yozuv) — faqat yozuvning o'zi to'g'irlanadi, hisobga tegilmaydi.
+      if (payment?.accountId) {
+        await tx.account.update({
+          where: { id: payment.accountId },
+          data: { balanceCache: { increment: payment.amount } },
+        });
+        await tx.account.update({
+          where: { id: newAccount.id },
+          data: { balanceCache: { decrement: body.amount } },
+        });
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            accountId: newAccount.id,
+            amount: body.amount,
+            currency: newAccount.currency,
+            type: newAccount.type === "CASH" ? "CASH_OUT" : "BANK_OUT",
+            counterpartyId: employee.counterpartyId,
+            counterpartyNameSnapshot: employee.counterparty.name,
+            description: body.note?.trim() || `Oylik — ${body.period}`,
+          },
+        });
+      }
       await tx.payrollAccrual.update({
         where: { id },
         data: {
@@ -74,6 +100,7 @@ export async function PUT(
           note: body.note?.trim() || undefined,
         },
       });
+      return { hadPayment: !!payment?.accountId };
     });
 
     await prisma.log.create({
@@ -85,7 +112,12 @@ export async function PUT(
       },
     });
 
-    return jsonOk({ ok: true });
+    return jsonOk({
+      ok: true,
+      warning: adjusted.hadPayment
+        ? undefined
+        : "Bu yozuv bog'liq tranzaksiyasiz edi — yozuv to'g'irlandi, lekin hech qanday hisob balansi o'zgartirilmadi.",
+    });
   } catch (e) {
     return handleError(e);
   }
@@ -105,11 +137,8 @@ export async function DELETE(
     });
     if (!accrual) return jsonErr("Yozuv topilmadi", 404);
 
-    const payment = await prisma.payment.findFirst({
-      where: { sourceType: "PAYROLL", sourceId: id },
-    });
-
     await prisma.$transaction(async (tx) => {
+      const payment = await findLinkedPayment(tx, accrual);
       if (payment?.accountId) {
         await tx.account.update({
           where: { id: payment.accountId },
