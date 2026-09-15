@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Truck, Save, Phone, Car } from "lucide-react";
+import { Truck, Save, Phone, Car, Plus } from "lucide-react";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 
 interface Driver {
@@ -31,6 +31,21 @@ interface Props {
 export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
   const router = useRouter();
   const [f, setF] = useState(initial);
+  // Yetkazish endi yangi buyurtma yaratilayotganda belgilanadi — shu
+  // sabab, agar buyurtmada hali hech qanday yetkazish ma'lumoti bo'lmasa
+  // (masalan bu funksiyadan oldin yaratilgan eski buyurtma, yoki mijoz
+  // o'zi olib ketadigan buyurtma), forma yopiq turadi va bekorga bo'sh
+  // joy egallamaydi — kerak bo'lsa "+ Yetkazish qo'shish" bilan ochiladi.
+  const hasDeliveryData = Boolean(
+    initial.driverName ||
+      initial.driverPhone ||
+      initial.deliveryAddress ||
+      initial.deliveryCost ||
+      initial.receiverName ||
+      initial.receiverPhone ||
+      initial.expectedDeliveryDate
+  );
+  const [formOpen, setFormOpen] = useState(hasDeliveryData);
   const [driversList, setDriversList] = useState(drivers);
   // Avval qo'lda kiritilgan (yoki hali tanlanmagan) buyurtmalar uchun —
   // telefon raqami bo'yicha mos haydovchini avtomatik topamiz.
@@ -89,6 +104,26 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (!formOpen) {
+    return (
+      <div className="panel p-5">
+        <h3 className="font-bold mb-1 flex items-center gap-2">
+          <Truck size={16} className="text-primary" /> Yetkazish (logistika)
+        </h3>
+        <p className="text-xs text-ink-soft mb-3">
+          Bu buyurtmada yetkazish ma'lumoti kiritilmagan.
+        </p>
+        <button
+          type="button"
+          onClick={() => setFormOpen(true)}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+        >
+          <Plus size={14} /> Yetkazish qo'shish
+        </button>
+      </div>
+    );
   }
 
   return (

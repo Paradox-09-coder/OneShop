@@ -53,9 +53,8 @@ export default async function PayrollPage({
       <PageHeader title="Oyliklar" subtitle="Xodimlar oylik hisoblari" />
       <SectionTabs
         tabs={[
+          { label: "Xodimlar", href: "/xodimlar" },
           { label: "Oyliklar", href: "/xodimlar/oylik" },
-          { label: "Tranzaksiyalar", href: "/moliya/tranzaksiyalar" },
-          { label: "Qarzdorliklar", href: "/moliya/qarzdorliklar" },
         ]}
       />
       <ListToolbar searchPlaceholder="Xodim ismi bo'yicha qidirish..." />

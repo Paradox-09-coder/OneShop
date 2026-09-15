@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
+import SectionTabs from "@/components/section-tabs";
 import { formatMoney, formatDate } from "@/lib/utils";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
@@ -70,6 +71,12 @@ export default async function EmployeesPage({
             title="Yangi xodim"
           />
         }
+      />
+      <SectionTabs
+        tabs={[
+          { label: "Xodimlar", href: "/xodimlar" },
+          { label: "Oyliklar", href: "/xodimlar/oylik" },
+        ]}
       />
       <ListToolbar searchPlaceholder="Ism, lavozim yoki telefon bo'yicha qidirish..." />
 
