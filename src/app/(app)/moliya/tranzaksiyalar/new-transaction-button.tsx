@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Mic, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MoneyInput from "@/components/money-input";
 
@@ -43,6 +43,11 @@ export default function NewTransactionButton({
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const account = accounts.find((a) => a.id === accountId);
   const counterparty = counterparties.find((c) => c.id === counterpartyId);
@@ -58,6 +63,60 @@ export default function NewTransactionButton({
     setDate(new Date().toISOString().slice(0, 10));
     setDescription("");
     setError("");
+    setVoiceTranscript("");
+  }
+
+  async function startRecording() {
+    setError("");
+    setVoiceTranscript("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        void submitVoice(new Blob(chunksRef.current, { type: recorder.mimeType }));
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch {
+      setError("Mikrofonga ruxsat berilmadi");
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  }
+
+  async function submitVoice(blob: Blob) {
+    setVoiceLoading(true);
+    setError("");
+    try {
+      const form = new FormData();
+      form.append("audio", blob, "voice.webm");
+      const res = await fetch("/api/moliya/tranzaksiya/voice", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(data.error?.message ?? "Ovozni tushunolmadim");
+        return;
+      }
+      const v = data.data;
+      setVoiceTranscript(v.transcript);
+      setKind(v.kind);
+      if (v.amount > 0) setAmount(String(v.amount));
+      if (v.description) setDescription(v.description);
+      if (v.accountId) setAccountId(v.accountId);
+    } finally {
+      setVoiceLoading(false);
+    }
   }
 
   async function loadOpenOrders(cpId: string, knd: "IN" | "OUT") {
@@ -146,6 +205,35 @@ export default function NewTransactionButton({
                 <X size={18} />
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={recording ? stopRecording : startRecording}
+              disabled={voiceLoading}
+              className={cn(
+                "w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border transition disabled:opacity-50",
+                recording
+                  ? "bg-danger/10 border-danger text-danger animate-pulse"
+                  : "border-primary/30 text-primary hover:bg-primary/5"
+              )}
+            >
+              {recording ? (
+                <>
+                  <Square size={14} /> To&apos;xtatish
+                </>
+              ) : voiceLoading ? (
+                "Eshitilmoqda..."
+              ) : (
+                <>
+                  <Mic size={15} /> Ovozli aytib kiriting
+                </>
+              )}
+            </button>
+            {voiceTranscript && (
+              <p className="text-xs text-ink-soft italic mb-3 -mt-1">
+                🎙 &quot;{voiceTranscript}&quot;
+              </p>
+            )}
 
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
