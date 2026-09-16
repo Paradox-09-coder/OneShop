@@ -102,6 +102,7 @@ export default function NewTransactionButton({
       const res = await fetch("/api/moliya/tranzaksiya/voice", {
         method: "POST",
         body: form,
+        signal: AbortSignal.timeout(40_000),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -114,6 +115,8 @@ export default function NewTransactionButton({
       if (v.amount > 0) setAmount(String(v.amount));
       if (v.description) setDescription(v.description);
       if (v.accountId) setAccountId(v.accountId);
+    } catch {
+      setError("Ovozni yuborishda xato — internetni tekshirib qayta urinib ko'ring");
     } finally {
       setVoiceLoading(false);
     }

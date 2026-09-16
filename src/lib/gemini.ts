@@ -12,6 +12,53 @@ export function isGeminiConfigured() {
   return !!API_KEY;
 }
 
+// Gemini vaqti-vaqti bilan "high demand"/503 qaytaradi (ishlab chiqarishda
+// haqiqatan ham ko'ringan) — bitta marta qisqa kutib qayta urinamiz, aks
+// holda so'rov abadiy osilib qolmasin deb 25s'dan keyin to'xtatamiz (aks
+// holda front-end'da tugma "Eshitilmoqda..." holatida abadiy qolib ketadi).
+interface GeminiResponse {
+  candidates?: { content?: { parts?: { text?: string }[] } }[];
+}
+
+async function callGemini(body: Record<string, unknown>): Promise<GeminiResponse> {
+  if (!API_KEY) throw new Error("GEMINI_API_KEY sozlanmagan");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(25_000),
+      });
+    } catch (e) {
+      throw new Error(
+        e instanceof Error && e.name === "TimeoutError"
+          ? "Gemini javob bermadi (timeout) — birozdan keyin qayta urinib ko'ring"
+          : `Gemini bilan bog'lanishda xato: ${e instanceof Error ? e.message : String(e)}`
+      );
+    }
+    const data = await res.json();
+    if (!res.ok) {
+      const message: string = data?.error?.message ?? res.statusText;
+      const overloaded = /high demand|overloaded|503/i.test(message);
+      if (overloaded && attempt === 1) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      throw new Error(
+        overloaded
+          ? "Gemini hozir band — birozdan keyin qayta urinib ko'ring"
+          : `Gemini xatosi: ${message}`
+      );
+    }
+    return data;
+  }
+  throw new Error("Gemini bilan bog'lanib bo'lmadi");
+}
+
 /**
  * Audio (masalan Telegram ovozli xabar, OGG/Opus) ni Gemini orqali
  * o'zbek tilidagi matnga o'giradi. Xato bo'lsa — throw qiladi, chaqiruvchi
@@ -21,42 +68,26 @@ export async function transcribeAudio(
   audio: Buffer,
   mimeType: string
 ): Promise<string> {
-  if (!API_KEY) throw new Error("GEMINI_API_KEY sozlanmagan");
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
+  const data = (await callGemini({
+    contents: [
+      {
+        parts: [
           {
-            parts: [
-              {
-                text:
-                  "Bu ovozli xabarni faqat o'zbek tilida yozma matnga o'gir. " +
-                  "Boshqa hech qanday izoh, sarlavha yoki tirnoq qo'ymasdan, " +
-                  "faqat aynan gapirilgan matnni qaytar.",
-              },
-              {
-                inlineData: {
-                  mimeType,
-                  data: audio.toString("base64"),
-                },
-              },
-            ],
+            text:
+              "Bu ovozli xabarni faqat o'zbek tilida yozma matnga o'gir. " +
+              "Boshqa hech qanday izoh, sarlavha yoki tirnoq qo'ymasdan, " +
+              "faqat aynan gapirilgan matnni qaytar.",
+          },
+          {
+            inlineData: {
+              mimeType,
+              data: audio.toString("base64"),
+            },
           },
         ],
-      }),
-    }
-  );
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(
-      `Gemini xatosi: ${data?.error?.message ?? res.statusText}`
-    );
-  }
+      },
+    ],
+  }));
 
   const text: string | undefined =
     data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -86,8 +117,6 @@ export async function parseVoiceTransaction(
   mimeType: string,
   accountNames: string[]
 ): Promise<VoiceTransactionResult> {
-  if (!API_KEY) throw new Error("GEMINI_API_KEY sozlanmagan");
-
   const prompt =
     "Bu ovozli xabarda odam kassa/bank tranzaksiyasi (pul kirim yoki chiqimi) haqida gapiryapti. " +
     "Avval xabarni o'zbek tilida transkript qil, keyin quyidagi JSON formatda javob ber, boshqa hech narsa yozmasdan:\n" +
@@ -98,29 +127,17 @@ export async function parseVoiceTransaction(
     "\"kind\" — agar pul kirim bo'lsa (sotuv, to'lov qabul qilindi) \"IN\", agar chiqim bo'lsa (xarajat, to'lov qilindi) \"OUT\". " +
     "Agar summa aniq aytilmagan bo'lsa, amount: 0 qaytar.";
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: audio.toString("base64") } },
-            ],
-          },
+  const data = await callGemini({
+    contents: [
+      {
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType, data: audio.toString("base64") } },
         ],
-        generationConfig: { responseMimeType: "application/json" },
-      }),
-    }
-  );
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(`Gemini xatosi: ${data?.error?.message ?? res.statusText}`);
-  }
+      },
+    ],
+    generationConfig: { responseMimeType: "application/json" },
+  });
 
   const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error("Gemini matn qaytarmadi");
