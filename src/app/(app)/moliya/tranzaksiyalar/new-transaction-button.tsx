@@ -14,6 +14,14 @@ interface AccountOption {
 interface CounterpartyOption {
   id: string;
   name: string;
+  type: string;
+}
+interface OpenOrderOption {
+  id: string;
+  orderNumber: string;
+  agreedAmount: number;
+  paidAmount: number;
+  orderCurrency: string;
 }
 
 export default function NewTransactionButton({
@@ -28,6 +36,8 @@ export default function NewTransactionButton({
   const [kind, setKind] = useState<"IN" | "OUT">("IN");
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [counterpartyId, setCounterpartyId] = useState("");
+  const [orderId, setOrderId] = useState("");
+  const [openOrders, setOpenOrders] = useState<OpenOrderOption[]>([]);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState("");
@@ -35,15 +45,39 @@ export default function NewTransactionButton({
   const [loading, setLoading] = useState(false);
 
   const account = accounts.find((a) => a.id === accountId);
+  const counterparty = counterparties.find((c) => c.id === counterpartyId);
+  const showOrderPicker = kind === "IN" && counterparty?.type === "CLIENT";
 
   function reset() {
     setKind("IN");
     setAccountId(accounts[0]?.id ?? "");
     setCounterpartyId("");
+    setOrderId("");
+    setOpenOrders([]);
     setAmount("");
     setDate(new Date().toISOString().slice(0, 10));
     setDescription("");
     setError("");
+  }
+
+  async function loadOpenOrders(cpId: string, knd: "IN" | "OUT") {
+    setOrderId("");
+    setOpenOrders([]);
+    const cp = counterparties.find((c) => c.id === cpId);
+    if (knd !== "IN" || cp?.type !== "CLIENT" || !cpId) return;
+    const res = await fetch(`/api/orders?clientId=${encodeURIComponent(cpId)}&open=1`);
+    const data = await res.json();
+    if (data.ok) setOpenOrders(data.data.orders);
+  }
+
+  function onKindChange(knd: "IN" | "OUT") {
+    setKind(knd);
+    loadOpenOrders(counterpartyId, knd);
+  }
+
+  function onCounterpartyChange(id: string) {
+    setCounterpartyId(id);
+    loadOpenOrders(id, kind);
   }
 
   async function submit() {
@@ -67,6 +101,7 @@ export default function NewTransactionButton({
           kind,
           amount: amt,
           counterpartyId: counterpartyId || undefined,
+          orderId: showOrderPicker ? orderId || undefined : undefined,
           description: description.trim() || undefined,
           date,
         }),
@@ -116,7 +151,7 @@ export default function NewTransactionButton({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setKind("IN")}
+                  onClick={() => onKindChange("IN")}
                   className={cn(
                     "py-2 rounded-xl text-sm font-semibold border transition",
                     kind === "IN"
@@ -128,7 +163,7 @@ export default function NewTransactionButton({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setKind("OUT")}
+                  onClick={() => onKindChange("OUT")}
                   className={cn(
                     "py-2 rounded-xl text-sm font-semibold border transition",
                     kind === "OUT"
@@ -163,7 +198,7 @@ export default function NewTransactionButton({
                 </label>
                 <select
                   value={counterpartyId}
-                  onChange={(e) => setCounterpartyId(e.target.value)}
+                  onChange={(e) => onCounterpartyChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
                 >
                   <option value="">— tanlanmagan —</option>
@@ -174,6 +209,29 @@ export default function NewTransactionButton({
                   ))}
                 </select>
               </div>
+
+              {showOrderPicker && openOrders.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-ink-soft mb-1">
+                    Qaysi buyurtma (shot-faktura) uchun? (ixtiyoriy)
+                  </label>
+                  <select
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  >
+                    <option value="">— aniqlanmagan (mijozga so&apos;raladi) —</option>
+                    {openOrders.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.orderNumber} — qolgan {(o.agreedAmount - o.paidAmount).toLocaleString("ru-RU")} {o.orderCurrency}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-ink-soft mt-1">
+                    Tanlansa, mijozga Telegram orqali shu buyurtma yopilgani haqida xabar ketadi.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-ink-soft mb-1">

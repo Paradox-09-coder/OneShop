@@ -54,15 +54,28 @@ const CreateOrder = z.object({
     .min(1),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await requireApiPermission("orders.read");
+    const { searchParams } = new URL(req.url);
+    const clientId = searchParams.get("clientId") ?? undefined;
+    const openOnly = searchParams.get("open") === "1";
+
     const orders = await prisma.order.findMany({
+      where: {
+        ...(clientId ? { clientId } : {}),
+        ...(openOnly ? { status: { not: "CANCELLED" } } : {}),
+      },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: clientId ? 50 : 100,
       include: { client: { select: { name: true } } },
     });
-    return jsonOk({ orders });
+
+    const filtered = openOnly
+      ? orders.filter((o) => (o.agreedAmount ?? 0) - o.paidAmount > 0.01)
+      : orders;
+
+    return jsonOk({ orders: filtered });
   } catch (e) {
     return handleError(e);
   }

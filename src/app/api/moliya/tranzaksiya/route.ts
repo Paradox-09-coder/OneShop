@@ -1,6 +1,8 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { handleError, jsonErr, jsonOk, requireApiPermission } from "@/lib/api";
+import { sendMessage, escape } from "@/lib/telegram";
 
 // Qo'lda kirim/chiqim tranzaksiyasi qo'shish (masalan naqd sotuv,
 // tashkilotdan tashqari xarajat) — hisobning balanceCache'ini yangilaydi.
@@ -10,9 +12,69 @@ const Body = z.object({
   kind: z.enum(["IN", "OUT"]),
   amount: z.number().positive(),
   counterpartyId: z.string().optional(),
+  orderId: z.string().optional(),
   description: z.string().optional(),
   date: z.string().optional(),
 });
+
+interface CounterpartyMeta {
+  telegram_id?: number;
+}
+
+// Meeting: mijoz Telegram bot orqali pul o'tkazganda, qaysi shot-faktura
+// (buyurtma) uchun ekanini yopib/aniqlashtirib berishni so'rab ogohlantirish
+// yuboriladi — B2B mijozlar uchun.
+async function notifyClientAboutPayment(
+  counterpartyId: string,
+  amount: number,
+  currency: string,
+  linkedOrderId: string | undefined
+) {
+  const client = await prisma.counterparty.findUnique({
+    where: { id: counterpartyId },
+  });
+  if (!client || client.type !== "CLIENT") return;
+  const telegramId = (client.metadata as CounterpartyMeta | null)?.telegram_id;
+  if (!telegramId) return;
+
+  if (linkedOrderId) {
+    const order = await prisma.order.findUnique({ where: { id: linkedOrderId } });
+    if (!order) return;
+    const remaining = (order.agreedAmount ?? 0) - order.paidAmount;
+    await sendMessage(
+      telegramId,
+      `✅ <b>To'lovingiz qabul qilindi</b>\n\n` +
+        `Summa: <b>${amount.toLocaleString("ru-RU")} ${currency}</b>\n` +
+        `Buyurtma: <b>${escape(order.orderNumber)}</b>\n\n` +
+        (remaining > 0.01
+          ? `Iltimos, shu buyurtma (shot-faktura) bo'yicha qolgan hisobingizni yopib bering: ` +
+            `<b>${remaining.toLocaleString("ru-RU")} ${order.orderCurrency}</b>`
+          : `Ushbu buyurtma bo'yicha hisobingiz to'liq yopildi. Rahmat!`)
+    ).catch(() => {});
+    return;
+  }
+
+  const openOrders = await prisma.order.findMany({
+    where: { clientId: counterpartyId, status: { not: "CANCELLED" } },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  const open = openOrders.filter((o) => (o.agreedAmount ?? 0) - o.paidAmount > 0.01);
+  if (open.length === 0) return;
+
+  const lines = open
+    .map(
+      (o) =>
+        `• ${escape(o.orderNumber)} — qolgan: ${((o.agreedAmount ?? 0) - o.paidAmount).toLocaleString("ru-RU")} ${o.orderCurrency}`
+    )
+    .join("\n");
+  await sendMessage(
+    telegramId,
+    `✅ <b>To'lovingiz qabul qilindi</b>\n\n` +
+      `Summa: <b>${amount.toLocaleString("ru-RU")} ${currency}</b>\n\n` +
+      `Iltimos, ushbu to'lov qaysi shot-faktura (buyurtma) uchun ekanini bildiring, shuni yopib beramiz:\n${lines}`
+  ).catch(() => {});
+}
 
 export async function POST(req: Request) {
   try {
@@ -42,7 +104,17 @@ export async function POST(req: Request) {
       counterpartyName = cp?.name;
     }
 
-    const [, payment] = await prisma.$transaction([
+    // Buyurtmaga bog'lash faqat kirim (mijozdan pul kelganda) va buyurtma
+    // shu kontragentga tegishli bo'lsa ma'noga ega.
+    let linkedOrderId: string | undefined;
+    if (body.orderId && body.kind === "IN" && body.counterpartyId) {
+      const order = await prisma.order.findUnique({ where: { id: body.orderId } });
+      if (order && order.clientId === body.counterpartyId) {
+        linkedOrderId = order.id;
+      }
+    }
+
+    const ops: Prisma.PrismaPromise<unknown>[] = [
       prisma.account.update({
         where: { id: account.id },
         data: {
@@ -63,10 +135,21 @@ export async function POST(req: Request) {
           counterpartyNameSnapshot: counterpartyName,
           description: body.description?.trim() || undefined,
           sourceType: "MANUAL",
+          orderId: linkedOrderId,
           createdById: session.id,
         },
       }),
-    ]);
+    ];
+    if (linkedOrderId) {
+      ops.push(
+        prisma.order.update({
+          where: { id: linkedOrderId },
+          data: { paidAmount: { increment: body.amount } },
+        })
+      );
+    }
+
+    const [, payment] = await prisma.$transaction(ops);
 
     await prisma.log.create({
       data: {
@@ -76,6 +159,15 @@ export async function POST(req: Request) {
         description: `Tranzaksiya qo'shildi: ${body.kind === "IN" ? "kirim" : "chiqim"} ${body.amount} ${account.currency} (${account.name})`,
       },
     });
+
+    if (body.kind === "IN" && body.counterpartyId) {
+      notifyClientAboutPayment(
+        body.counterpartyId,
+        body.amount,
+        account.currency,
+        linkedOrderId
+      ).catch(() => {});
+    }
 
     return jsonOk({ payment });
   } catch (e) {

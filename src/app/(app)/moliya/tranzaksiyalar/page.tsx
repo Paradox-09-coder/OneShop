@@ -88,7 +88,7 @@ export default async function TransactionsPage({
       prisma.counterparty.findMany({
         where: { deletedAt: null },
         orderBy: { name: "asc" },
-        select: { id: true, name: true },
+        select: { id: true, name: true, type: true },
         take: 300,
       }),
       prisma.payment.groupBy({
