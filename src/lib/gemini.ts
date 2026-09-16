@@ -2,20 +2,20 @@
 // Meeting: "ovozli xabar tashlasalar ham o'zi kiritib qo'yadi robotni o'zi."
 
 const API_KEY = process.env.GEMINI_API_KEY ?? "";
-// "gemini-2.0-flash" google tomonidan butunlay o'chirilgan ("no longer
-// available"). "-latest" alias'ini ishlatamiz — Google eski modelni
-// o'chirganda ham bu doim joriy flash modelga ishora qiladi, kodni qayta
-// o'zgartirish kerak bo'lmaydi.
-const MODEL = "gemini-flash-latest";
+// "gemini-flash-latest" alias ANIQ VERSIYAGA PIN QILINMAGAN — production'da
+// sinovdan o'tkazilganda bu hozir "gemini-3.8-flash"ga ishora qilib chiqdi,
+// audio uchun "thinking" bosqichi bilan 50-90s+ javob berayotgan (ba'zan
+// 90s'dan ham oshib ketadi). Aniq "gemini-3.6-flash" versiyasi xuddi shu
+// audio uchun izchil ~3-4s javob berdi (uch marta sinovdan o'tkazildi).
+// Shuning uchun aniq versiyaga pin qilamiz — Google keyinchalik buni ham
+// o'chirsa, xato aniq "model topilmadi" bo'lib chiqadi (sekin osilib
+// qolish emas), shunda MODEL'ni yangilash kerak bo'ladi.
+const MODEL = "gemini-3.6-flash";
 
 export function isGeminiConfigured() {
   return !!API_KEY;
 }
 
-// Gemini vaqti-vaqti bilan "high demand"/503 qaytaradi (ishlab chiqarishda
-// haqiqatan ham ko'ringan) — bitta marta qisqa kutib qayta urinamiz, aks
-// holda so'rov abadiy osilib qolmasin deb 25s'dan keyin to'xtatamiz (aks
-// holda front-end'da tugma "Eshitilmoqda..." holatida abadiy qolib ketadi).
 interface GeminiResponse {
   candidates?: { content?: { parts?: { text?: string }[] } }[];
 }
@@ -23,8 +23,9 @@ interface GeminiResponse {
 async function callGemini(body: Record<string, unknown>): Promise<GeminiResponse> {
   if (!API_KEY) throw new Error("GEMINI_API_KEY sozlanmagan");
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+  const attempts = 2;
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     let res: Response;
     try {
       res = await fetch(url, {
@@ -44,7 +45,7 @@ async function callGemini(body: Record<string, unknown>): Promise<GeminiResponse
     if (!res.ok) {
       const message: string = data?.error?.message ?? res.statusText;
       const overloaded = /high demand|overloaded|503/i.test(message);
-      if (overloaded && attempt === 1) {
+      if (overloaded && attempt < attempts) {
         await new Promise((r) => setTimeout(r, 1500));
         continue;
       }
@@ -68,7 +69,7 @@ export async function transcribeAudio(
   audio: Buffer,
   mimeType: string
 ): Promise<string> {
-  const data = (await callGemini({
+  const data = await callGemini({
     contents: [
       {
         parts: [
@@ -87,7 +88,7 @@ export async function transcribeAudio(
         ],
       },
     ],
-  }));
+  });
 
   const text: string | undefined =
     data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -107,12 +108,11 @@ export interface VoiceTransactionResult {
 /**
  * Meeting: "ikkinchi etap ovoz" — rahbar/xodim tranzaksiyani (kirim/chiqim)
  * qo'lda forma to'ldirmasdan, ovozli aytib kiritsin (masalan "kommunal
- * to'lov uchun kassadan 500 ming to'ladim"). Ikki bosqichda ishlaydi —
- * avval transcribeAudio (Telegram'da sinovdan o'tgan, tez), keyin matnni
- * JSON'ga o'giramiz. Audio+JSON'ni bitta chaqiruvda birlashtirish amalda
- * Gemini'da 25s+ osilib qolishga olib keldi — ikkiga bo'lish buni tuzatdi.
- * Forma shu javob bilan oldindan to'ldiriladi, lekin tranzaksiya
- * YARATILMAYDI: rahbar ko'rib, tasdiqlab "Saqlash" bosishi kerak.
+ * to'lov uchun kassadan 500 ming to'ladim"). Ikki bosqichda ishlaydi: avval
+ * transcribeAudio (matn), keyin matndan JSON struktura ajratiladi — har
+ * ikkisi ham bir necha soniyada tugaydi. Forma shu javob bilan oldindan
+ * to'ldiriladi, lekin tranzaksiya YARATILMAYDI: rahbar ko'rib, tasdiqlab
+ * "Saqlash" bosishi kerak.
  */
 export async function parseVoiceTransaction(
   audio: Buffer,

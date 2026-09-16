@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, X, Mic, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MoneyInput from "@/components/money-input";
+import { blobToWav } from "@/lib/audio-to-wav";
 
 interface AccountOption {
   id: string;
@@ -97,12 +98,13 @@ export default function NewTransactionButton({
     setVoiceLoading(true);
     setError("");
     try {
+      const wav = await blobToWav(blob);
       const form = new FormData();
-      form.append("audio", blob, "voice.webm");
+      form.append("audio", wav, "voice.wav");
       const res = await fetch("/api/moliya/tranzaksiya/voice", {
         method: "POST",
         body: form,
-        signal: AbortSignal.timeout(40_000),
+        signal: AbortSignal.timeout(60_000),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -225,7 +227,7 @@ export default function NewTransactionButton({
                   <Square size={14} /> To&apos;xtatish
                 </>
               ) : voiceLoading ? (
-                "Eshitilmoqda..."
+                "Tinglab tahlil qilinmoqda..."
               ) : (
                 <>
                   <Mic size={15} /> Ovozli aytib kiriting
