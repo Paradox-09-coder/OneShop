@@ -107,35 +107,33 @@ export interface VoiceTransactionResult {
 /**
  * Meeting: "ikkinchi etap ovoz" — rahbar/xodim tranzaksiyani (kirim/chiqim)
  * qo'lda forma to'ldirmasdan, ovozli aytib kiritsin (masalan "kommunal
- * to'lov uchun kassadan 500 ming to'ladim"). Bitta Gemini chaqiruvida audio
- * to'g'ridan-to'g'ri strukturaviy JSON'ga o'giriladi — forma shu bilan
- * oldindan to'ldiriladi, lekin YARATILMAYDI: rahbar ko'rib, tasdiqlab
- * "Saqlash" bosishi kerak (pul harakati — avtomatik yaratish xavfli).
+ * to'lov uchun kassadan 500 ming to'ladim"). Ikki bosqichda ishlaydi —
+ * avval transcribeAudio (Telegram'da sinovdan o'tgan, tez), keyin matnni
+ * JSON'ga o'giramiz. Audio+JSON'ni bitta chaqiruvda birlashtirish amalda
+ * Gemini'da 25s+ osilib qolishga olib keldi — ikkiga bo'lish buni tuzatdi.
+ * Forma shu javob bilan oldindan to'ldiriladi, lekin tranzaksiya
+ * YARATILMAYDI: rahbar ko'rib, tasdiqlab "Saqlash" bosishi kerak.
  */
 export async function parseVoiceTransaction(
   audio: Buffer,
   mimeType: string,
   accountNames: string[]
 ): Promise<VoiceTransactionResult> {
+  const transcript = await transcribeAudio(audio, mimeType);
+
   const prompt =
-    "Bu ovozli xabarda odam kassa/bank tranzaksiyasi (pul kirim yoki chiqimi) haqida gapiryapti. " +
-    "Avval xabarni o'zbek tilida transkript qil, keyin quyidagi JSON formatda javob ber, boshqa hech narsa yozmasdan:\n" +
-    '{"transcript": "...", "kind": "IN" yoki "OUT", "amount": raqam (faqat son), ' +
+    "Quyidagi matnda odam kassa/bank tranzaksiyasi (pul kirim yoki chiqimi) haqida gapirgan. " +
+    "Shu matnni tahlil qilib, faqat quyidagi JSON formatda javob ber, boshqa hech narsa yozmasdan:\n" +
+    '{"kind": "IN" yoki "OUT", "amount": raqam (faqat son), ' +
     '"currency": "UZS" yoki "USD" yoki "EUR" yoki "RUB", ' +
     `"accountName": mavjud hisoblardan eng mos keladigani yoki null (mavjud hisoblar: ${accountNames.join(", ")}), ` +
     '"description": qisqa izoh (masalan "Kommunal to\'lov")}\n' +
     "\"kind\" — agar pul kirim bo'lsa (sotuv, to'lov qabul qilindi) \"IN\", agar chiqim bo'lsa (xarajat, to'lov qilindi) \"OUT\". " +
-    "Agar summa aniq aytilmagan bo'lsa, amount: 0 qaytar.";
+    "Agar summa aniq aytilmagan bo'lsa, amount: 0 qaytar.\n\n" +
+    `Matn: "${transcript}"`;
 
   const data = await callGemini({
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          { inlineData: { mimeType, data: audio.toString("base64") } },
-        ],
-      },
-    ],
+    contents: [{ parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: "application/json" },
   });
 
@@ -150,7 +148,7 @@ export async function parseVoiceTransaction(
   }
 
   return {
-    transcript: parsed.transcript ?? "",
+    transcript,
     kind: parsed.kind === "OUT" ? "OUT" : "IN",
     amount: typeof parsed.amount === "number" ? parsed.amount : 0,
     currency:
