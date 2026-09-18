@@ -1195,7 +1195,7 @@ export default function NewOrderForm({
         </div>
       )}
 
-      <div className="space-y-4 self-center">
+      <div className="flex flex-col justify-center space-y-4">
         <div className="panel p-5 sticky top-4">
           <h3 className="font-bold text-ink mb-3">Yakuniy hisob</h3>
           <div className="space-y-2 text-sm">

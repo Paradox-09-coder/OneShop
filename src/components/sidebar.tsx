@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
@@ -172,12 +171,19 @@ export default function Sidebar({ user, allowedHrefs }: Props) {
         )}
       >
         {collapsed ? (
-          <Link href="/" aria-label="OneShop ERP" className="bg-white rounded-xl p-1.5 grid place-items-center">
-            <Image src="/logo-icon.png" alt="OneShop ERP" width={380} height={330} className="w-6 h-auto" />
+          <Link href="/" aria-label="OneShop ERP">
+            <span className="w-9 h-9 rounded-xl bg-primary text-white grid place-items-center font-black text-base">
+              O
+            </span>
           </Link>
         ) : (
-          <Link href="/" className="bg-white rounded-xl px-2.5 py-1.5 inline-flex items-center">
-            <Image src="/logo.png" alt="OneShop ERP" width={1090} height={330} className="h-7 w-auto" priority />
+          <Link href="/" className="flex items-center gap-2.5">
+            <span className="w-9 h-9 shrink-0 rounded-xl bg-primary text-white grid place-items-center font-black text-base">
+              O
+            </span>
+            <span className="text-base font-black tracking-tight text-white leading-tight">
+              OneShop<br />ERP
+            </span>
           </Link>
         )}
         <div className="flex gap-1">
