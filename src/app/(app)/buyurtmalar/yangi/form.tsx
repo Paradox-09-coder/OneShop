@@ -1195,8 +1195,8 @@ export default function NewOrderForm({
         </div>
       )}
 
-      <div className="flex flex-col justify-center space-y-4">
-        <div className="panel p-5 sticky top-4">
+      <div className="space-y-4">
+        <div className="panel p-5 sticky top-1/2 -translate-y-1/2">
           <h3 className="font-bold text-ink mb-3">Yakuniy hisob</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
