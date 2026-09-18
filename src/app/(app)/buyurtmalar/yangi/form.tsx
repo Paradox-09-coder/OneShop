@@ -6,6 +6,8 @@ import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag, Packag
 import { formatMoney } from "@/lib/utils";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 import MoneyInput from "@/components/money-input";
+import Select from "@/components/select";
+import DatePicker from "@/components/date-picker";
 
 interface ClientOpt {
   id: string;
@@ -115,10 +117,12 @@ export default function NewOrderForm({
   const [exchangeRate, setExchangeRate] = useState(defaultExchangeRate);
 
   const [taxMode, setTaxMode] = useState<Mode>("PERCENT");
-  const [taxValue, setTaxValue] = useState(0);
+  const [taxText, setTaxText] = useState("");
+  const taxValue = Number(taxText) || 0;
 
   const [discountMode, setDiscountMode] = useState<Mode>("PERCENT");
-  const [discountValue, setDiscountValue] = useState(0);
+  const [discountText, setDiscountText] = useState("");
+  const discountValue = Number(discountText) || 0;
 
   // To'lov usuli — To'liq to'lov/Zaklad hozirning o'zida hisobga pul
   // tushiradi (backendda Payment yaratiladi); Qarz bo'lsa hech narsa
@@ -168,7 +172,13 @@ export default function NewOrderForm({
   const [savingClient, setSavingClient] = useState(false);
 
   const subtotal = lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
-  const discountAmount = discountMode === "PERCENT" ? (subtotal * discountValue) / 100 : discountValue;
+  // Chegirma hech qachon mahsulotlar summasidan katta bo'lmasin — aks holda
+  // "Jami" manfiy chiqib, aslida bizga qarzdor mijozga biz qarzdor bo'lib
+  // qolamiz (masalan xato qo'shimcha nol bosilsa: 100 000 o'rniga 1 000 000).
+  const rawDiscountAmount =
+    discountMode === "PERCENT" ? (subtotal * discountValue) / 100 : discountValue;
+  const discountExceedsSubtotal = subtotal > 0 && rawDiscountAmount > subtotal;
+  const discountAmount = Math.min(rawDiscountAmount, subtotal);
   const afterDiscount = subtotal - discountAmount;
   const taxAmount = taxMode === "PERCENT" ? (afterDiscount * taxValue) / 100 : taxValue;
   const grand = afterDiscount + taxAmount;
@@ -486,30 +496,30 @@ export default function NewOrderForm({
 
             <div>
               <label className="block text-sm font-medium mb-1.5">Buyurtma turi</label>
-              <select
+              <Select
                 value={type}
-                onChange={(e) => setType(e.target.value as never)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="RETAIL">Chakana</option>
-                <option value="WHOLESALE">Ulgurji</option>
-                <option value="MANUFACTURING">Ishlab chiqarish</option>
-              </select>
+                onChange={(v) => setType(v as never)}
+                options={[
+                  { value: "RETAIL", label: "Chakana" },
+                  { value: "WHOLESALE", label: "Ulgurji" },
+                  { value: "MANUFACTURING", label: "Ishlab chiqarish" },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">Ustuvorlik</label>
-              <select
+              <Select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as never)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="NORMAL">Odatiy</option>
-                <option value="HIGH">Yuqori</option>
-                <option value="VIP">VIP</option>
-                <option value="URGENT_1D">1 kun ichida</option>
-                <option value="URGENT_3D">3 kun ichida</option>
-                <option value="URGENT_7D">7 kun ichida</option>
-              </select>
+                onChange={(v) => setPriority(v as never)}
+                options={[
+                  { value: "NORMAL", label: "Odatiy" },
+                  { value: "HIGH", label: "Yuqori" },
+                  { value: "VIP", label: "VIP" },
+                  { value: "URGENT_1D", label: "1 kun ichida" },
+                  { value: "URGENT_3D", label: "3 kun ichida" },
+                  { value: "URGENT_7D", label: "7 kun ichida" },
+                ]}
+              />
             </div>
           </div>
         </div>
@@ -721,24 +731,18 @@ export default function NewOrderForm({
                     <label className="text-xs font-medium text-ink-soft shrink-0">
                       Retsept varianti *
                     </label>
-                    <select
-                      value={l.recipeId ?? ""}
-                      onChange={(e) =>
-                        updateLine(i, { recipeId: e.target.value || undefined })
-                      }
-                      className={`flex-1 px-2 py-1.5 rounded-lg border bg-white text-sm ${
-                        l.recipeId ? "border-border" : "border-danger"
-                      }`}
-                    >
-                      <option value="" disabled>
-                        — tanlang —
-                      </option>
-                      {recipeOptions.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.variantName}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex-1">
+                      <Select
+                        value={l.recipeId ?? ""}
+                        onChange={(v) => updateLine(i, { recipeId: v || undefined })}
+                        error={!l.recipeId}
+                        placeholder="— tanlang —"
+                        options={recipeOptions.map((r) => ({
+                          value: r.id,
+                          label: r.variantName,
+                        }))}
+                      />
+                    </div>
                     {!l.recipeId && (
                       <span className="text-xs text-danger shrink-0">
                         Tanlanmagan
@@ -758,10 +762,10 @@ export default function NewOrderForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">Valyuta</label>
-              <select
+              <Select
                 value={currency}
-                onChange={(e) => {
-                  const nextCurrency = e.target.value as "UZS" | "USD";
+                onChange={(v) => {
+                  const nextCurrency = v as "UZS" | "USD";
                   if (nextCurrency !== currency) {
                     // Valyuta almashtirilganda tanlangan mahsulotlarning
                     // narxi ham joriy kursga qarab qayta hisoblanadi —
@@ -776,20 +780,19 @@ export default function NewOrderForm({
                   setCurrency(nextCurrency);
                   setPaymentAccountId("");
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="UZS">so'm (UZS)</option>
-                <option value="USD">dollar (USD)</option>
-              </select>
+                options={[
+                  { value: "UZS", label: "so'm (UZS)" },
+                  { value: "USD", label: "dollar (USD)" },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">QQS</label>
               <div className="flex gap-1">
-                <input
-                  type="number" onFocus={(e) => e.currentTarget.select()}
-                  min={0}
-                  value={taxValue}
-                  onChange={(e) => setTaxValue(Number(e.target.value))}
+                <MoneyInput
+                  value={taxText}
+                  onChange={setTaxText}
+                  placeholder="0"
                   className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
                 />
                 <button
@@ -853,13 +856,20 @@ export default function NewOrderForm({
                   {currency}
                 </button>
               </div>
-              <input
-                type="number" onFocus={(e) => e.currentTarget.select()}
-                min={0}
-                value={discountValue}
-                onChange={(e) => setDiscountValue(Number(e.target.value))}
-                className="flex-1 px-3 py-2 rounded-xl border border-border bg-white"
+              <MoneyInput
+                value={discountText}
+                onChange={setDiscountText}
+                placeholder="0"
+                className={`flex-1 px-3 py-2 rounded-xl border bg-white ${
+                  discountExceedsSubtotal ? "border-danger" : "border-border"
+                }`}
               />
+              {discountExceedsSubtotal && (
+                <p className="text-xs text-danger mt-1">
+                  Chegirma mahsulotlar summasidan ({formatMoney(subtotal, currency)}) katta
+                  bo'lolmaydi — shu summagacha cheklandi.
+                </p>
+              )}
             </div>
             {discountMode === "PERCENT" && (
               <div className="grid grid-cols-4 gap-2">
@@ -867,7 +877,7 @@ export default function NewOrderForm({
                   <button
                     key={p}
                     type="button"
-                    onClick={() => setDiscountValue(p)}
+                    onClick={() => setDiscountText(String(p))}
                     className={`py-2 rounded-xl border text-sm font-bold transition ${
                       discountValue === p
                         ? "border-primary bg-primary/5 text-primary"
@@ -903,20 +913,14 @@ export default function NewOrderForm({
                 {extraExpenses.map((exp) => (
                   <div key={exp.id}>
                     <div className="flex gap-2">
-                      <select
-                        value={exp.expenseType}
-                        onChange={(e) =>
-                          updateExpenseRow(exp.id, { expenseType: e.target.value })
-                        }
-                        className="flex-1 px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                      >
-                        <option value="">Tur tanlang...</option>
-                        {EXPENSE_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex-1">
+                        <Select
+                          value={exp.expenseType}
+                          onChange={(v) => updateExpenseRow(exp.id, { expenseType: v })}
+                          placeholder="Tur tanlang..."
+                          options={EXPENSE_TYPES.map((t) => ({ value: t, label: t }))}
+                        />
+                      </div>
                       <input
                         type="number" onFocus={(e) => e.currentTarget.select()}
                         min={0}
@@ -952,19 +956,15 @@ export default function NewOrderForm({
                         </div>
                         <div>
                           <label className="block text-xs text-ink-soft mb-1">Haydovchi</label>
-                          <select
+                          <Select
                             value={driverId}
-                            onChange={(e) => setDriverId(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                          >
-                            <option value="">— tanlang —</option>
-                            {driversList.map((d) => (
-                              <option key={d.id} value={d.id}>
-                                {d.name}
-                                {d.phone ? ` (${d.phone})` : ""}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={setDriverId}
+                            placeholder="— tanlang —"
+                            options={driversList.map((d) => ({
+                              value: d.id,
+                              label: d.name + (d.phone ? ` (${d.phone})` : ""),
+                            }))}
+                          />
                           {selectedDriver && (selectedDriver.phone || selectedDriver.carNumber) && (
                             <div className="mt-2 flex items-center gap-2 flex-wrap">
                               {selectedDriver.phone && (
@@ -1004,11 +1004,9 @@ export default function NewOrderForm({
                           <label className="block text-xs text-ink-soft mb-1">
                             Rejalashtirilgan sana
                           </label>
-                          <input
-                            type="date"
+                          <DatePicker
                             value={expectedDeliveryDate}
-                            onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                            onChange={setExpectedDeliveryDate}
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -1103,18 +1101,15 @@ export default function NewOrderForm({
                     <p className="text-xs text-ink-soft normal-case font-normal mb-1.5">
                       Pul shu kassa/bank hisobiga tushadi — Moliyada balans shuncha oshadi.
                     </p>
-                    <select
+                    <Select
                       value={paymentAccountId}
-                      onChange={(e) => setPaymentAccountId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                    >
-                      <option value="">— hisobni tanlang —</option>
-                      {availableAccounts.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name} ({a.currency})
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setPaymentAccountId}
+                      placeholder="— hisobni tanlang —"
+                      options={availableAccounts.map((a) => ({
+                        value: a.id,
+                        label: `${a.name} (${a.currency})`,
+                      }))}
+                    />
                     {availableAccounts.length === 0 && (
                       <p className="text-xs text-danger mt-1">
                         {currency} valyutasida faol hisob yo'q — avval Sozlamalardan qo'shing.
@@ -1170,14 +1165,14 @@ export default function NewOrderForm({
                 placeholder="Telefon"
                 className="w-full px-3 py-2 rounded-xl border border-border bg-white"
               />
-              <select
+              <Select
                 value={newClientKind}
-                onChange={(e) => setNewClientKind(e.target.value as never)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="RETAIL">Chakana mijoz</option>
-                <option value="RESELLER">Qayta sotuvchi</option>
-              </select>
+                onChange={(v) => setNewClientKind(v as never)}
+                options={[
+                  { value: "RETAIL", label: "Chakana mijoz" },
+                  { value: "RESELLER", label: "Qayta sotuvchi" },
+                ]}
+              />
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
@@ -1200,7 +1195,7 @@ export default function NewOrderForm({
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-4 self-center">
         <div className="panel p-5 sticky top-4">
           <h3 className="font-bold text-ink mb-3">Yakuniy hisob</h3>
           <div className="space-y-2 text-sm">

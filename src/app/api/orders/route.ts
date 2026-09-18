@@ -90,10 +90,13 @@ export async function POST(req: Request) {
       (s, it) => s + it.quantity * it.unitPrice,
       0
     );
-    const discount =
+    const rawDiscount =
       body.discountPercent > 0
         ? (subtotal * body.discountPercent) / 100
         : body.discountAmount;
+    // Chegirma mahsulotlar summasidan katta bo'lmasin — aks holda "Jami"
+    // manfiy chiqib, aslida qarzdor mijozga biz qarzdor bo'lib qolamiz.
+    const discount = Math.min(rawDiscount, subtotal);
     const afterDiscount = subtotal - discount;
     const tax =
       body.taxRate > 0
