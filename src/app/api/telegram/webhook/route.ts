@@ -346,6 +346,33 @@ async function handleText(msg: TelegramMessage, overrideText?: string) {
       );
       return;
     }
+    if (text.includes("To'lovlar tarixi")) {
+      const payments = await prisma.payment.findMany({
+        where: { counterpartyId: user.id, voidedAt: null },
+        orderBy: { date: "desc" },
+        take: 10,
+      });
+      if (payments.length === 0) {
+        await sendMessage(chatId, "Hozircha to'lovlar tarixi yo'q", {
+          reply_markup: kb,
+        });
+        return;
+      }
+      const lines = payments
+        .map((p) => {
+          const isOut = p.type === "CASH_OUT" || p.type === "BANK_OUT";
+          const d = new Date(p.date).toLocaleDateString("ru-RU");
+          return `${isOut ? "➖" : "➕"} ${d} — ${p.amount.toLocaleString("ru-RU")} ${p.currency}` +
+            (p.description ? ` (${escape(p.description)})` : "");
+        })
+        .join("\n");
+      await sendMessage(
+        chatId,
+        `<b>${escape(user.name)} — to'lovlar tarixi</b>\n\n${lines}`,
+        { reply_markup: kb }
+      );
+      return;
+    }
   }
 
   if (user.type === "CLIENT") {
