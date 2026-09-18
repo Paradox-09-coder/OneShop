@@ -2,7 +2,7 @@
 
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPageWrapper() {
   return (
@@ -76,10 +76,14 @@ function LoginForm() {
     <div className="min-h-screen grid place-items-center p-6 bg-bg">
       <div className="w-full max-w-md panel p-8">
         <div className="text-center mb-6">
-          <div className="inline-flex w-14 h-14 rounded-2xl bg-primary text-white items-center justify-center mb-3">
-            <LogIn size={22} />
-          </div>
-          <h1 className="text-2xl font-bold">OneShop ERP</h1>
+          <Image
+            src="/logo.png"
+            alt="OneShop ERP"
+            width={1090}
+            height={330}
+            className="h-12 w-auto mx-auto mb-3"
+            priority
+          />
           <p className="text-sm text-ink-soft mt-1">Tizimga kirish</p>
         </div>
 
