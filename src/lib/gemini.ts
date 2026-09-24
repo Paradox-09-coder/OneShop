@@ -17,7 +17,33 @@ export function isGeminiConfigured() {
 }
 
 interface GeminiResponse {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
+  candidates?: {
+    content?: { parts?: { text?: string; thought?: boolean }[] };
+    finishReason?: string;
+  }[];
+  promptFeedback?: { blockReason?: string };
+}
+
+// "parts[0]" deb ishonib bo'lmaydi — model "thinking"ni yoqib qo'yganda
+// (yoki Google standart qiymatini o'zgartirganda, bir marta "-latest"
+// alias'ida shunday bo'lgan edi) fikrlash qismi alohida part sifatida
+// kelishi mumkin, asosiy javob keyingi part'da bo'ladi. Shu sababli barcha
+// part'larni ko'rib, "thought" deb belgilanmagan birinchi matnni olamiz.
+function extractText(data: GeminiResponse): string | undefined {
+  const parts = data?.candidates?.[0]?.content?.parts ?? [];
+  const answer = parts.find((p) => p.text && !p.thought);
+  return answer?.text ?? parts.find((p) => p.text)?.text;
+}
+
+function describeEmptyResponse(data: GeminiResponse): string {
+  const finishReason = data?.candidates?.[0]?.finishReason;
+  const blockReason = data?.promptFeedback?.blockReason;
+  const detail = blockReason
+    ? `bloklandi: ${blockReason}`
+    : finishReason && finishReason !== "STOP"
+      ? `finishReason: ${finishReason}`
+      : "sabab noma'lum";
+  return `Gemini matn qaytarmadi (${detail})`;
 }
 
 async function callGemini(body: Record<string, unknown>): Promise<GeminiResponse> {
@@ -88,11 +114,14 @@ export async function transcribeAudio(
         ],
       },
     ],
+    // Transkripsiya oddiy vazifa — "thinking" kerak emas va ba'zan butun
+    // token byudjetini fikrlashga sarflab, javob matnisiz qolib ketishiga
+    // olib kelgan ("Gemini matn qaytarmadi" xatosi shundan kelib chiqqan).
+    generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
   });
 
-  const text: string | undefined =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Gemini matn qaytarmadi");
+  const text = extractText(data);
+  if (!text) throw new Error(describeEmptyResponse(data));
   return text.trim();
 }
 
@@ -134,11 +163,14 @@ export async function parseVoiceTransaction(
 
   const data = await callGemini({
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json" },
+    generationConfig: {
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 0 },
+    },
   });
 
-  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error("Gemini matn qaytarmadi");
+  const raw = extractText(data);
+  if (!raw) throw new Error(describeEmptyResponse(data));
 
   let parsed: Partial<VoiceTransactionResult>;
   try {
