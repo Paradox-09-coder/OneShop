@@ -85,6 +85,14 @@ export async function POST(req: Request) {
       where: { id: body.accountId },
     });
     if (!account) return jsonErr("Hisob topilmadi", 404);
+    // Meeting'da sinovdan o'tkazilgan: "naqd kassada yo'q bo'lsa, olmadi"
+    // (1:04:23) — chiqim hisobni manfiyga tushirmasligi kerak.
+    if (body.kind === "OUT" && account.balanceCache < body.amount) {
+      return jsonErr(
+        `${account.name}da yetarli mablag' yo'q — mavjud: ${account.balanceCache.toLocaleString("ru-RU")} ${account.currency}`,
+        422
+      );
+    }
 
     const type =
       account.type === "CASH"

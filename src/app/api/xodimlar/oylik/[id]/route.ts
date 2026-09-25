@@ -69,6 +69,15 @@ export async function PUT(
       // hisobdan yangi summani ayiramiz. Topilmasa (masalan qo'lda/demo
       // yozuv) — faqat yozuvning o'zi to'g'irlanadi, hisobga tegilmaydi.
       if (payment?.accountId) {
+        const availableAfterRefund =
+          payment.accountId === newAccount.id
+            ? newAccount.balanceCache + payment.amount
+            : newAccount.balanceCache;
+        if (availableAfterRefund < body.amount) {
+          throw new Error(
+            `${newAccount.name}da yetarli mablag' yo'q — mavjud: ${availableAfterRefund.toLocaleString("ru-RU")} ${newAccount.currency}`
+          );
+        }
         await tx.account.update({
           where: { id: payment.accountId },
           data: { balanceCache: { increment: payment.amount } },

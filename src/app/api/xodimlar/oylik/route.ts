@@ -37,6 +37,12 @@ export async function POST(req: Request) {
       where: { id: body.accountId },
     });
     if (!account) return jsonErr("Hisob topilmadi", 404);
+    if (account.balanceCache < body.amount) {
+      return jsonErr(
+        `${account.name}da yetarli mablag' yo'q — mavjud: ${account.balanceCache.toLocaleString("ru-RU")} ${account.currency}`,
+        422
+      );
+    }
 
     const type = account.type === "CASH" ? "CASH_OUT" : "BANK_OUT";
     const description = body.note?.trim() || `Oylik — ${body.period}`;

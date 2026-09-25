@@ -28,6 +28,15 @@ export async function POST(req: Request) {
       prisma.account.findUnique({ where: { id: body.toAccountId } }),
     ]);
     if (!from || !to) return jsonErr("Hisob topilmadi", 404);
+    // Meeting'da aynan shu holat sinovdan o'tkazilgan: "naqd kassada
+    // yo'q bo'lsa, olmadi" (1:04:23) — yetarli mablag' bo'lmasa ko'chirish
+    // bloklanishi kerak, hisob manfiyga tushib qolmasligi kerak.
+    if (from.balanceCache < body.amount) {
+      return jsonErr(
+        `${from.name}da yetarli mablag' yo'q — mavjud: ${from.balanceCache.toLocaleString("ru-RU")} ${from.currency}`,
+        422
+      );
+    }
     if (from.currency !== to.currency) {
       return jsonErr(
         `Valyutalar mos emas (${from.currency} → ${to.currency}) — hozircha faqat bir xil valyutadagi hisoblar orasida ko'chirish mumkin`,
