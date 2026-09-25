@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import Select from "@/components/select";
 
 interface CreatedParty {
   id: string;
@@ -169,49 +170,43 @@ export default function AddCounterpartyButton({
               {!lockType && (
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Kontragent turi</label>
-                  <select
+                  <Select
                     value={type}
-                    onChange={(e) => setType(e.target.value as typeof type)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  >
-                    <option value="CLIENT">Mijoz</option>
-                    <option value="SUPPLIER">Ta'minotchi</option>
-                    <option value="EMPLOYEE">Xodim</option>
-                    <option value="FOUNDER">Ta'sischi</option>
-                    <option value="LENDER">Kreditor</option>
-                    <option value="OTHER">Boshqa</option>
-                  </select>
+                    onChange={(v) => setType(v as typeof type)}
+                    options={[
+                      { value: "CLIENT", label: "Mijoz" },
+                      { value: "SUPPLIER", label: "Ta'minotchi" },
+                      { value: "EMPLOYEE", label: "Xodim" },
+                      { value: "FOUNDER", label: "Ta'sischi" },
+                      { value: "LENDER", label: "Kreditor" },
+                      { value: "OTHER", label: "Boshqa" },
+                    ]}
+                  />
                 </div>
               )}
               {type === "CLIENT" && (
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Mijoz turi</label>
-                  <select
+                  <Select
                     value={customerKind}
-                    onChange={(e) => setCustomerKind(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  >
-                    <option value="RETAIL">Chakana</option>
-                    <option value="RESELLER">Qayta sotuvchi</option>
-                  </select>
+                    onChange={setCustomerKind}
+                    options={[
+                      { value: "RETAIL", label: "Chakana" },
+                      { value: "RESELLER", label: "Qayta sotuvchi" },
+                    ]}
+                  />
                 </div>
               )}
               {type === "EMPLOYEE" && (
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-1.5">Lavozimi</label>
-                    <select
+                    <Select
                       value={position}
-                      onChange={(e) => setPosition(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                    >
-                      <option value="">— tanlang —</option>
-                      {POSITION_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setPosition}
+                      placeholder="— tanlang —"
+                      options={POSITION_OPTIONS.map((opt) => ({ value: opt, label: opt }))}
+                    />
                   </div>
                   {position === "Boshqa" && (
                     <div>

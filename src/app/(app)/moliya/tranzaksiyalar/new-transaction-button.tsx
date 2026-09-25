@@ -6,6 +6,7 @@ import { Plus, X, Mic, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MoneyInput from "@/components/money-input";
 import { blobToWav } from "@/lib/audio-to-wav";
+import Select from "@/components/select";
 
 interface AccountOption {
   id: string;
@@ -272,35 +273,26 @@ export default function NewTransactionButton({
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Hisob
                 </label>
-                <select
+                <Select
                   value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                >
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({a.currency})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setAccountId}
+                  options={accounts.map((a) => ({
+                    value: a.id,
+                    label: `${a.name} (${a.currency})`,
+                  }))}
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Kontragent (ixtiyoriy)
                 </label>
-                <select
+                <Select
                   value={counterpartyId}
-                  onChange={(e) => onCounterpartyChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                >
-                  <option value="">— tanlanmagan —</option>
-                  {counterparties.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={onCounterpartyChange}
+                  placeholder="— tanlanmagan —"
+                  options={counterparties.map((c) => ({ value: c.id, label: c.name }))}
+                />
               </div>
 
               {showOrderPicker && openOrders.length > 0 && (
@@ -308,18 +300,15 @@ export default function NewTransactionButton({
                   <label className="block text-xs font-medium text-ink-soft mb-1">
                     Qaysi buyurtma (shot-faktura) uchun? (ixtiyoriy)
                   </label>
-                  <select
+                  <Select
                     value={orderId}
-                    onChange={(e) => setOrderId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                  >
-                    <option value="">— aniqlanmagan (mijozga so&apos;raladi) —</option>
-                    {openOrders.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.orderNumber} — qolgan {(o.agreedAmount - o.paidAmount).toLocaleString("ru-RU")} {o.orderCurrency}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setOrderId}
+                    placeholder="— aniqlanmagan (mijozga so'raladi) —"
+                    options={openOrders.map((o) => ({
+                      value: o.id,
+                      label: `${o.orderNumber} — qolgan ${(o.agreedAmount - o.paidAmount).toLocaleString("ru-RU")} ${o.orderCurrency}`,
+                    }))}
+                  />
                   <p className="text-[11px] text-ink-soft mt-1">
                     Tanlansa, mijozga Telegram orqali shu buyurtma yopilgani haqida xabar ketadi.
                   </p>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeftRight, X } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import MoneyInput from "@/components/money-input";
+import Select from "@/components/select";
 
 interface AccountOption {
   id: string;
@@ -102,38 +103,34 @@ export default function TransferButton({ accounts }: { accounts: AccountOption[]
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Qaysi hisobdan
                 </label>
-                <select
+                <Select
                   value={fromId}
-                  onChange={(e) => setFromId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                >
-                  <option value="">— tanlang —</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id} disabled={a.id === toId}>
-                      {a.name} ({formatMoney(a.balanceCache, a.currency)})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setFromId}
+                  placeholder="— tanlang —"
+                  options={accounts.map((a) => ({
+                    value: a.id,
+                    label: `${a.name} (${formatMoney(a.balanceCache, a.currency)})`,
+                    disabled: a.id === toId,
+                  }))}
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Qaysi hisobga
                 </label>
-                <select
+                <Select
                   value={toId}
-                  onChange={(e) => setToId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                >
-                  <option value="">— tanlang —</option>
-                  {accounts
+                  onChange={setToId}
+                  placeholder="— tanlang —"
+                  options={accounts
                     .filter((a) => a.currency === (fromAccount?.currency ?? a.currency))
-                    .map((a) => (
-                      <option key={a.id} value={a.id} disabled={a.id === fromId}>
-                        {a.name} ({formatMoney(a.balanceCache, a.currency)})
-                      </option>
-                    ))}
-                </select>
+                    .map((a) => ({
+                      value: a.id,
+                      label: `${a.name} (${formatMoney(a.balanceCache, a.currency)})`,
+                      disabled: a.id === fromId,
+                    }))}
+                />
               </div>
 
               <div>

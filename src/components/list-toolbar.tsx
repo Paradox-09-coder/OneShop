@@ -3,6 +3,8 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
+import Select from "./select";
+import DatePicker from "./date-picker";
 
 interface SelectOption {
   value: string;
@@ -86,21 +88,14 @@ export default function ListToolbar({
   }
 
   const selectField = (s: SelectFilter, value: string, onChange: (v: string) => void) => (
-    <label key={s.key} className="flex flex-col gap-1">
+    <div key={s.key} className="flex flex-col gap-1">
       <span className="text-xs text-ink-soft font-medium">{s.label}</span>
-      <select
+      <Select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="px-3 py-2 rounded-xl border border-border bg-white text-sm"
-      >
-        <option value="">Barchasi</option>
-        {s.options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+        onChange={onChange}
+        options={[{ value: "", label: "Barchasi" }, ...s.options]}
+      />
+    </div>
   );
 
   if (popover) {
@@ -161,22 +156,16 @@ export default function ListToolbar({
                     {dateRange.label ?? "Sana oralig'i"}
                   </span>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <input
-                      type="date"
+                    <DatePicker
                       value={draft[fromKey] ?? ""}
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, [fromKey]: e.target.value }))
-                      }
-                      className="flex-1 px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
+                      onChange={(v) => setDraft((d) => ({ ...d, [fromKey]: v }))}
+                      className="flex-1"
                     />
                     <span className="text-ink-soft text-sm">—</span>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={draft[toKey] ?? ""}
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, [toKey]: e.target.value }))
-                      }
-                      className="flex-1 px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
+                      onChange={(v) => setDraft((d) => ({ ...d, [toKey]: v }))}
+                      className="flex-1"
                     />
                   </div>
                 </div>
@@ -227,20 +216,14 @@ export default function ListToolbar({
             {dateRange.label ?? "Sana"}
           </span>
           <div className="flex items-center gap-1.5">
-          <input
-            type="date"
+          <DatePicker
             value={sp.get(fromKey) ?? ""}
-            onChange={(e) => update(fromKey, e.target.value)}
-            className="px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
-            title={`${dateRange.label ?? "Sana"} — dan`}
+            onChange={(v) => update(fromKey, v)}
           />
           <span className="text-ink-soft text-sm">—</span>
-          <input
-            type="date"
+          <DatePicker
             value={sp.get(toKey) ?? ""}
-            onChange={(e) => update(toKey, e.target.value)}
-            className="px-2.5 py-2 rounded-xl border border-border bg-white text-sm text-ink-soft"
-            title={`${dateRange.label ?? "Sana"} — gacha`}
+            onChange={(v) => update(toKey, v)}
           />
           </div>
         </div>

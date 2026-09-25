@@ -7,6 +7,7 @@ import { unitTypeLabel } from "@/lib/labels";
 import type { UnitType, Currency } from "@prisma/client";
 import { Plus, Pencil, Trash2, X, Utensils, Calculator } from "lucide-react";
 import { useDialog } from "@/components/use-dialog";
+import Select from "@/components/select";
 
 interface Material {
   id: string;
@@ -367,17 +368,16 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                         key={i}
                         className="grid grid-cols-12 gap-2 items-center p-2 rounded-xl bg-gray-50"
                       >
-                        <select
-                          value={it.materialProductId}
-                          onChange={(e) => changeMaterial(i, e.target.value)}
-                          className="col-span-5 px-2 py-1.5 rounded-lg border border-border bg-white text-sm"
-                        >
-                          {materials.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name} ({m.sku})
-                            </option>
-                          ))}
-                        </select>
+                        <div className="col-span-5">
+                          <Select
+                            value={it.materialProductId}
+                            onChange={(v) => changeMaterial(i, v)}
+                            options={materials.map((m) => ({
+                              value: m.id,
+                              label: `${m.name} (${m.sku})`,
+                            }))}
+                          />
+                        </div>
                         <input
                           type="number" onFocus={(e) => e.currentTarget.select()}
                           step="0.01"

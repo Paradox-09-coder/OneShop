@@ -6,6 +6,7 @@ import { roleLabel } from "@/lib/labels";
 import type { Role } from "@prisma/client";
 import { Plus, Pencil, Trash2, X, ShieldCheck } from "lucide-react";
 import { useDialog } from "@/components/use-dialog";
+import Select from "@/components/select";
 
 interface UserRow {
   id: string;
@@ -205,28 +206,28 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
                   className="px-3 py-2 rounded-xl border border-border bg-white"
                 />
               </div>
-              <select
+              <Select
                 value={draft.role}
-                onChange={(e) => setDraft({ ...draft, role: e.target.value as Role })}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {roleLabel[r]}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="password"
-                value={draft.password}
-                onChange={(e) =>
-                  setDraft({ ...draft, password: e.target.value })
-                }
-                placeholder={
-                  draft.id ? "Yangi parol (bo'sh qoldirsangiz o'zgarmaydi)" : "Parol"
-                }
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                onChange={(v) => setDraft({ ...draft, role: v as Role })}
+                options={ROLES.map((r) => ({ value: r, label: roleLabel[r] }))}
               />
+              <div>
+                <label className="block text-xs font-medium text-ink-soft mb-1">
+                  {draft.id
+                    ? "Yangi parol — faqat parolni o'zgartirmoqchi bo'lsangiz to'ldiring"
+                    : "Parol"}
+                </label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={draft.password}
+                  onChange={(e) =>
+                    setDraft({ ...draft, password: e.target.value })
+                  }
+                  placeholder={draft.id ? "Bo'sh qoldirsangiz, parol o'zgarmaydi" : "Parol"}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                />
+              </div>
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"

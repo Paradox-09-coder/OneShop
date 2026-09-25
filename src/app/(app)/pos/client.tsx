@@ -15,6 +15,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useDialog } from "@/components/use-dialog";
+import Select from "@/components/select";
 
 interface Product {
   id: string;
@@ -461,17 +462,14 @@ export default function PosClient({
           <label className="block text-xs text-ink-soft mb-1">
             Kassaga tushadi:
           </label>
-          <select
+          <Select
             value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-          >
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} ({a.currency})
-              </option>
-            ))}
-          </select>
+            onChange={setAccountId}
+            options={accounts.map((a) => ({
+              value: a.id,
+              label: `${a.name} (${a.currency})`,
+            }))}
+          />
         </div>
 
         <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 mb-3">

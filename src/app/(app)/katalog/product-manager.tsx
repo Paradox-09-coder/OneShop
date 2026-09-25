@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/utils";
 import type { UnitType, Currency } from "@prisma/client";
 import { Plus, Pencil, Trash2, X, Utensils } from "lucide-react";
 import { useDialog } from "@/components/use-dialog";
+import Select from "@/components/select";
 
 interface Product {
   id: string;
@@ -251,20 +252,18 @@ export default function ProductManager({
                 </div>
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Birligi</label>
-                  <select
+                  <Select
                     value={draft.unitType}
-                    onChange={(e) =>
-                      setDraft({ ...draft, unitType: e.target.value as UnitType })
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                  >
-                    <option value="DONA">dona</option>
-                    <option value="METR">metr</option>
-                    <option value="M2">m²</option>
-                    <option value="MM">mm</option>
-                    <option value="KG">kg</option>
-                    <option value="LITR">litr</option>
-                  </select>
+                    onChange={(v) => setDraft({ ...draft, unitType: v as UnitType })}
+                    options={[
+                      { value: "DONA", label: "dona" },
+                      { value: "METR", label: "metr" },
+                      { value: "M2", label: "m²" },
+                      { value: "MM", label: "mm" },
+                      { value: "KG", label: "kg" },
+                      { value: "LITR", label: "litr" },
+                    ]}
+                  />
                 </div>
               </div>
               <div>
@@ -278,18 +277,12 @@ export default function ProductManager({
               </div>
               <div>
                 <label className="block text-xs text-ink-soft mb-1">Kategoriya</label>
-                <select
-                  value={draft.categoryId}
-                  onChange={(e) => setDraft({ ...draft, categoryId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                >
-                  <option value="">— tanlang —</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={draft.categoryId ?? ""}
+                  onChange={(v) => setDraft({ ...draft, categoryId: v })}
+                  placeholder="— tanlang —"
+                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
@@ -316,18 +309,16 @@ export default function ProductManager({
                 </div>
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Valyuta</label>
-                  <select
+                  <Select
                     value={draft.baseCurrency}
-                    onChange={(e) =>
-                      setDraft({ ...draft, baseCurrency: e.target.value as Currency })
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  >
-                    <option value="UZS">so'm</option>
-                    <option value="USD">$</option>
-                    <option value="EUR">€</option>
-                    <option value="RUB">₽</option>
-                  </select>
+                    onChange={(v) => setDraft({ ...draft, baseCurrency: v as Currency })}
+                    options={[
+                      { value: "UZS", label: "so'm" },
+                      { value: "USD", label: "$" },
+                      { value: "EUR", label: "€" },
+                      { value: "RUB", label: "₽" },
+                    ]}
+                  />
                 </div>
               </div>
               <div>

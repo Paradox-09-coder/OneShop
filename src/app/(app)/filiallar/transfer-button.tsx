@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, ArrowRight } from "lucide-react";
+import Select from "@/components/select";
 
 interface Warehouse {
   id: string;
@@ -66,29 +67,21 @@ export default function TransferButton({ warehouses }: { warehouses: Warehouse[]
               <div className="grid grid-cols-2 gap-2 items-end">
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Qayerdan</label>
-                  <select
+                  <Select
                     value={fromId}
-                    onChange={(e) => setFromId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  >
-                    <option value="">— tanlang —</option>
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>{w.name}</option>
-                    ))}
-                  </select>
+                    onChange={setFromId}
+                    placeholder="— tanlang —"
+                    options={warehouses.map((w) => ({ value: w.id, label: w.name }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs text-ink-soft mb-1">Qayerga</label>
-                  <select
+                  <Select
                     value={toId}
-                    onChange={(e) => setToId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                  >
-                    <option value="">— tanlang —</option>
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>{w.name}</option>
-                    ))}
-                  </select>
+                    onChange={setToId}
+                    placeholder="— tanlang —"
+                    options={warehouses.map((w) => ({ value: w.id, label: w.name }))}
+                  />
                 </div>
               </div>
 

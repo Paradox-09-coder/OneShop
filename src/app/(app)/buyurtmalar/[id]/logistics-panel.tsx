@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Truck, Save, Phone, Car, Plus } from "lucide-react";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
+import Select from "@/components/select";
 
 interface Driver {
   id: string;
@@ -151,19 +152,15 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
         </div>
         <div>
           <label className="block text-xs text-ink-soft mb-1">Haydovchi</label>
-          <select
+          <Select
             value={driverId}
-            onChange={(e) => selectDriver(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-          >
-            <option value="">— tanlang —</option>
-            {driversList.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-                {d.phone ? ` (${d.phone})` : ""}
-              </option>
-            ))}
-          </select>
+            onChange={selectDriver}
+            placeholder="— tanlang —"
+            options={driversList.map((d) => ({
+              value: d.id,
+              label: d.name + (d.phone ? ` (${d.phone})` : ""),
+            }))}
+          />
           {driverId && (f.driverPhone || f.driverCarNumber) && (
             <div className="mt-2 flex items-center gap-2 flex-wrap">
               {f.driverPhone && (

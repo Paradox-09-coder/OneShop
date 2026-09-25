@@ -6,6 +6,7 @@ import { formatMoney } from "@/lib/utils";
 import { accountTypeLabel } from "@/lib/labels";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { useDialog } from "@/components/use-dialog";
+import Select from "@/components/select";
 
 type AccountType = "CASH" | "BANK";
 type Currency = "UZS" | "USD" | "EUR" | "RUB";
@@ -169,28 +170,24 @@ export default function AccountsManager({ accounts }: { accounts: AccountRow[] }
               autoFocus
             />
             <div className="grid grid-cols-2 gap-2">
-              <select
+              <Select
                 value={draft.type}
-                onChange={(e) =>
-                  setDraft({ ...draft, type: e.target.value as AccountType })
-                }
-                className="px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="CASH">Kassa</option>
-                <option value="BANK">Bank</option>
-              </select>
-              <select
+                onChange={(v) => setDraft({ ...draft, type: v as AccountType })}
+                options={[
+                  { value: "CASH", label: "Kassa" },
+                  { value: "BANK", label: "Bank" },
+                ]}
+              />
+              <Select
                 value={draft.currency}
-                onChange={(e) =>
-                  setDraft({ ...draft, currency: e.target.value as Currency })
-                }
-                className="px-3 py-2 rounded-xl border border-border bg-white"
-              >
-                <option value="UZS">so'm</option>
-                <option value="USD">$</option>
-                <option value="EUR">€</option>
-                <option value="RUB">₽</option>
-              </select>
+                onChange={(v) => setDraft({ ...draft, currency: v as Currency })}
+                options={[
+                  { value: "UZS", label: "so'm" },
+                  { value: "USD", label: "$" },
+                  { value: "EUR", label: "€" },
+                  { value: "RUB", label: "₽" },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs text-ink-soft mb-1">Boshlang'ich balans</label>

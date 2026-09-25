@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
 import { ShieldAlert, Save } from "lucide-react";
 import type { Currency } from "@prisma/client";
+import Select from "@/components/select";
 
 interface Props {
   clientId: string;
@@ -79,17 +80,17 @@ export default function CreditLimitPanel({ clientId, initial, currentDebt }: Pro
             className="w-full px-3 py-2 rounded-xl border border-border bg-white disabled:opacity-50"
             placeholder="100 000 000"
           />
-          <select
+          <Select
             value={currency}
-            onChange={(e) => setCurrency(e.target.value as Currency)}
+            onChange={(v) => setCurrency(v as Currency)}
             disabled={!enabled}
-            className="px-3 py-2 rounded-xl border border-border bg-white disabled:opacity-50"
-          >
-            <option value="UZS">so'm</option>
-            <option value="USD">$</option>
-            <option value="EUR">€</option>
-            <option value="RUB">₽</option>
-          </select>
+            options={[
+              { value: "UZS", label: "so'm" },
+              { value: "USD", label: "$" },
+              { value: "EUR", label: "€" },
+              { value: "RUB", label: "₽" },
+            ]}
+          />
         </div>
 
         {enabled && (

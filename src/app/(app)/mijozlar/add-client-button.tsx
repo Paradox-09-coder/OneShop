@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import Select from "@/components/select";
 
 export default function AddClientButton() {
   const router = useRouter();
@@ -93,14 +94,14 @@ export default function AddClientButton() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Mijoz turi</label>
-                <select
+                <Select
                   value={kind}
-                  onChange={(e) => setKind(e.target.value as never)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
-                >
-                  <option value="RETAIL">Chakana</option>
-                  <option value="RESELLER">Qayta sotuvchi</option>
-                </select>
+                  onChange={(v) => setKind(v as never)}
+                  options={[
+                    { value: "RETAIL", label: "Chakana" },
+                    { value: "RESELLER", label: "Qayta sotuvchi" },
+                  ]}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-2">

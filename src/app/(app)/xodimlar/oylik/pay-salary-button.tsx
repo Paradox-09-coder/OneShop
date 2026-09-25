@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Pencil, X } from "lucide-react";
 import MoneyInput from "@/components/money-input";
 import { useDialog } from "@/components/use-dialog";
+import Select from "@/components/select";
 
 interface EmployeeOpt {
   id: string;
@@ -147,19 +148,15 @@ export default function PaySalaryButton({
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Xodim
                 </label>
-                <select
+                <Select
                   value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                >
-                  <option value="">— tanlang —</option>
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                      {e.position ? ` — ${e.position}` : ""}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setEmployeeId}
+                  placeholder="— tanlang —"
+                  options={employees.map((e) => ({
+                    value: e.id,
+                    label: e.name + (e.position ? ` — ${e.position}` : ""),
+                  }))}
+                />
               </div>
 
               <div>
@@ -176,18 +173,15 @@ export default function PaySalaryButton({
                 <label className="block text-xs font-medium text-ink-soft mb-1">
                   Qaysi hisobdan
                 </label>
-                <select
+                <Select
                   value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
-                >
-                  <option value="">— tanlang —</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({a.currency})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setAccountId}
+                  placeholder="— tanlang —"
+                  options={accounts.map((a) => ({
+                    value: a.id,
+                    label: `${a.name} (${a.currency})`,
+                  }))}
+                />
               </div>
 
               <div>
