@@ -247,8 +247,12 @@ export default function NewOrderForm({
     rate: number
   ): number {
     if (from === to) return amount;
-    if (from === "UZS" && to === "USD") return rate > 0 ? amount / rate : amount;
-    if (from === "USD" && to === "UZS") return amount * rate;
+    // 2 xonagacha yaxlitlanadi — aks holda bo'linishdan uzun kasr son chiqib
+    // (masalan 15.983606557...), number input'ning standart step="1"
+    // tekshiruvi buni "noto'g'ri qiymat" deb rad etardi.
+    if (from === "UZS" && to === "USD")
+      return rate > 0 ? Math.round((amount / rate) * 100) / 100 : amount;
+    if (from === "USD" && to === "UZS") return Math.round(amount * rate);
     return amount;
   }
 
@@ -707,6 +711,7 @@ export default function NewOrderForm({
                     <input
                       type="number" onFocus={(e) => e.currentTarget.select()}
                       min={0}
+                      step={0.01}
                       value={l.unitPrice}
                       onChange={(e) =>
                         updateLine(i, { unitPrice: Number(e.target.value) })
