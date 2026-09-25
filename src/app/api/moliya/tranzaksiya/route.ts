@@ -21,6 +21,20 @@ interface CounterpartyMeta {
   telegram_id?: number;
 }
 
+// Formadagi "Sana" faqat kun sifatida tanlanadi (vaqt yo'q) — buni
+// to'g'ridan-to'g'ri `new Date("2026-09-25")` qilsak, bu YARIM TUNGA
+// (UTC) teng bo'lib, Toshkent vaqtida "05:00" bo'lib chiqadi. Natijada
+// bir kunda kiritilgan barcha tranzaksiyalar bir xil vaqtga "yopishib"
+// qolib, Tranzaksiyalar ro'yxatidagi tartib (va ko'rsatilgan vaqt) real
+// kiritilish ketma-ketligini aks ettirmay qoladi. Shu sababli tanlangan
+// kunga joriy soat/daqiqa/soniyani qo'shib qo'yamiz.
+function resolveDate(dateStr?: string): Date | undefined {
+  if (!dateStr) return undefined;
+  const now = new Date();
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+}
+
 // Meeting: mijoz Telegram bot orqali pul o'tkazganda, qaysi shot-faktura
 // (buyurtma) uchun ekanini yopib/aniqlashtirib berishni so'rab ogohlantirish
 // yuboriladi — B2B mijozlar uchun.
@@ -135,7 +149,7 @@ export async function POST(req: Request) {
       prisma.payment.create({
         data: {
           type,
-          date: body.date ? new Date(body.date) : undefined,
+          date: resolveDate(body.date),
           accountId: account.id,
           amount: body.amount,
           currency: account.currency,
