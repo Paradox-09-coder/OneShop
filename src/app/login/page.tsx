@@ -80,9 +80,7 @@ function LoginForm() {
             <LogIn size={22} />
           </div>
           <h1 className="text-2xl font-bold">OneShop ERP</h1>
-          <p className="text-sm text-ink-soft mt-1">Tizimga kirish</p>
-          <p className="text-lg font-semibold mt-2">hello</p>
-        </div>
+          <p className="text-sm text-ink-soft mt-1">Tizimga kirish</p>        </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
