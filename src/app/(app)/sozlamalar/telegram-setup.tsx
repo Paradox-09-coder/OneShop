@@ -40,7 +40,7 @@ export default function TelegramSetup({ configured, webhookInfo }: Props) {
           <X size={16} /> TELEGRAM_BOT_TOKEN o'rnatilmagan
         </p>
         <p className="text-xs text-ink-soft mt-2">
-          Bot faol bo'lishi uchun Railway'ga <code className="bg-white px-1 rounded">TELEGRAM_BOT_TOKEN</code>{" "}
+          Bot faol bo'lishi uchun Railway'ga <code className="bg-panel px-1 rounded">TELEGRAM_BOT_TOKEN</code>{" "}
           environment variable qo'shing.
         </p>
       </div>
@@ -80,7 +80,7 @@ export default function TelegramSetup({ configured, webhookInfo }: Props) {
       <button
         onClick={setup}
         disabled={loading}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark disabled:opacity-50"
       >
         <Send size={14} />
         {loading ? "..." : info?.url ? "Webhook'ni yangilash" : "Webhook o'rnatish"}

@@ -129,7 +129,7 @@ export default function AddCounterpartyButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark"
         >
           <Plus size={16} /> {label ?? "Yangi kontragent"}
         </button>
@@ -142,7 +142,7 @@ export default function AddCounterpartyButton({
         >
           <form
             onSubmit={onSubmit}
-            className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl"
+            className="bg-panel rounded-2xl w-full max-w-md p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -164,7 +164,7 @@ export default function AddCounterpartyButton({
                   onChange={(e) => setName(e.target.value)}
                   required
                   autoFocus
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 />
               </div>
               {!lockType && (
@@ -216,7 +216,7 @@ export default function AddCounterpartyButton({
                       <input
                         value={customPosition}
                         onChange={(e) => setCustomPosition(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                         placeholder="Lavozimni yozing"
                       />
                     </div>
@@ -228,7 +228,7 @@ export default function AddCounterpartyButton({
                     <input
                       value={carNumber}
                       onChange={(e) => setCarNumber(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                       placeholder="01A123BB"
                     />
                   </div>
@@ -239,7 +239,7 @@ export default function AddCounterpartyButton({
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   placeholder="+998 90 000 00 00"
                 />
               </div>

@@ -155,7 +155,7 @@ export default function ProductManager({
         </h3>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
         >
           <Plus size={14} /> Yangi mahsulot
         </button>
@@ -163,7 +163,7 @@ export default function ProductManager({
 
       <div className="overflow-x-auto max-h-[65vh] overflow-y-auto">
         <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-white z-10 shadow-sm">
+          <thead className="sticky top-0 bg-panel z-10 shadow-sm">
             <tr className="text-xs text-ink-soft uppercase border-b border-border bg-gray-50/50">
               <th className="text-left px-4 py-3">SKU</th>
               <th className="text-left px-4 py-3">Nomi</th>
@@ -226,7 +226,7 @@ export default function ProductManager({
 
       {draft && (
         <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
+          <div className="bg-panel rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg">
                 {draft.id ? "Mahsulotni tahrirlash" : "Yangi mahsulot"}
@@ -245,7 +245,7 @@ export default function ProductManager({
                   <input
                     value={draft.sku}
                     onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white font-mono text-sm"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel font-mono text-sm"
                     placeholder="GEN-3000"
                     autoFocus
                   />
@@ -271,7 +271,7 @@ export default function ProductManager({
                 <input
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   placeholder="Generator 3kW benzin"
                 />
               </div>
@@ -293,7 +293,7 @@ export default function ProductManager({
                     onChange={(e) =>
                       setDraft({ ...draft, baseCost: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   />
                 </div>
                 <div>
@@ -304,7 +304,7 @@ export default function ProductManager({
                     onChange={(e) =>
                       setDraft({ ...draft, basePrice: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   />
                 </div>
                 <div>
@@ -334,7 +334,7 @@ export default function ProductManager({
                       lowStockThreshold: Number(e.target.value),
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 />
               </div>
               <label className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 cursor-pointer">

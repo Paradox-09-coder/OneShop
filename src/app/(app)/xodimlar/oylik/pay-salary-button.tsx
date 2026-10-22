@@ -116,7 +116,7 @@ export default function PaySalaryButton({
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark"
         >
           <Plus size={16} /> Oylik to'lash
         </button>
@@ -128,7 +128,7 @@ export default function PaySalaryButton({
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            className="bg-panel rounded-2xl p-6 max-w-sm w-full shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -165,7 +165,7 @@ export default function PaySalaryButton({
                   type="month"
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 
@@ -192,7 +192,7 @@ export default function PaySalaryButton({
                   value={amountText}
                   onChange={setAmountText}
                   placeholder="0"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 
@@ -220,7 +220,7 @@ export default function PaySalaryButton({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Masalan: Oylik + KPI"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 

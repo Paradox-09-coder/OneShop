@@ -88,7 +88,7 @@ export default async function OrderDetailPage({
             href={`/api/orders/${order.id}/nakladnoy`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border bg-white hover:bg-gray-50 text-sm font-semibold"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-border bg-panel hover:bg-gray-50 text-sm font-semibold"
             title="Nakladnoy chiqarish (PDF)"
           >
             <FileText size={14} /> Nakladnoy

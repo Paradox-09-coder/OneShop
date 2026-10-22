@@ -38,7 +38,7 @@ export default function PageHeader({ title, subtitle, actions, back = true }: Pr
           {back && (
             <button
               onClick={onBackClick}
-              className="mt-1 p-2 rounded-xl border border-border bg-white hover:bg-gray-50 text-ink-soft"
+              className="mt-1 w-10 h-10 shrink-0 grid place-items-center rounded-full border border-border bg-panel hover:border-primary/40 hover:text-primary text-ink-soft transition"
               title="Orqaga"
               aria-label="Orqaga"
             >
@@ -46,7 +46,7 @@ export default function PageHeader({ title, subtitle, actions, back = true }: Pr
             </button>
           )}
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold text-ink">{title}</h1>
+            <h1 className="text-2xl md:text-[32px] font-bold tracking-tight text-ink leading-tight">{title}</h1>
             {subtitle && <p className="text-sm text-ink-soft mt-1">{subtitle}</p>}
           </div>
         </div>

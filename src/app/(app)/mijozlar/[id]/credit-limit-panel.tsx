@@ -77,7 +77,7 @@ export default function CreditLimitPanel({ clientId, initial, currentDebt }: Pro
             value={limit}
             onChange={(e) => setLimit(Number(e.target.value))}
             disabled={!enabled}
-            className="w-full px-3 py-2 rounded-xl border border-border bg-white disabled:opacity-50"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-panel disabled:opacity-50"
             placeholder="100 000 000"
           />
           <Select

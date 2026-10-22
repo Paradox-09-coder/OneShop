@@ -38,7 +38,7 @@ export function useDialog() {
       onClick={() => close(false)}
     >
       <div
-        className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
+        className="bg-panel rounded-2xl p-6 max-w-sm w-full shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 mb-5">

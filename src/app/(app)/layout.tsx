@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import Sidebar from "@/components/sidebar";
 import Topbar from "@/components/topbar";
 import { getSession } from "@/lib/auth";
-import { roleLabel } from "@/lib/labels";
 import { allowedHrefs, canAccessPath } from "@/lib/access";
 import { Ban } from "lucide-react";
 
@@ -27,21 +26,19 @@ export default async function AppShellLayout({
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar
-        user={{
-          name: session.name,
-          role: roleLabel[session.role],
-        }}
-        allowedHrefs={hrefs}
-      />
-      <main className="flex-1 md:ml-[260px] max-w-full min-h-screen">
+      <Sidebar allowedHrefs={hrefs} />
+      {/* min-w-0 — flex element sifatida keng kontentga (masalan Kanban
+          etaplari) qarab o'zi kengayib ketmasin: aks holda butun sahifa,
+          header bilan birga yonga surilardi. Keng qism faqat o'z
+          overflow-x-auto konteyneri ichida scroll bo'ladi. */}
+      <main className="flex-1 min-w-0 md:ml-[272px] max-w-full min-h-screen">
         <Topbar />
         {/* pt-[…] — header endi fixed, oqimdan chiqarilgan, shuning uchun
             kontent uning tagida qolib ketmasligi uchun joy qoldiramiz.
             (px/pb alohida yozilgan — p-4/md:p-8 bilan aralashtirilsa,
             Tailwind'da shorthand va pt-* orasidagi tartib buzilib,
             md'da noto'g'ri qiymat qo'llanishi mumkin edi.) */}
-        <div className="px-4 pb-4 pt-[72px] md:px-8 md:pb-8 md:pt-[88px]">
+        <div className="px-4 pb-4 pt-[76px] md:px-8 md:pb-8 md:pt-[84px]">
           {allowed ? (
             children
           ) : (

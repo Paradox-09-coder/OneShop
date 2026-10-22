@@ -6,6 +6,7 @@ import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag, Packag
 import { formatMoney } from "@/lib/utils";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
 import MoneyInput from "@/components/money-input";
+import AnimatedNumber from "@/components/animated-number";
 import Select from "@/components/select";
 import DatePicker from "@/components/date-picker";
 
@@ -403,7 +404,7 @@ export default function NewOrderForm({
               <div className="relative">
                 <div
                   onClick={() => setClientPanelOpen((v) => !v)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-white cursor-pointer hover:border-primary/50"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-panel cursor-pointer hover:border-primary/50"
                 >
                   <User size={15} className="text-ink-soft shrink-0" />
                   <span className="flex-1 text-sm truncate">
@@ -445,7 +446,7 @@ export default function NewOrderForm({
                             setClientVisibleCount(10);
                           }}
                           placeholder="Ism yoki telefon bo'yicha qidirish..."
-                          className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-white text-sm"
+                          className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-panel text-sm"
                         />
                       </div>
                       <div className="max-h-60 overflow-y-auto overscroll-contain">
@@ -604,7 +605,7 @@ export default function NewOrderForm({
                     value={productQuery}
                     onChange={(e) => setProductQuery(e.target.value)}
                     placeholder="Mahsulot yoki SKU bo'yicha qidirish..."
-                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-white text-sm"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-panel text-sm"
                   />
                 </div>
               </div>
@@ -641,7 +642,7 @@ export default function NewOrderForm({
                           setProductQty(p, p.unitType === "DONA" ? Math.round(raw) : raw);
                         }}
                         placeholder="0"
-                        className="w-16 px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center shrink-0"
+                        className="w-16 px-2 py-1.5 rounded-lg border border-border bg-panel text-sm text-center shrink-0"
                       />
                     </div>
                   );
@@ -682,7 +683,7 @@ export default function NewOrderForm({
                           quantity: Math.max(1, (l.quantity ?? 1) - 1),
                         })
                       }
-                      className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+                      className="w-7 h-7 rounded-lg bg-panel border border-border grid place-items-center"
                     >
                       <Minus size={12} />
                     </button>
@@ -695,14 +696,14 @@ export default function NewOrderForm({
                         const raw = Number(e.target.value);
                         updateLine(i, { quantity: isCountable ? Math.round(raw) : raw });
                       }}
-                      className="w-full px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-center"
+                      className="w-full px-2 py-1.5 rounded-lg border border-border bg-panel text-sm text-center"
                     />
                     <button
                       type="button"
                       onClick={() =>
                         updateLine(i, { quantity: (l.quantity ?? 0) + 1 })
                       }
-                      className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+                      className="w-7 h-7 rounded-lg bg-panel border border-border grid place-items-center"
                     >
                       <Plus size={12} />
                     </button>
@@ -716,17 +717,17 @@ export default function NewOrderForm({
                       onChange={(e) =>
                         updateLine(i, { unitPrice: Number(e.target.value) })
                       }
-                      className="w-full px-2 py-1.5 rounded-lg border border-border bg-white text-sm"
+                      className="w-full px-2 py-1.5 rounded-lg border border-border bg-panel text-sm"
                       placeholder="narx"
                     />
                   </div>
                   <div className="col-span-1 text-right text-sm font-semibold">
-                    {formatMoney(l.quantity * l.unitPrice, currency)}
+                    <AnimatedNumber value={l.quantity * l.unitPrice} kind="money" currency={currency} />
                   </div>
                   <button
                     type="button"
                     onClick={() => removeLine(i)}
-                    className="col-span-1 p-1.5 rounded-lg hover:bg-white text-danger justify-self-end"
+                    className="col-span-1 p-1.5 rounded-lg hover:bg-panel text-danger justify-self-end"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -798,7 +799,7 @@ export default function NewOrderForm({
                   value={taxText}
                   onChange={setTaxText}
                   placeholder="0"
-                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-white"
+                  className="flex-1 px-3 py-2 rounded-l-xl border border-border bg-panel"
                 />
                 <button
                   type="button"
@@ -819,7 +820,7 @@ export default function NewOrderForm({
                   min={1}
                   value={exchangeRate}
                   onChange={(e) => setExchangeRate(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 />
                 <p className="text-xs text-ink-soft mt-1">
                   Sozlamalardagi kurs: {defaultExchangeRate.toLocaleString("ru-RU")} so'm.
@@ -844,7 +845,7 @@ export default function NewOrderForm({
                   className={`px-4 py-2 text-sm font-bold ${
                     discountMode === "PERCENT"
                       ? "bg-primary text-white"
-                      : "bg-white text-ink-soft hover:bg-gray-50"
+                      : "bg-panel text-ink-soft hover:bg-gray-50"
                   }`}
                 >
                   %
@@ -855,7 +856,7 @@ export default function NewOrderForm({
                   className={`px-4 py-2 text-sm font-bold border-l border-border ${
                     discountMode === "AMOUNT"
                       ? "bg-primary text-white"
-                      : "bg-white text-ink-soft hover:bg-gray-50"
+                      : "bg-panel text-ink-soft hover:bg-gray-50"
                   }`}
                 >
                   {currency}
@@ -865,7 +866,7 @@ export default function NewOrderForm({
                 value={discountText}
                 onChange={setDiscountText}
                 placeholder="0"
-                className={`flex-1 px-3 py-2 rounded-xl border bg-white ${
+                className={`flex-1 px-3 py-2 rounded-xl border bg-panel ${
                   discountExceedsSubtotal ? "border-danger" : "border-border"
                 }`}
               />
@@ -934,7 +935,7 @@ export default function NewOrderForm({
                         onChange={(e) =>
                           updateExpenseRow(exp.id, { amountText: e.target.value })
                         }
-                        className="w-32 px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                        className="w-32 px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                       />
                       <span className="px-2 py-2 text-sm font-semibold text-ink-soft shrink-0">
                         {currency}
@@ -949,14 +950,14 @@ export default function NewOrderForm({
                     </div>
 
                     {exp.expenseType === "Logistika" && (
-                      <div className="mt-2 p-3 rounded-xl bg-white border border-border space-y-2 text-sm">
+                      <div className="mt-2 p-3 rounded-xl bg-panel border border-border space-y-2 text-sm">
                         <div>
                           <label className="block text-xs text-ink-soft mb-1">Manzil</label>
                           <input
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
                             placeholder="Google Maps havolasi yoki taxminiy manzil (tuman, mahalla...)"
-                            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                           />
                         </div>
                         <div>
@@ -1022,7 +1023,7 @@ export default function NewOrderForm({
                             <input
                               value={receiverName}
                               onChange={(e) => setReceiverName(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                              className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                             />
                           </div>
                           <div>
@@ -1030,7 +1031,7 @@ export default function NewOrderForm({
                             <input
                               value={receiverPhone}
                               onChange={(e) => setReceiverPhone(e.target.value)}
-                              className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                              className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                             />
                           </div>
                         </div>
@@ -1096,7 +1097,7 @@ export default function NewOrderForm({
                           placeholder="Mijoz to'lagan summa"
                           value={depositText}
                           onChange={setDepositText}
-                          className="w-full px-3 py-2 rounded-xl border border-border bg-white mb-2"
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-panel mb-2"
                         />
                       </>
                     )}
@@ -1125,7 +1126,7 @@ export default function NewOrderForm({
                     <div className="flex justify-between text-sm pt-1 border-t border-primary/15">
                       <span className="text-ink-soft">Qolgan qarz</span>
                       <span className="font-bold text-danger">
-                        {formatMoney(remainingDebt, currency)}
+                        <AnimatedNumber value={remainingDebt} kind="money" currency={currency} />
                       </span>
                     </div>
                   )}
@@ -1144,7 +1145,7 @@ export default function NewOrderForm({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
               />
             </div>
           </div>
@@ -1154,21 +1155,21 @@ export default function NewOrderForm({
       {/* Yangi mijoz modali — tugma bosilganda ochiladi */}
       {addingClient && (
         <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
+          <div className="bg-panel rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
             <h3 className="font-bold text-lg mb-3">Yangi mijoz qo'shish</h3>
             <div className="space-y-2">
               <input
                 value={newClientName}
                 onChange={(e) => setNewClientName(e.target.value)}
                 placeholder="Ismi / kompaniya nomi"
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 autoFocus
               />
               <input
                 value={newClientPhone}
                 onChange={(e) => setNewClientPhone(e.target.value)}
                 placeholder="Telefon"
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
               />
               <Select
                 value={newClientKind}
@@ -1206,7 +1207,7 @@ export default function NewOrderForm({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-ink-soft">Mahsulotlar</span>
-              <span className="font-semibold">{formatMoney(subtotal, currency)}</span>
+              <span className="font-semibold"><AnimatedNumber value={subtotal} kind="money" currency={currency} /></span>
             </div>
             {discountValue > 0 && (
               <div className="flex justify-between">
@@ -1215,7 +1216,7 @@ export default function NewOrderForm({
                   {discountMode === "PERCENT" ? ` (${discountValue}%)` : ""}
                 </span>
                 <span className="font-semibold text-warning">
-                  −{formatMoney(discountAmount, currency)}
+                  −<AnimatedNumber value={discountAmount} kind="money" currency={currency} />
                 </span>
               </div>
             )}
@@ -1225,19 +1226,19 @@ export default function NewOrderForm({
                   QQS{taxMode === "PERCENT" ? ` (${taxValue}%)` : ""}
                 </span>
                 <span className="font-semibold">
-                  {formatMoney(taxAmount, currency)}
+                  <AnimatedNumber value={taxAmount} kind="money" currency={currency} />
                 </span>
               </div>
             )}
             <div className="pt-2 border-t border-border flex justify-between">
               <span className="font-bold">Jami</span>
               <span className="font-bold text-lg text-primary">
-                {formatMoney(grand, currency)}
+                <AnimatedNumber value={grand} kind="money" currency={currency} />
               </span>
             </div>
             {currency !== "UZS" && (
               <p className="text-xs text-ink-soft pt-1">
-                = {formatMoney(grand * exchangeRate, "UZS")} (kurs {exchangeRate})
+                = <AnimatedNumber value={grand * exchangeRate} kind="money" currency="UZS" /> (kurs {exchangeRate})
               </p>
             )}
             {extraExpensesTotal > 0 && (
@@ -1247,7 +1248,7 @@ export default function NewOrderForm({
                   <span className="text-xs"> (jamiga kirmaydi)</span>
                 </span>
                 <span className="font-semibold text-ink-soft">
-                  {formatMoney(extraExpensesTotal, currency)}
+                  <AnimatedNumber value={extraExpensesTotal} kind="money" currency={currency} />
                 </span>
               </div>
             )}
@@ -1257,14 +1258,14 @@ export default function NewOrderForm({
                   {paymentType === "FULL" ? "To'langan" : "Zaklad"}
                 </span>
                 <span className="font-semibold text-success">
-                  {formatMoney(paidNow, currency)}
+                  <AnimatedNumber value={paidNow} kind="money" currency={currency} />
                 </span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-ink-soft">Qarz qoladi</span>
               <span className={`font-semibold ${remainingDebt > 0 ? "text-danger" : "text-success"}`}>
-                {formatMoney(remainingDebt, currency)}
+                <AnimatedNumber value={remainingDebt} kind="money" currency={currency} />
               </span>
             </div>
           </div>

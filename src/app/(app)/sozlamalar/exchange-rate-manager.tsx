@@ -36,13 +36,13 @@ export default function ExchangeRateManager({ current }: { current: number }) {
         min={1}
         value={rate}
         onChange={(e) => setRate(Number(e.target.value))}
-        className="flex-1 max-w-xs px-3 py-2 rounded-xl border border-border bg-white"
+        className="flex-1 max-w-xs px-3 py-2 rounded-xl border border-border bg-panel"
       />
       <span className="text-sm text-ink-soft">so'm</span>
       <button
         onClick={save}
         disabled={saving}
-        className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50"
+        className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-primary text-white text-sm font-semibold disabled:opacity-50"
       >
         <Save size={14} />
         {saving ? "..." : "Saqlash"}

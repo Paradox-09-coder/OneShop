@@ -66,7 +66,7 @@ export default async function CrmPage() {
                     {list.slice(0, 20).map((c) => (
                       <div
                         key={c.id}
-                        className="p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-sm cursor-pointer transition"
+                        className="p-3 rounded-xl bg-gray-50 hover:bg-panel hover:shadow-sm cursor-pointer transition"
                       >
                         <p className="font-semibold text-sm">{c.name}</p>
                         {c.phone && (

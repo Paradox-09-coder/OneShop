@@ -95,7 +95,7 @@ export default async function ClientDetailPage({
             </div>
             <Link
               href={`/buyurtmalar/yangi?client=${client.id}`}
-              className="px-4 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-dark"
+              className="px-4 py-2 rounded-full bg-primary text-white font-semibold text-sm hover:bg-primary-dark"
             >
               + Yangi buyurtma
             </Link>

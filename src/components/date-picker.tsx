@@ -87,7 +87,7 @@ export default function DatePicker({
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openCalendar())}
         className={cn(
-          "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border bg-white text-left text-sm transition disabled:opacity-50 disabled:cursor-not-allowed",
+          "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border bg-panel text-left text-sm transition disabled:opacity-50 disabled:cursor-not-allowed",
           "border-border hover:border-primary/40",
           open && "border-primary ring-2 ring-primary/15",
           className
@@ -100,7 +100,7 @@ export default function DatePicker({
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-1.5 w-72 rounded-xl border border-border bg-white shadow-lg p-3 animate-fadeIn">
+        <div className="absolute z-30 mt-1.5 w-72 rounded-xl border border-border bg-panel shadow-lg p-3 animate-fadeIn">
           <div className="flex items-center justify-between mb-2">
             <button
               type="button"

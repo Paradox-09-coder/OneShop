@@ -60,7 +60,7 @@ export default function DateRangePicker({ current, from, to }: Props) {
             onClick={() => setRange(p.value)}
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
               current === p.value
-                ? "bg-white shadow-sm text-primary"
+                ? "bg-panel shadow-sm text-primary"
                 : "text-ink-soft hover:text-ink"
             }`}
           >
@@ -75,18 +75,18 @@ export default function DateRangePicker({ current, from, to }: Props) {
             type="date"
             value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-border bg-white text-sm"
+            className="px-3 py-1.5 rounded-lg border border-border bg-panel text-sm"
           />
           <span className="text-ink-soft text-sm">→</span>
           <input
             type="date"
             value={customTo}
             onChange={(e) => setCustomTo(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-border bg-white text-sm"
+            className="px-3 py-1.5 rounded-lg border border-border bg-panel text-sm"
           />
           <button
             onClick={applyCustom}
-            className="px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-semibold"
+            className="px-3 py-1.5 rounded-full bg-primary text-white text-sm font-semibold"
           >
             Qo'llash
           </button>

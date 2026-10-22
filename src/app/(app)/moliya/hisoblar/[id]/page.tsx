@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AnimatedNumber from "@/components/animated-number";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
@@ -65,7 +66,7 @@ export default async function AccountDetailPage({
             </div>
             <span className="text-sm text-ink-soft font-medium">Umumiy kirim</span>
           </div>
-          <p className="text-2xl font-bold">{formatMoney(income, account.currency)}</p>
+          <p className="text-2xl font-bold"><AnimatedNumber value={income} kind="money" currency={account.currency} /></p>
           <p className="text-xs text-ink-soft mt-1">{incomeAgg._count} ta tranzaksiya</p>
         </div>
         <div className="panel p-5">
@@ -75,7 +76,7 @@ export default async function AccountDetailPage({
             </div>
             <span className="text-sm text-ink-soft font-medium">Umumiy chiqim</span>
           </div>
-          <p className="text-2xl font-bold">{formatMoney(expense, account.currency)}</p>
+          <p className="text-2xl font-bold"><AnimatedNumber value={expense} kind="money" currency={account.currency} /></p>
           <p className="text-xs text-ink-soft mt-1">{expenseAgg._count} ta tranzaksiya</p>
         </div>
         <div className="panel p-5">
@@ -86,7 +87,7 @@ export default async function AccountDetailPage({
             <span className="text-sm text-ink-soft font-medium">Sof balans</span>
           </div>
           <p className={`text-2xl font-bold ${income - expense >= 0 ? "text-ink" : "text-danger"}`}>
-            {formatMoney(income - expense, account.currency)}
+            <AnimatedNumber value={income - expense} kind="money" currency={account.currency} />
           </p>
         </div>
       </div>

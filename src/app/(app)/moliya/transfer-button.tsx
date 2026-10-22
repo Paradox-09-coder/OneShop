@@ -74,7 +74,7 @@ export default function TransferButton({ accounts }: { accounts: AccountOption[]
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-white hover:bg-gray-50 text-sm font-semibold"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-panel hover:bg-gray-50 text-sm font-semibold"
       >
         <ArrowLeftRight size={15} /> Tranzaksiya
       </button>
@@ -85,7 +85,7 @@ export default function TransferButton({ accounts }: { accounts: AccountOption[]
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            className="bg-panel rounded-2xl p-6 max-w-sm w-full shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -141,7 +141,7 @@ export default function TransferButton({ accounts }: { accounts: AccountOption[]
                   value={amount}
                   onChange={setAmount}
                   placeholder="0"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 
@@ -153,7 +153,7 @@ export default function TransferButton({ accounts }: { accounts: AccountOption[]
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Masalan: naqddan kartaga o'tkazish"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 

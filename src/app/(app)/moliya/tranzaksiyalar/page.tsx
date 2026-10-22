@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import AnimatedNumber from "@/components/animated-number";
 import PageHeader from "@/components/page-header";
 import SectionTabs from "@/components/section-tabs";
 import EmptyState from "@/components/empty-state";
@@ -168,7 +169,7 @@ export default async function TransactionsPage({
             Jami balans
           </p>
           <p className="text-3xl font-bold text-ink tabular-nums mt-1 leading-none">
-            {formatMoney(primaryTotal, primaryCurrency)}
+            <AnimatedNumber value={primaryTotal} kind="money" currency={primaryCurrency} />
           </p>
           <div className="flex items-center gap-4 mt-2.5 text-xs tabular-nums flex-wrap">
             <span className="inline-flex items-center gap-1.5">
@@ -198,7 +199,7 @@ export default async function TransactionsPage({
               <span className="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Kirim</span>
             </div>
             <p className="text-lg font-bold text-success tabular-nums mt-1.5 leading-none">
-              {formatMoney(kirim, primaryCurrency)}
+              <AnimatedNumber value={kirim} kind="money" currency={primaryCurrency} />
             </p>
           </div>
           <div>
@@ -209,7 +210,7 @@ export default async function TransactionsPage({
               <span className="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Chiqim</span>
             </div>
             <p className="text-lg font-bold text-danger tabular-nums mt-1.5 leading-none">
-              {formatMoney(chiqim, primaryCurrency)}
+              <AnimatedNumber value={chiqim} kind="money" currency={primaryCurrency} />
             </p>
           </div>
         </div>
@@ -238,7 +239,7 @@ export default async function TransactionsPage({
                 {accountTypeLabel[a.type]}
               </p>
               <p className="relative mt-2 text-lg font-bold tabular-nums leading-tight">
-                {formatMoney(a.balanceCache, a.currency)}
+                <AnimatedNumber value={a.balanceCache} kind="money" currency={a.currency} />
               </p>
             </Link>
           ))}
@@ -270,7 +271,7 @@ export default async function TransactionsPage({
             ...(sp.from ? { from: sp.from } : {}),
             ...(sp.to ? { to: sp.to } : {}),
           }).toString()}`}
-          className="inline-flex items-center gap-1.5 h-[42px] px-3.5 rounded-xl border border-border bg-white text-sm font-semibold text-ink-soft hover:bg-gray-50 shrink-0"
+          className="inline-flex items-center gap-1.5 h-[42px] px-3.5 rounded-xl border border-border bg-panel text-sm font-semibold text-ink-soft hover:bg-gray-50 shrink-0"
         >
           <Download size={15} /> Yuklab olish
         </a>

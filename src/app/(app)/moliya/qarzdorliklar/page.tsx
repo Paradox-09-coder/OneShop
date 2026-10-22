@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import AnimatedNumber from "@/components/animated-number";
 import PageHeader from "@/components/page-header";
 import SectionTabs from "@/components/section-tabs";
 import { formatMoney } from "@/lib/utils";
@@ -35,9 +36,9 @@ export default async function DebtsPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="panel p-5" style={{ background: "color-mix(in srgb, var(--color-success) 8%, white)" }}>
+        <div className="panel p-5" style={{ background: "color-mix(in srgb, var(--color-success) 8%, var(--color-panel))" }}>
           <div className="flex items-center justify-between mb-2">
-            <div className="w-9 h-9 rounded-xl bg-white text-success grid place-items-center">
+            <div className="w-9 h-9 rounded-xl bg-panel text-success grid place-items-center">
               <ArrowDownLeft size={18} />
             </div>
             <span className="text-xs font-bold uppercase tracking-wide text-success">
@@ -46,15 +47,15 @@ export default async function DebtsPage() {
           </div>
           <p className="text-xs text-ink-soft">Bizga qarzdorlar — bizdan qarzdor</p>
           <p className="text-2xl font-bold mt-1 text-success">
-            {formatMoney(totalDebt, "UZS")}
+            <AnimatedNumber value={totalDebt} kind="money" />
           </p>
           <p className="text-xs text-ink-soft mt-1">
             {debtors.length} ta kontragent
           </p>
         </div>
-        <div className="panel p-5" style={{ background: "color-mix(in srgb, var(--color-danger) 8%, white)" }}>
+        <div className="panel p-5" style={{ background: "color-mix(in srgb, var(--color-danger) 8%, var(--color-panel))" }}>
           <div className="flex items-center justify-between mb-2">
-            <div className="w-9 h-9 rounded-xl bg-white text-danger grid place-items-center">
+            <div className="w-9 h-9 rounded-xl bg-panel text-danger grid place-items-center">
               <ArrowUpRight size={18} />
             </div>
             <span className="text-xs font-bold uppercase tracking-wide text-danger">
@@ -63,7 +64,7 @@ export default async function DebtsPage() {
           </div>
           <p className="text-xs text-ink-soft">Biz qarzdormiz — ularga qarzdormiz</p>
           <p className="text-2xl font-bold mt-1 text-danger">
-            {formatMoney(totalCredit, "UZS")}
+            <AnimatedNumber value={totalCredit} kind="money" />
           </p>
           <p className="text-xs text-ink-soft mt-1">
             {creditors.length} ta kontragent

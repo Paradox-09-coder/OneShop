@@ -111,7 +111,7 @@ export default function ListToolbar({
             onChange={(e) => setQ(e.target.value)}
             onFocus={openPanel}
             placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-white text-sm"
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-panel text-sm"
           />
         </div>
         <button
@@ -181,7 +181,7 @@ export default function ListToolbar({
                 </button>
                 <button
                   onClick={applyDraft}
-                  className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
+                  className="px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
                 >
                   Tayyor
                 </button>
@@ -204,7 +204,7 @@ export default function ListToolbar({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={searchPlaceholder}
-          className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-white text-sm"
+          className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-panel text-sm"
         />
       </div>
 

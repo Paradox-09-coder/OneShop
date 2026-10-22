@@ -147,7 +147,7 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
             value={f.deliveryAddress}
             onChange={(e) => setF({ ...f, deliveryAddress: e.target.value })}
             placeholder="Google Maps havolasi yoki taxminiy manzil (tuman, mahalla...)"
-            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
           />
         </div>
         <div>
@@ -213,7 +213,7 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
             placeholder="0"
             value={costText}
             onChange={(e) => setCostText(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
           />
         </div>
         <label className="flex items-center gap-2 p-2 rounded-xl bg-gray-50 cursor-pointer">
@@ -242,7 +242,7 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
             onChange={(e) =>
               setF({ ...f, expectedDeliveryDate: e.target.value })
             }
-            className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -253,7 +253,7 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
             <input
               value={f.receiverName}
               onChange={(e) => setF({ ...f, receiverName: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
             />
           </div>
           <div>
@@ -261,7 +261,7 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
             <input
               value={f.receiverPhone}
               onChange={(e) => setF({ ...f, receiverPhone: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
             />
           </div>
         </div>

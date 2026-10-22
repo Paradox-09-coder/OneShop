@@ -62,14 +62,14 @@ export default function AddClientButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark"
       >
         <Plus size={16} /> Yangi mijoz
       </button>
 
       {open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
+          <div className="bg-panel rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Yangi mijoz qo'shish</h2>
               <button
@@ -86,7 +86,7 @@ export default function AddClientButton() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   placeholder="Alisher / OOO ..."
                   autoFocus
                 />
@@ -110,7 +110,7 @@ export default function AddClientButton() {
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                     placeholder="+998 90 000 00 00"
                   />
                 </div>
@@ -119,7 +119,7 @@ export default function AddClientButton() {
                   <input
                     value={phone2}
                     onChange={(e) => setPhone2(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                     placeholder="ixtiyoriy"
                   />
                 </div>
@@ -130,7 +130,7 @@ export default function AddClientButton() {
                 <input
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   placeholder="@username"
                 />
               </div>
@@ -140,7 +140,7 @@ export default function AddClientButton() {
                 <input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 />
               </div>
 
@@ -149,7 +149,7 @@ export default function AddClientButton() {
                 <input
                   value={inn}
                   onChange={(e) => setInn(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   placeholder="ixtiyoriy"
                 />
               </div>

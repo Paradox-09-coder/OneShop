@@ -17,7 +17,7 @@ export default function SearchBar({ placeholder = "Поиск...", value, onChan
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full pl-11 pr-16 py-3 bg-white border border-border rounded-2xl text-sm placeholder:text-ink-soft/60"
+        className="w-full pl-11 pr-16 py-3 bg-panel border border-border rounded-2xl text-sm placeholder:text-ink-soft/60"
       />
       <kbd className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-ink-soft bg-gray-100 px-2 py-0.5 rounded-md font-mono">
         ⌘K

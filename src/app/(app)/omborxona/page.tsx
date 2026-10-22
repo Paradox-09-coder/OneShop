@@ -96,7 +96,7 @@ export default async function WarehousePage({
               <Link
                 href="/omborxona"
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-                  !isLowStock ? "bg-white shadow-sm" : "text-ink-soft"
+                  !isLowStock ? "bg-panel shadow-sm" : "text-ink-soft"
                 }`}
               >
                 Barchasi
@@ -104,7 +104,7 @@ export default async function WarehousePage({
               <Link
                 href="/omborxona?filter=low-stock"
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-                  isLowStock ? "bg-white shadow-sm text-danger" : "text-ink-soft"
+                  isLowStock ? "bg-panel shadow-sm text-danger" : "text-ink-soft"
                 }`}
               >
                 Kam qoldiq

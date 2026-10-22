@@ -23,14 +23,14 @@ export default function Tabs({ tabs, active, onChange, variant = "filled" }: Tab
           key={tab.value}
           onClick={() => onChange(tab.value)}
           className={cn(
-            "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+            "px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300",
             variant === "filled"
               ? active === tab.value
                 ? "bg-primary text-white"
-                : "bg-gray-100 text-ink-soft hover:bg-gray-200"
+                : "bg-panel border border-border text-ink-soft hover:text-ink hover:border-primary/30"
               : active === tab.value
                 ? "bg-primary text-white"
-                : "bg-white border border-border text-ink-soft hover:border-primary/30"
+                : "bg-panel border border-border text-ink-soft hover:border-primary/30"
           )}
         >
           {tab.label}

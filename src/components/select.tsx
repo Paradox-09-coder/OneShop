@@ -60,7 +60,7 @@ export default function Select({
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border bg-white text-left text-sm transition disabled:opacity-50 disabled:cursor-not-allowed",
+          "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border bg-panel text-left text-sm transition disabled:opacity-50 disabled:cursor-not-allowed",
           error ? "border-danger" : "border-border hover:border-primary/40",
           open && "border-primary ring-2 ring-primary/15",
           className
@@ -78,7 +78,7 @@ export default function Select({
         />
       </button>
       {open && (
-        <div className="absolute z-30 mt-1.5 w-full max-h-64 overflow-auto rounded-xl border border-border bg-white shadow-lg py-1 animate-fadeIn">
+        <div className="absolute z-30 mt-1.5 w-full max-h-64 overflow-auto rounded-xl border border-border bg-panel shadow-lg py-1 animate-fadeIn">
           {options.length === 0 ? (
             <p className="px-3 py-2 text-sm text-ink-soft">Variantlar yo&apos;q</p>
           ) : (

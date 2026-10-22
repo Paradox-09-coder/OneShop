@@ -147,7 +147,7 @@ export default async function OrdersPage({
         actions={
           <Link
             href="/buyurtmalar/yangi"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark"
           >
             <Plus size={16} /> Yangi buyurtma
           </Link>
@@ -159,7 +159,7 @@ export default async function OrdersPage({
           <Link
             href={hrefWith({ view: "kanban" })}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              view === "kanban" ? "bg-white shadow-sm" : "text-ink-soft"
+              view === "kanban" ? "bg-panel shadow-sm" : "text-ink-soft"
             }`}
           >
             <LayoutGrid size={15} /> Kanban
@@ -167,7 +167,7 @@ export default async function OrdersPage({
           <Link
             href={hrefWith({ view: "table" })}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              view === "table" ? "bg-white shadow-sm" : "text-ink-soft"
+              view === "table" ? "bg-panel shadow-sm" : "text-ink-soft"
             }`}
           >
             <Table2 size={15} /> Jadval
@@ -177,7 +177,7 @@ export default async function OrdersPage({
           <Link
             href={hrefWith({ filter: undefined })}
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              !filter ? "bg-white shadow-sm" : "text-ink-soft"
+              !filter ? "bg-panel shadow-sm" : "text-ink-soft"
             }`}
           >
             Barchasi
@@ -185,7 +185,7 @@ export default async function OrdersPage({
           <Link
             href={hrefWith({ filter: "active" })}
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              filter === "active" ? "bg-white shadow-sm" : "text-ink-soft"
+              filter === "active" ? "bg-panel shadow-sm" : "text-ink-soft"
             }`}
           >
             Aktiv
@@ -193,7 +193,7 @@ export default async function OrdersPage({
           <Link
             href={hrefWith({ filter: "debt" })}
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              filter === "debt" ? "bg-white shadow-sm" : "text-ink-soft"
+              filter === "debt" ? "bg-panel shadow-sm" : "text-ink-soft"
             }`}
           >
             Qarzli

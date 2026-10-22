@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AnimatedNumber from "@/components/animated-number";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney } from "@/lib/utils";
@@ -122,7 +123,7 @@ export default async function ClientMarginReportPage({
             </div>
             <span className="text-sm text-ink-soft">Umumiy sotuv</span>
           </div>
-          <p className="text-2xl font-bold">{formatMoney(totalRevenue, "UZS")}</p>
+          <p className="text-2xl font-bold"><AnimatedNumber value={totalRevenue} kind="money" /></p>
         </div>
         <div className="panel p-5">
           <div className="flex items-center gap-3 mb-2">
@@ -140,7 +141,7 @@ export default async function ClientMarginReportPage({
               totalProfit >= 0 ? "text-ink" : "text-danger"
             }`}
           >
-            {formatMoney(totalProfit, "UZS")}
+            <AnimatedNumber value={totalProfit} kind="money" />
           </p>
         </div>
         <div className="panel p-5">
@@ -151,10 +152,10 @@ export default async function ClientMarginReportPage({
             <span className="text-sm text-ink-soft">O'rtacha marja</span>
           </div>
           <p className="text-2xl font-bold">
-            {totalRevenue > 0
-              ? ((totalProfit / totalRevenue) * 100).toFixed(1)
-              : "0.0"}
-            %
+            <AnimatedNumber
+              value={totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0}
+              kind="percent"
+            />
           </p>
         </div>
       </div>

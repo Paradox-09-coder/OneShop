@@ -202,7 +202,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
       <div className="flex justify-end mb-3">
         <button
           onClick={openNew}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark"
         >
           <Plus size={16} /> Yangi retsept variant
         </button>
@@ -299,7 +299,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
 
       {draft && (
         <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl animate-fadeIn my-8">
+          <div className="bg-panel rounded-2xl w-full max-w-2xl p-6 shadow-2xl animate-fadeIn my-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg">
                 {draft.id ? "Retseptni tahrirlash" : "Yangi retsept"}
@@ -319,7 +319,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                   <input
                     value={draft.variantName}
                     onChange={(e) => setDraft({ ...draft, variantName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                     placeholder="Standart"
                   />
                 </div>
@@ -331,7 +331,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                     onChange={(e) =>
                       setDraft({ ...draft, outputQty: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   />
                 </div>
                 <div>
@@ -342,7 +342,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                     onChange={(e) =>
                       setDraft({ ...draft, laborCost: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                   />
                 </div>
               </div>
@@ -385,7 +385,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                           onChange={(e) =>
                             updateIngredient(i, { quantity: Number(e.target.value) })
                           }
-                          className="col-span-2 px-2 py-1.5 rounded-lg border border-border bg-white text-sm"
+                          className="col-span-2 px-2 py-1.5 rounded-lg border border-border bg-panel text-sm"
                           placeholder="miqdor"
                         />
                         <span className="col-span-1 text-xs text-ink-soft">
@@ -399,14 +399,14 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                               wastePercent: Number(e.target.value),
                             })
                           }
-                          className="col-span-2 px-2 py-1.5 rounded-lg border border-border bg-white text-sm"
+                          className="col-span-2 px-2 py-1.5 rounded-lg border border-border bg-panel text-sm"
                           placeholder="chiq %"
                         />
                         <span className="col-span-1 text-xs">%</span>
                         <button
                           type="button"
                           onClick={() => removeIngredient(i)}
-                          className="col-span-1 p-1 rounded-lg text-danger hover:bg-white"
+                          className="col-span-1 p-1 rounded-lg text-danger hover:bg-panel"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -430,7 +430,7 @@ export default function RecipeEditor({ productId, recipes, materials }: Props) {
                 onChange={(e) => setDraft({ ...draft, note: e.target.value })}
                 placeholder="Izoh (ixtiyoriy)"
                 rows={2}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
               />
 
               {err && (

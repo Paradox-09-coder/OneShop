@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
+import AnimatedNumber from "@/components/animated-number";
 import {
   Plus,
   Minus,
@@ -257,7 +258,7 @@ export default function PosClient({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Mahsulot, SKU yoki barcode..."
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-white"
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-panel"
             autoFocus
           />
         </div>
@@ -273,7 +274,7 @@ export default function PosClient({
                   key={o.id}
                   type="button"
                   onClick={() => copyFrom(o)}
-                  className="text-left p-2 rounded-xl border border-border bg-white hover:bg-primary/5 hover:border-primary transition"
+                  className="text-left p-2 rounded-xl border border-border bg-panel hover:bg-primary/5 hover:border-primary transition"
                   title={`${o.items.map((i) => i.productName).join(", ")} — bosib chekka nusxa`}
                 >
                   <p className="text-xs font-mono text-primary truncate">
@@ -347,7 +348,7 @@ export default function PosClient({
         <div className="relative mb-4">
           <div
             onClick={() => setClientPanelOpen((v) => !v)}
-            className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-white cursor-pointer hover:border-primary/50"
+            className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-panel cursor-pointer hover:border-primary/50"
           >
             <User size={15} className="text-ink-soft shrink-0" />
             <span className="text-sm font-medium truncate flex-1">
@@ -378,7 +379,7 @@ export default function PosClient({
                   value={clientQuery}
                   onChange={(e) => setClientQuery(e.target.value)}
                   placeholder="Ism yoki telefon..."
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm mb-1"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-panel text-sm mb-1"
                 />
                 <button
                   onClick={() => {
@@ -425,19 +426,27 @@ export default function PosClient({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{l.name}</p>
                 <p className="text-xs text-ink-soft">
-                  {formatMoney(l.price, "UZS")}
+                  {formatMoney(l.price, "UZS")} × {l.quantity} ={" "}
+                  <AnimatedNumber
+                    value={l.price * l.quantity}
+                    kind="money"
+                    className="font-semibold text-ink"
+                  />
                 </p>
               </div>
               <button
                 onClick={() => dec(l.id)}
-                className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+                className="w-7 h-7 rounded-lg bg-panel border border-border grid place-items-center"
               >
                 <Minus size={12} />
               </button>
-              <span className="w-8 text-center font-bold">{l.quantity}</span>
+              {/* key — miqdor o'zgarganda element qayta chiziladi va "pop" animatsiyasi ishlaydi */}
+              <span key={l.quantity} className="w-8 text-center font-bold animate-pop">
+                {l.quantity}
+              </span>
               <button
                 onClick={() => inc(l.id)}
-                className="w-7 h-7 rounded-lg bg-white border border-border grid place-items-center"
+                className="w-7 h-7 rounded-lg bg-panel border border-border grid place-items-center"
               >
                 <Plus size={12} />
               </button>
@@ -476,7 +485,7 @@ export default function PosClient({
           <div className="flex justify-between">
             <span className="text-sm text-ink-soft">Jami</span>
             <span className="text-xl font-bold text-primary">
-              {formatMoney(total, "UZS")}
+              <AnimatedNumber value={total} kind="money" />
             </span>
           </div>
         </div>

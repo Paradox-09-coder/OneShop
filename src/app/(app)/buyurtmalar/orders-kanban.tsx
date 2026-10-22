@@ -236,7 +236,7 @@ export default function OrdersKanban({
           onMouseEnter={() => hoverScroll(-1)}
           onMouseLeave={stopAutoScroll}
           onClick={() => scrollRef.current?.scrollBy({ left: -240, behavior: "smooth" })}
-          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-border shadow-md grid place-items-center text-ink-soft hover:text-primary hover:bg-white transition"
+          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-panel/90 border border-border shadow-md grid place-items-center text-ink-soft hover:text-primary hover:bg-panel transition"
           aria-label="Chapga surish"
         >
           <ChevronLeft size={18} />
@@ -248,7 +248,7 @@ export default function OrdersKanban({
           onMouseEnter={() => hoverScroll(1)}
           onMouseLeave={stopAutoScroll}
           onClick={() => scrollRef.current?.scrollBy({ left: 240, behavior: "smooth" })}
-          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-border shadow-md grid place-items-center text-ink-soft hover:text-primary hover:bg-white transition"
+          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-panel/90 border border-border shadow-md grid place-items-center text-ink-soft hover:text-primary hover:bg-panel transition"
           aria-label="O'ngga surish"
         >
           <ChevronRight size={18} />
@@ -276,7 +276,7 @@ export default function OrdersKanban({
                 e.preventDefault();
                 handleDrop(col.status);
               }}
-              className={`w-80 flex-shrink-0 rounded-2xl bg-white border border-border overflow-hidden transition-shadow ${
+              className={`w-80 flex-shrink-0 rounded-2xl bg-panel border border-border overflow-hidden transition-shadow ${
                 dragOverStatus === col.status ? "ring-2 ring-primary" : ""
               }`}
             >
@@ -304,7 +304,7 @@ export default function OrdersKanban({
                     onDragStart={() => setDraggingId(o.id)}
                     onDragEnd={() => setDraggingId(null)}
                     onClick={() => router.push(`/buyurtmalar/${o.id}`)}
-                    className={`p-3 rounded-xl bg-white shadow-sm hover:shadow-md border border-border hover:border-primary/40 cursor-grab active:cursor-grabbing transition ${
+                    className={`p-3 rounded-xl bg-panel shadow-sm hover:shadow-md border border-border hover:border-primary/40 cursor-grab active:cursor-grabbing transition ${
                       draggingId === o.id ? "opacity-40" : ""
                     }`}
                   >

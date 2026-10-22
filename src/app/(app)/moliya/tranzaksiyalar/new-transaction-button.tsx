@@ -199,7 +199,7 @@ export default function NewTransactionButton({
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            className="bg-panel rounded-2xl p-6 max-w-sm w-full shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -323,7 +323,7 @@ export default function NewTransactionButton({
                   value={amount}
                   onChange={setAmount}
                   placeholder="0"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 
@@ -335,7 +335,7 @@ export default function NewTransactionButton({
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 
@@ -347,7 +347,7 @@ export default function NewTransactionButton({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Masalan: do'kondan naqd sotuv"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel text-sm"
                 />
               </div>
 

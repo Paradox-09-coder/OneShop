@@ -39,7 +39,7 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={(e) => e.target === overlayRef.current && onClose()}
     >
-      <div className={cn("bg-white rounded-2xl shadow-2xl w-full animate-fadeIn", sizes[size])}>
+      <div className={cn("bg-panel rounded-2xl shadow-2xl w-full animate-fadeIn", sizes[size])}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-bold text-ink">{title}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-ink-soft">

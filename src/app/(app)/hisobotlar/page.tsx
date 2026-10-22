@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AnimatedNumber from "@/components/animated-number";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/page-header";
 import { formatMoney } from "@/lib/utils";
@@ -86,7 +87,7 @@ export default async function ReportsPage() {
         actions={
           <Link
             href="/hisobotlar/mijoz-marja"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold hover:bg-primary-dark"
           >
             <Users size={16} /> Mijoz marja hisoboti
           </Link>
@@ -97,13 +98,13 @@ export default async function ReportsPage() {
         <div className="panel p-5">
           <p className="text-sm text-ink-soft">Oylik daromad</p>
           <p className="text-2xl font-bold text-success mt-1">
-            {formatMoney(income._sum.amount ?? 0, "UZS")}
+            <AnimatedNumber value={income._sum.amount ?? 0} kind="money" />
           </p>
         </div>
         <div className="panel p-5">
           <p className="text-sm text-ink-soft">Oylik xarajat</p>
           <p className="text-2xl font-bold text-danger mt-1">
-            {formatMoney(expense._sum.amount ?? 0, "UZS")}
+            <AnimatedNumber value={expense._sum.amount ?? 0} kind="money" />
           </p>
         </div>
         <div className="panel p-5">
@@ -113,7 +114,7 @@ export default async function ReportsPage() {
               netProfit >= 0 ? "text-primary" : "text-danger"
             }`}
           >
-            {formatMoney(netProfit, "UZS")}
+            <AnimatedNumber value={netProfit} kind="money" />
           </p>
         </div>
       </div>

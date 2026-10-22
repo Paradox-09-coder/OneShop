@@ -107,7 +107,7 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
       <div className="flex justify-end mb-3">
         <button
           onClick={() => setDraft({ ...EMPTY })}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
         >
           <Plus size={14} /> Yangi foydalanuvchi
         </button>
@@ -176,7 +176,7 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
 
       {draft && (
         <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
+          <div className="bg-panel rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fadeIn">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg">
                 {draft.id ? "Foydalanuvchini tahrirlash" : "Yangi foydalanuvchi"}
@@ -196,14 +196,14 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
                     setDraft({ ...draft, username: e.target.value })
                   }
                   placeholder="Foydalanuvchi (login)"
-                  className="px-3 py-2 rounded-xl border border-border bg-white"
+                  className="px-3 py-2 rounded-xl border border-border bg-panel"
                   autoFocus
                 />
                 <input
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                   placeholder="To'liq ismi"
-                  className="px-3 py-2 rounded-xl border border-border bg-white"
+                  className="px-3 py-2 rounded-xl border border-border bg-panel"
                 />
               </div>
               <Select
@@ -225,7 +225,7 @@ export default function UsersManager({ users }: { users: UserRow[] }) {
                     setDraft({ ...draft, password: e.target.value })
                   }
                   placeholder={draft.id ? "Bo'sh qoldirsangiz, parol o'zgarmaydi" : "Parol"}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 />
               </div>
               <label className="inline-flex items-center gap-2">
