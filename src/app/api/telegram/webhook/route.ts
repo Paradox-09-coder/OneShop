@@ -82,6 +82,23 @@ interface Update {
   };
 }
 
+// Foydalanuvchini Telegram ID bo'yicha topadi — bazada to'g'ridan-to'g'ri
+// (metadata.telegram_id). Oldin birinchi 200 ta kontragent olinib, ular
+// ichidan qidirilardi: kontragentlar 200 dan oshgach, yangi qo'shilganlar
+// botga kirgandan keyin ham "avval /start" xatosini olardi. Bir nechta
+// yozuv mos kelsa — eng oxirgi yangilangani (ya'ni hozirgina /start
+// qilib bog'langani) olinadi.
+async function findByTelegramId(tgId: number, type?: "OTHER") {
+  return prisma.counterparty.findFirst({
+    where: {
+      deletedAt: null,
+      ...(type ? { type } : {}),
+      metadata: { path: ["telegram_id"], equals: tgId },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
 function normalizePhone(s: string): string {
   return s.replace(/\D/g, "").replace(/^998/, "+998");
 }
@@ -214,14 +231,7 @@ async function handleVoice(msg: TelegramMessage) {
   const chatId = msg.chat.id;
   if (!msg.voice) return;
 
-  const users = await prisma.counterparty.findMany({
-    where: { deletedAt: null },
-    take: 200,
-  });
-  const user = users.find(
-    (u) =>
-      (u.metadata as DriverOrClientMeta | null)?.telegram_id === msg.from?.id
-  );
+  const user = msg.from ? await findByTelegramId(msg.from.id) : null;
   if (!user) {
     await sendMessage(chatId, "Iltimos, avval /start orqali tanishuv.", {
       reply_markup: contactRequestKeyboard,
@@ -266,14 +276,7 @@ async function handleText(msg: TelegramMessage, overrideText?: string) {
   const chatId = msg.chat.id;
 
   // Find who this user is by their telegram_id
-  const users = await prisma.counterparty.findMany({
-    where: { deletedAt: null },
-    take: 200,
-  });
-  const user = users.find(
-    (u) =>
-      (u.metadata as DriverOrClientMeta | null)?.telegram_id === msg.from?.id
-  );
+  const user = msg.from ? await findByTelegramId(msg.from.id) : null;
 
   if (!user) {
     if (text.startsWith("/start")) {
@@ -579,15 +582,7 @@ async function handleCallback(query: NonNullable<Update["callback_query"]>) {
     return;
   }
 
-  const users = await prisma.counterparty.findMany({
-    where: { deletedAt: null, type: "OTHER" },
-    take: 200,
-  });
-  const driver = users.find(
-    (u) =>
-      (u.metadata as { telegram_id?: number } | null)?.telegram_id ===
-      query.from.id
-  );
+  const driver = await findByTelegramId(query.from.id, "OTHER");
   if (!driver) {
     await answerCallbackQuery(query.id, "Siz haydovchi sifatida topilmadingiz");
     return;
