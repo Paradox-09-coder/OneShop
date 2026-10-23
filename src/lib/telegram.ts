@@ -1,7 +1,10 @@
 // Telegram Bot Client — Bot API orqali sendMessage, editMessageText, etc.
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
-const API_BASE = TOKEN ? `https://api.telegram.org/bot${TOKEN}` : "";
+// TELEGRAM_API_BASE — faqat lokal sinov uchun (soxta Telegram serveri).
+// Production'da belgilanmaydi, shuning uchun haqiqiy Telegram ishlatiladi.
+const API_ROOT = process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
+const API_BASE = TOKEN ? `${API_ROOT}/bot${TOKEN}` : "";
 
 export function isTelegramConfigured() {
   return !!TOKEN;

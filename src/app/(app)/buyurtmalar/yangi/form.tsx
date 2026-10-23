@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import PhoneInput from "@/components/phone-input";
 import { useRouter } from "next/navigation";
 import { Trash2, Plus, UserPlus, Minus, Search, User, X, Phone, Car, Tag, Package } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
@@ -1028,9 +1029,9 @@ export default function NewOrderForm({
                           </div>
                           <div>
                             <label className="block text-xs text-ink-soft mb-1">Telefon</label>
-                            <input
+                            <PhoneInput
                               value={receiverPhone}
-                              onChange={(e) => setReceiverPhone(e.target.value)}
+                              onChange={setReceiverPhone}
                               className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                             />
                           </div>
@@ -1165,10 +1166,9 @@ export default function NewOrderForm({
                 className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                 autoFocus
               />
-              <input
+              <PhoneInput
                 value={newClientPhone}
-                onChange={(e) => setNewClientPhone(e.target.value)}
-                placeholder="Telefon"
+                onChange={setNewClientPhone}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
               />
               <Select

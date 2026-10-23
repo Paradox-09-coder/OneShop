@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PhoneInput from "@/components/phone-input";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import Select from "@/components/select";
@@ -107,18 +108,17 @@ export default function AddClientButton() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-sm font-medium mb-1">Telefon</label>
-                  <input
+                  <PhoneInput
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={setPhone}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
-                    placeholder="+998 90 000 00 00"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Qo'shimcha</label>
-                  <input
+                  <PhoneInput
                     value={phone2}
-                    onChange={(e) => setPhone2(e.target.value)}
+                    onChange={setPhone2}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
                     placeholder="ixtiyoriy"
                   />

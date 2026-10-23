@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import Sidebar from "@/components/sidebar";
 import Topbar from "@/components/topbar";
+import UpdateBanner from "@/components/update-banner";
 import { getSession } from "@/lib/auth";
 import { allowedHrefs, canAccessPath } from "@/lib/access";
 import { Ban } from "lucide-react";
@@ -26,6 +27,7 @@ export default async function AppShellLayout({
 
   return (
     <div className="flex min-h-screen">
+      <UpdateBanner />
       <Sidebar allowedHrefs={hrefs} />
       {/* min-w-0 — flex element sifatida keng kontentga (masalan Kanban
           etaplari) qarab o'zi kengayib ketmasin: aks holda butun sahifa,

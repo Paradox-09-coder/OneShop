@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PhoneInput from "@/components/phone-input";
 import { useRouter } from "next/navigation";
 import { Truck, Save, Phone, Car, Plus } from "lucide-react";
 import AddCounterpartyButton from "../../kontragentlar/add-counterparty-button";
@@ -258,9 +259,9 @@ export default function LogisticsPanel({ orderId, drivers, initial }: Props) {
           </div>
           <div>
             <label className="block text-xs text-ink-soft mb-1">Telefon</label>
-            <input
+            <PhoneInput
               value={f.receiverPhone}
-              onChange={(e) => setF({ ...f, receiverPhone: e.target.value })}
+              onChange={(v) => setF({ ...f, receiverPhone: v })}
               className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
             />
           </div>

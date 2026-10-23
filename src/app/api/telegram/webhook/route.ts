@@ -17,7 +17,14 @@ import {
   downloadTelegramFile,
 } from "@/lib/telegram";
 import { transcribeAudio, isGeminiConfigured } from "@/lib/gemini";
+import {
+  startClientOrder,
+  handleClientOrderText,
+  handleClientOrderCallback,
+  findClientByTelegramId,
+} from "@/lib/telegram-client-order";
 import { stagesFor } from "@/lib/state-machine";
+import { orderStatusLabel } from "@/lib/labels";
 import { NextResponse } from "next/server";
 import type { OrderStatus } from "@prisma/client";
 
@@ -284,6 +291,15 @@ async function handleText(msg: TelegramMessage, overrideText?: string) {
   const kb = keyboardFor(user.type);
   const meta = (user.metadata as DriverOrClientMeta | null) ?? {};
 
+  // Katalog orqali buyurtma berish jarayonida yozilgan matn (miqdor / manzil).
+  if (
+    user.type === "CLIENT" &&
+    !MENU_BUTTON_HINTS.some((h) => text.includes(h)) &&
+    (await handleClientOrderText(chatId, user, text))
+  ) {
+    return;
+  }
+
   // Mijoz "📦 Yangi buyurtma"ni bosgandan keyin yuborgan KEYINGI erkin
   // matn — bu uning so'rovi. Menyu tugmasi bosilsa (masalan fikridan
   // qaytib "Buyurtmalarim"ni bossa), buni so'rov deb hisoblamaymiz.
@@ -377,17 +393,9 @@ async function handleText(msg: TelegramMessage, overrideText?: string) {
 
   if (user.type === "CLIENT") {
     if (text.includes("Yangi buyurtma")) {
-      await prisma.counterparty.update({
-        where: { id: user.id },
-        data: { metadata: { ...meta, awaiting_order_request: true } },
-      });
-      await sendMessage(
-        chatId,
-        "📦 Nima kerakligini bitta xabarda yozing — mahsulot nomi va " +
-          "miqdorini ko'rsating.\n\n" +
-          "Masalan: <i>\"Polizol 33kg standart, 20 dona\"</i>",
-        { reply_markup: kb }
-      );
+      // Katalogdan tanlash → savat → manzil → tasdiq (telegram-client-order.ts).
+      // Katalogda yo'q narsa uchun u yerda "✍️ Matn bilan yozish" tugmasi bor.
+      await startClientOrder(chatId, user);
       return;
     }
     if (text.includes("Buyurtmalarim")) {
@@ -401,7 +409,7 @@ async function handleText(msg: TelegramMessage, overrideText?: string) {
       const lines = orders
         .map(
           (o) =>
-            `📋 ${escape(o.orderNumber)} — ${o.status} — ${(o.agreedAmount ?? 0).toLocaleString("ru-RU")} ${o.orderCurrency}`
+            `📋 ${escape(o.orderNumber)} — ${orderStatusLabel[o.status]} —${(o.agreedAmount ?? 0).toLocaleString("ru-RU")} ${o.orderCurrency}`
         )
         .join("\n");
       await sendMessage(chatId, `<b>Buyurtmalaringiz:</b>\n${lines}`, {
@@ -546,6 +554,19 @@ async function sendDeliveryList(
 
 async function handleCallback(query: NonNullable<Update["callback_query"]>) {
   const data = query.data ?? "";
+
+  // Mijozning katalog orqali buyurtma berish tugmalari ("co:..."). Faqat
+  // CLIENT roli; boshqa rollarning tugmalariga tegmaydi.
+  if (data.startsWith("co:")) {
+    const client = await findClientByTelegramId(query.from.id);
+    if (!client) {
+      await answerCallbackQuery(query.id, "Siz mijoz sifatida topilmadingiz");
+      return;
+    }
+    await handleClientOrderCallback(query, client);
+    return;
+  }
+
   const [action, orderId] = data.split(":");
 
   if (action === "confirm_receipt" || action === "deny_receipt") {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import PhoneInput from "@/components/phone-input";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import Select from "@/components/select";
@@ -236,11 +237,10 @@ export default function AddCounterpartyButton({
               )}
               <div>
                 <label className="block text-sm font-medium mb-1.5">Telefon</label>
-                <input
+                <PhoneInput
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={setPhone}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-panel"
-                  placeholder="+998 90 000 00 00"
                 />
               </div>
 

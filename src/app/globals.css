@@ -196,6 +196,36 @@ input::placeholder, textarea::placeholder {
   }
 }
 
+/* "Sayt yangilandi" xabari (components/update-banner.tsx) */
+@keyframes updateIn {
+  0% { opacity: 0; transform: translateY(-140%) scale(0.96); }
+  60% { opacity: 1; transform: translateY(8%) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes updatePulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes updateSparkle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(18deg) scale(1.18); }
+}
+@keyframes updateShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.update-banner { animation: updateIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.update-pulse { animation: updatePulse 1.8s ease-out infinite; }
+.update-sparkle { animation: updateSparkle 2.4s ease-in-out infinite; }
+.update-shimmer {
+  background: linear-gradient(90deg, transparent, var(--color-primary), var(--color-accent), var(--color-primary), transparent);
+  background-size: 200% 100%;
+  animation: updateShimmer 2.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .update-banner, .update-pulse, .update-sparkle, .update-shimmer { animation: none; }
+}
+
 /* Reusable panel look */
 .panel {
   background: var(--color-panel);

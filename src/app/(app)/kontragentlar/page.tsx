@@ -5,6 +5,8 @@ import { counterpartyTypeLabel } from "@/lib/labels";
 import AddCounterpartyButton from "./add-counterparty-button";
 import ListToolbar from "@/components/list-toolbar";
 import Pagination from "@/components/pagination";
+import ClickableRow from "@/components/clickable-row";
+import Link from "next/link";
 import SectionTabs from "@/components/section-tabs";
 import type { CounterpartyType, Prisma } from "@prisma/client";
 
@@ -106,8 +108,19 @@ export default async function CounterpartiesPage({
             </thead>
             <tbody>
               {visible.map((p) => (
-                <tr key={p.id} className="border-b border-border/50 hover:bg-gray-50/50">
-                  <td className="px-5 py-3 font-semibold">{p.name}</td>
+                <ClickableRow
+                  key={p.id}
+                  href={`/kontragentlar/${encodeURIComponent(p.id)}`}
+                  className="border-b border-border/50 hover:bg-gray-50/50"
+                >
+                  <td className="px-5 py-3 font-semibold">
+                    <Link
+                      href={`/kontragentlar/${encodeURIComponent(p.id)}`}
+                      className="hover:text-primary"
+                    >
+                      {p.name}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3">
                     <span className="chip bg-slate-100 text-slate-700">
                       {counterpartyTypeLabel[p.type]}
@@ -120,7 +133,7 @@ export default async function CounterpartiesPage({
                   <td className="px-5 py-3 text-ink-soft">
                     {formatDate(p.createdAt)}
                   </td>
-                </tr>
+                </ClickableRow>
               ))}
               {visible.length === 0 && (
                 <tr>
